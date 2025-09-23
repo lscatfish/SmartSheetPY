@@ -2,7 +2,7 @@
 这是用于解析xlsx文件的py文件
 """
 from openpyxl import load_workbook, Workbook
-
+from openpyxl.styles import Font, Side, Border, Alignment
 
 # # 加载工作簿（read_only=True 适合大文件，提升性能）
 # wb = load_workbook(r"D:\code\SmartSheetPY\青峰班.xlsx", True, True)
@@ -33,14 +33,14 @@ from openpyxl import load_workbook, Workbook
 class XlsxLoad:
     """读取xlsx文件的类"""
 
-    def __init__(self, _path):
+    def __init__(self, _path: str):
         self.__path = _path
         self.__sheet = []
         self.__load()
 
     def __load(self):
         """读取文件"""
-        print('xlsx文件读取\"'+self.__path+'\"',end = '')
+        print('xlsx文件读取\"' + self.__path + '\"', end = '')
         wb = load_workbook(self.__path)
         wb = load_workbook(self.path, data_only = True, read_only = True)
         ws = wb.worksheets[0]
@@ -59,3 +59,19 @@ class XlsxLoad:
     def sheet(self):
         """返回解析到的sheet"""
         return self.__sheet
+
+
+class XlsxWrite:
+    """xlsx写文件"""
+
+    def __init__(self, _path: str, _sheet: list):
+        """
+        Parameters
+        --------
+        _path :str
+            路径
+        _sheet:list
+            表格
+        """
+        self.__path = _path
+        self.__sheet = _sheet
