@@ -1,6 +1,4 @@
 ﻿from functools import singledispatchmethod
-from pydoc import classname
-
 from globalconstants import GlobalConstants as gc
 
 
@@ -10,7 +8,7 @@ class DefPerson:
     def __init__(self,
                  cname: str = None,
                  name: str = None,
-                 studentID=None) -> None:
+                 studentID = None) -> None:
         """
         Parameters
         ---------------
@@ -70,4 +68,28 @@ class DefPerson:
                         self.information[gc.chstrGrade] = first4 + '级'
                 else:
                     self.information[gc.chstrGrade] = first4 + '级'
-        if len(classname) > 0:
+        if len(self.classname) > 4:
+            if '宣' in self.classname:
+                self.classname = '青宣班'
+            elif '文' in self.classname:
+                self.classname = '青文班'
+            elif '骨' in self.classname:
+                self.classname = '青骨班'
+            elif '学' in self.classname:
+                self.classname = '青学班'
+            elif '艺' in self.classname:
+                self.classname = '青艺班'
+            elif '峰' in self.classname:
+                self.classname = '青峰班'
+            elif '公' in self.classname:
+                self.classname = '青公班'
+            elif '社' in self.classname:
+                self.classname = '青社班'
+            elif '书' in self.classname:
+                self.classname = '青书班'
+            elif '膺' in self.classname:
+                self.classname = '青膺班'
+            elif '志' in self.classname:
+                self.classname = '青志班'
+            elif '组' in self.classname:
+                self.classname = '青组班'
