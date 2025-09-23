@@ -34,15 +34,28 @@ class XlsxLoad:
     """读取xlsx文件的类"""
 
     def __init__(self, _path):
-        self.path = _path
-        self.sheet = []
-        self.load()
+        self.__path = _path
+        self.__sheet = []
+        self.__load()
 
-    def load(self):
+    def __load(self):
         """读取文件"""
+        print('xlsx文件读取\"'+self.__path+'\"',end = '')
+        wb = load_workbook(self.__path)
         wb = load_workbook(self.path, data_only = True, read_only = True)
         ws = wb.worksheets[0]
-        for row in ws.iter_rows(values_only = True):#遍历全部
-            self.sheet.append(row)
+        for row in ws.iter_rows(values_only = True):  # 遍历全部
+            self.__sheet.append(row)
         ws.close()
         wb.close()
+        print(' - Done!')
+
+    @property
+    def path(self):
+        """返回文件路径"""
+        return self.__path
+
+    @property
+    def sheet(self):
+        """返回解析到的sheet"""
+        return self.__sheet
