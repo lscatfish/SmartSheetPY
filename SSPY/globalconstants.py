@@ -1,4 +1,5 @@
 class GlobalConstants:
+    """全局常量储存"""
     chstrName = '姓名'
     chstrGrade = '年级'
     chstrStudentID = '学号'
