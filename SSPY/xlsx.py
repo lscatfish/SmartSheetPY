@@ -68,8 +68,8 @@ class XlsxWrite:
 
     def __init__(
         self,
-        path: str,
-        sheet: list,
+        path: str = None,
+        sheet: list = None,
         title: str = '',
         widths: list = None,
         heights: int = None,
@@ -126,3 +126,25 @@ class XlsxWrite:
         self.__fontHeader = font_header
         self.__widths = widths
         self.__heights = heights
+
+    def can_write(self) -> bool:
+        """检查能否开始写入表格"""
+        if self.__path is None: return False
+        if self.__sheet is None: return False
+        if self.__title == '' and self.__hasTitle: return False
+        return True
+
+    def write(self) -> bool:
+        """写入文件"""
+        if not self.can_write(): return False
+        # 创建wb
+        wb = Workbook()
+        ws = wb.active
+        if self.__hasTitle: ws.title = self.__title
+        for row in self.__sheet:
+            ws.append(row)
+
+        wb.save(self.__path)
+        ws.close()
+        wb.close()
+        return True
