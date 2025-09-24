@@ -6,3 +6,4 @@
 - python-docx v1.2.0 
 - pypdfium2 v4.30.0 
 - pyinstaller v6.16.0
+- python v3.10
