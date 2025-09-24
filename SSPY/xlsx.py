@@ -151,10 +151,11 @@ class XlsxWrite:
         if self.__title == '' and self.__hasTitle: return False
         return True
 
-    def write(self) -> bool:
+    def write(self, ifp: bool = False) -> bool:
         """写入文件"""
         width_default = 8.43
         if not self.can_write(): return False
+        if ifp: print('write xlsx file as \"' + self.__path + '\"', end = '')
         # 创建wb
         wb = Workbook()
         ws = wb.active
@@ -193,4 +194,83 @@ class XlsxWrite:
         wb.save(self.__path)
         ws.close()
         wb.close()
+        print(' - Done!')
         return True
+
+    @property
+    def path(self):
+        return self.__path
+
+    @path.setter
+    def path(self, value: str):
+        if isinstance(value, str):
+            self.__path = value
+        else:
+            raise TypeError("路径必须是str类型")
+
+    @property
+    def sheet(self):
+        return self.__sheet
+
+    @sheet.setter
+    def sheet(self, value: list):
+        if isinstance(value, list):
+            self.__sheet = value
+        else:
+            raise TypeError("sheet必须是list类型")
+
+    @property
+    def hasTitle(self):
+        return self.__hasTitle
+
+    @hasTitle.setter
+    def hasTitle(self, i_hasTitle: bool):
+        if isinstance(i_hasTitle, bool):
+            self.__hasTitle = i_hasTitle
+        else:
+            raise ValueError("hasTitle必须是bool类型")
+
+    @property
+    def title(self):
+        return self.__title
+
+    @title.setter
+    def title(self, i_title: str):
+        if isinstance(i_title, str):
+            self.__title = i_title
+            self.__hasTitle = True
+        else:
+            raise ValueError("标题必须是字符串类型")
+
+    @property
+    def fontRegular(self):
+        return self.__fontRegular
+
+    @fontRegular.setter
+    def fontRegular(self, fontRegular: Font):
+        self.__fontRegular = fontRegular
+
+    @property
+    def fontTitle(self):
+        return self.__fontTitle
+
+    @fontTitle.setter
+    def fontTitle(self, fontTitle: Font):
+        self.__fontTitle = fontTitle
+
+    @property
+    def border(self):
+        return self.__border
+
+    @border.setter
+    def border(self, border: Border):
+        self.__border = border
+        self.__hasBorder = True
+
+    @property
+    def hasBorder(self):
+        return self.__hasBorder
+
+    @hasBorder.setter
+    def hasBorder(self, hasBorder: bool):
+        self.__hasBorder = hasBorder
