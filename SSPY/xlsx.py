@@ -129,6 +129,8 @@ class XlsxWrite:
         alignment: Alignment
             对齐方式
         """
+        if widths is None:
+            widths = []
         self.__path = path
         self.__sheet = sheet
         self.__title = title
@@ -146,8 +148,8 @@ class XlsxWrite:
 
     def can_write(self) -> bool:
         """检查能否开始写入表格"""
-        if self.__path is None: return False
-        if self.__sheet is None: return False
+        if self.__path is None or self.__path == '': return False
+        if self.__sheet is None or self.__sheet == []: return False
         if self.__title == '' and self.__hasTitle: return False
         return True
 
@@ -192,9 +194,9 @@ class XlsxWrite:
             ws.cell(1, 1).value = self.__title
             ws.cell(1, 1).font = self.__fontTitle
         wb.save(self.__path)
-        ws.close()
         wb.close()
-        print(' - Done!')
+        if ifp:
+            print(' - Done!')
         return True
 
     @property
@@ -257,6 +259,7 @@ class XlsxWrite:
     @fontTitle.setter
     def fontTitle(self, fontTitle: Font):
         self.__fontTitle = fontTitle
+        self.__hasTitle = True
 
     @property
     def border(self):
@@ -314,3 +317,11 @@ class XlsxWrite:
     @fontHeader.setter
     def fontHeader(self, fontHeader: Font):
         self.__fontHeader = fontHeader
+
+
+content = [('we', 'fhds', 'fjjf'),
+           ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad'),
+           ('dsafdasf', 'dfsda', 'dfrgioehbn'),
+           ['dfadjonf', 'dfnfd', 'dsfnsnj', 'dsnfiu']]
+a = XlsxWrite(path = 'text.xlsx', sheet = content, widths = [35, 25, ])
+if a.can_write(): a.write(True)
