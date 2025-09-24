@@ -274,3 +274,43 @@ class XlsxWrite:
     @hasBorder.setter
     def hasBorder(self, hasBorder: bool):
         self.__hasBorder = hasBorder
+
+    @property
+    def alignment(self):
+        return self.__alignment
+
+    @alignment.setter
+    def alignment(self, alignment: Alignment):
+        self.__alignment = alignment
+
+    @property
+    def widths(self):
+        return self.__widths
+
+    @widths.setter
+    def widths(self, widths: list):
+        self.__widths = widths
+
+    @property
+    def height(self):
+        return self.__height
+
+    @height.setter
+    def height(self, height: int):
+        self.__height = height
+
+    @property
+    def hasHeader(self):
+        return self.__hasHeader
+
+    @hasHeader.setter
+    def hasHeader(self, hasHeader: bool):
+        self.__hasHeader = hasHeader
+
+    @property
+    def fontHeader(self):
+        return self.__fontHeader
+
+    @fontHeader.setter
+    def fontHeader(self, fontHeader: Font):
+        self.__fontHeader = fontHeader
