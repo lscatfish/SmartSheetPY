@@ -189,7 +189,7 @@ class XlsxWrite:
             ws.insert_rows(1)
             ws.merge_cells(start_row = 1, end_row = 1, start_column = 1, end_column = ws.max_column)
             ws.cell(1, 1).value = self.__title
-
+            ws.cell(1, 1).font = self.__fontTitle
         wb.save(self.__path)
         ws.close()
         wb.close()
