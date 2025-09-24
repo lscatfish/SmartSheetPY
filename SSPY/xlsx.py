@@ -2,7 +2,7 @@
 这是用于解析xlsx文件的py文件
 """
 from openpyxl import load_workbook, Workbook
-from openpyxl.styles import Font, Side, Border, Alignment
+from openpyxl.styles import Font, Border, Alignment
 from globalconstants import GlobalConstants as gc
 
 
@@ -129,8 +129,7 @@ class XlsxWrite:
         alignment: Alignment
             对齐方式
         """
-        if widths is None:
-            widths = []
+        if widths is None: widths = []
         self.__path = path
         self.__sheet = sheet
         self.__title = title
@@ -191,12 +190,11 @@ class XlsxWrite:
         if self.__hasTitle:
             ws.insert_rows(1)
             ws.merge_cells(start_row = 1, end_row = 1, start_column = 1, end_column = ws.max_column)
-            ws.cell(1, 1).value = self.__title
-            ws.cell(1, 1).font = self.__fontTitle
+            ws.cell(row = 1, column = 1).value = self.__title
+            ws.cell(row = 1, column = 1).font = self.__fontTitle
         wb.save(self.__path)
         wb.close()
-        if ifp:
-            print(' - Done!')
+        if ifp: print(' - Done!')
         return True
 
     @property
@@ -319,9 +317,9 @@ class XlsxWrite:
         self.__fontHeader = fontHeader
 
 
-content = [('we', 'fhds', 'fjjf'),
-           ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad'),
-           ('dsafdasf', 'dfsda', 'dfrgioehbn'),
-           ['dfadjonf', 'dfnfd', 'dsfnsnj', 'dsnfiu']]
-a = XlsxWrite(path = 'text.xlsx', sheet = content, widths = [35, 25, ])
-if a.can_write(): a.write(True)
+# content = [('we', 'fhds', 'fjjf'),
+#            ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad'),
+#            ('dsafdasf', 'dfsda', 'dfrgioehbn'),
+#            ['dfadjonf', 'dfnfd', 'dsfnsnj', 'dsnfiu']]
+# a = XlsxWrite(path = 'text.xlsx', sheet = content, widths = [35, 25, ])
+# if a.can_write(): a.write(True)
