@@ -18,6 +18,8 @@ class GlobalConstants:
     chstrSignPosition = '报名岗位'
     chstrGender = '性别'
     fontRegularGBK = Font(name = '仿宋_GB2312', size = 14)
+    fontTitleGBK = Font(name = '宋体', size = 24, bold = True)
+    fontHeaderGBK = Font(name = '仿宋_GB2312', size = 14, bold = True)
     borderThinBlack = Border(
         left = Side(style = "thin", color = "000000"),
         right = Side(style = "thin", color = "000000"),

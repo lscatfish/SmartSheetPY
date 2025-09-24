@@ -3,6 +3,8 @@
 """
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Side, Border, Alignment
+from globalconstants import GlobalConstants as gc
+
 
 # # 加载工作簿（read_only=True 适合大文件，提升性能）
 # wb = load_workbook(r"D:\code\SmartSheetPY\青峰班.xlsx", True, True)
@@ -64,14 +66,63 @@ class XlsxLoad:
 class XlsxWrite:
     """xlsx写文件"""
 
-    def __init__(self, _path: str, _sheet: list):
+    def __init__(
+        self,
+        path: str,
+        sheet: list,
+        title: str = '',
+        widths: list = None,
+        heights: int = None,
+        font_regular: Font = gc.fontRegularGBK,
+        font_title: Font = gc.fontTitleGBK,
+        font_header: Font = gc.fontHeaderGBK,
+        border: Border = gc.borderThinBlack,
+        has_border: bool = False,
+        has_title: bool = False,
+        has_header: bool = False,
+        alignment: Alignment = gc.alignmentStd,
+    ):
         """
         Parameters
         --------
-        _path :str
+        path : str
             路径
-        _sheet:list
+        sheet : list
             表格
+        title : str
+            标题的名称
+        widths : list
+            列宽的组合
+        heights : int
+            行高
+        font_regular: Font
+            正文字体
+        font_title: Font
+            标题字体
+        font_header: Font
+            表头字体
+        border: Border
+            单元格边框
+        has_border: bool
+            是否加边框
+        has_title: bool
+            是否有标题
+        has_header: bool
+            是否有表头
+        alignment: Alignment
+            对齐方式
         """
-        self.__path = _path
-        self.__sheet = _sheet
+        self.__path = path
+        self.__sheet = sheet
+        self.__title = title
+        self.__fontRegular = font_regular
+        self.__fontTitle = font_title
+        self.__border = border
+        self.__hasBorder = has_border
+        self.__hasTitle = has_title
+        self.__alignment = alignment
+        self.__hasTitle = has_title
+        self.__hasHeader = has_header
+        self.__fontHeader = font_header
+        self.__widths = widths
+        self.__heights = heights
