@@ -32,6 +32,23 @@ from globalconstants import GlobalConstants as gc
 # # 关闭工作簿
 # wb.close()
 
+# wb = Workbook()
+# ws = wb.active
+# content = [('we', 'fhds', 'fjjf'),
+#            ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad'),
+#            ('dsafdasf', 'dfsda', 'dfrgioehbn'),
+#            ['dfadjonf', 'dfnfd', 'dsfnsnj', 'dsnfiu']]
+# for row in content:
+#     ws.append(row)
+# for i in range(1, len(content) + 1):
+#     ws.row_dimensions[i].height = i * 5 + 20
+# for i in range(1, ws.max_column + 1):
+#     col_letter=ws.cell(row=1, column=i).column_letter
+#     ws.column_dimensions[col_letter].width = i * 5 + 20
+# wb.save('text.xlsx')
+# wb.close()
+
+
 class XlsxLoad:
     """读取xlsx文件的类"""
 
@@ -72,7 +89,7 @@ class XlsxWrite:
         sheet: list = None,
         title: str = '',
         widths: list = None,
-        heights: int = None,
+        height: int = None,
         font_regular: Font = gc.fontRegularGBK,
         font_title: Font = gc.fontTitleGBK,
         font_header: Font = gc.fontHeaderGBK,
@@ -93,7 +110,7 @@ class XlsxWrite:
             标题的名称
         widths : list
             列宽的组合
-        heights : int
+        height : int
             行高
         font_regular: Font
             正文字体
@@ -125,7 +142,7 @@ class XlsxWrite:
         self.__hasHeader = has_header
         self.__fontHeader = font_header
         self.__widths = widths
-        self.__heights = heights
+        self.__height = height
 
     def can_write(self) -> bool:
         """检查能否开始写入表格"""
@@ -136,6 +153,7 @@ class XlsxWrite:
 
     def write(self) -> bool:
         """写入文件"""
+        width_default = 8.43
         if not self.can_write(): return False
         # 创建wb
         wb = Workbook()
@@ -143,6 +161,34 @@ class XlsxWrite:
         if self.__hasTitle: ws.title = self.__title
         for row in self.__sheet:
             ws.append(row)
+        for i in range(1, ws.max_row + 1):
+            ws.row_dimensions[i].height = self.__height
+        for i in range(1, ws.max_column + 1):
+            col_letter = ws.cell(row = 1, column = i).column_letter
+            if i < len(self.__widths) and self.__widths[i - 1] > 0:
+                ws.column_dimensions[col_letter].width = self.__widths[i - 1]
+                width_default = self.__widths[i - 1]
+            elif i == len(self.__widths):
+                if self.__widths[i - 1] <= 0:
+                    ws.column_dimensions[col_letter].width = width_default
+                else:
+                    ws.column_dimensions[col_letter].width = self.__widths[i - 1]
+                    width_default = self.__widths[i - 1]
+            else:
+                ws.column_dimensions[col_letter].width = width_default
+
+        for row in ws.iter_rows(values_only = False):
+            for cell in row:
+                cell.alignment = self.__alignment
+                if self.__hasBorder: cell.border = self.__border
+                cell.font = self.__fontRegular
+        if self.__hasHeader:
+            for cell in ws[1]:
+                cell.font = self.__fontHeader
+        if self.__hasTitle:
+            ws.insert_rows(1)
+            ws.merge_cells(start_row = 1, end_row = 1, start_column = 1, end_column = ws.max_column)
+            ws.cell(1, 1).value = self.__title
 
         wb.save(self.__path)
         ws.close()
