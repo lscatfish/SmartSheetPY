@@ -5,5 +5,6 @@
 - openpyxl v1.6.1 &nbsp;&nbsp;&nbsp; 
 - python-docx v1.2.0 
 - pypdfium2 v4.30.0 
+- pdfplumber v0.11.7
 - pyinstaller v6.16.0
 - python v3.10

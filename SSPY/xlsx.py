@@ -22,7 +22,6 @@ class XlsxLoad:
         ws = wb.worksheets[0]
         for row in ws.iter_rows(values_only = True):  # 遍历全部
             self.__sheet.append(row)
-        ws.close()
         wb.close()
         print(' - Done!')
 
@@ -149,6 +148,7 @@ class XlsxWrite:
             ws.merge_cells(start_row = 1, end_row = 1, start_column = 1, end_column = ws.max_column)
             ws.cell(row = 1, column = 1).value = self.__title
             ws.cell(row = 1, column = 1).font = self.__fontTitle
+            ws.cell(row = 1, column = 1).alignment=self.__alignment
         wb.save(self.__path)
         wb.close()
         if ifp: print(' - Done!')
@@ -272,11 +272,14 @@ class XlsxWrite:
     @fontHeader.setter
     def fontHeader(self, fontHeader: Font):
         self.__fontHeader = fontHeader
+        self.__hasHeader = True
+
 
 
 # content = [('we', 'fhds', 'fjjf'),
-#            ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad'),
+#            ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad','房键'),
 #            ('dsafdasf', 'dfsda', 'dfrgioehbn'),
 #            ['dfadjonf', 'dfnfd', 'dsfnsnj', 'dsnfiu']]
-# a = XlsxWrite(path = 'text.xlsx', sheet = content, widths = [35, 25, ])
+# a = XlsxWrite(path = 'text.xlsx', sheet = content, widths = [35, 25])
+# a.title='myTest.xlsx'
 # if a.can_write(): a.write(True)
