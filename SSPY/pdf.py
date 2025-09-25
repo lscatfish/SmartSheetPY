@@ -1,7 +1,7 @@
 import pdfplumber
 import pypdfium2
-from helperfunction import *
-from mycell.rectcell import MyRectCell
+from .helperfunction import *
+from .mycell.rectcell import MyRectCell
 
 
 class PdfLoad:
@@ -90,6 +90,3 @@ class PdfLoad:
                 apage.append(c)
             self.__pageList.append(apage)
         pdf.close()
-
-
-# a = PdfLoad('./组织推荐班委-李炘宇.pdf', table_only = True)

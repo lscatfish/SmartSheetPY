@@ -10,7 +10,6 @@ def clean_enter(in_list: list | tuple) -> list:
             out_list.append(nc)
     return out_list
 
-
 def check_value(in_list: list | tuple, target_value = None, part: bool = False) -> bool:
     if target_value is None: return True
     if target_value not in in_list:
