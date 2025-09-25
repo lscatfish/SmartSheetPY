@@ -1,5 +1,5 @@
 ﻿from functools import singledispatchmethod
-from globalconstants import GlobalConstants as gc
+from .globalconstants import GlobalConstants as gc
 
 
 class DefPerson:

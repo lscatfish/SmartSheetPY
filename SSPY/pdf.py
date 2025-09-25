@@ -1,100 +1,7 @@
 import pdfplumber
 import pypdfium2
 from helperfunction import *
-from basic import Point
-
-
-class MyCell:
-    """定义一个单元格地址和内容"""
-
-    def __init__(
-        self,
-        text: str = None,
-        left: float = None,
-        top: float = None,
-        right: float = None,
-        bottom: float = None, ):
-        self.__text = text
-        self.__left = left
-        self.__top = top
-        self.__right = right
-        self.__bottom = bottom
-
-    @property
-    def text(self):
-        return self.__text
-
-    @text.setter
-    def text(self, value: str):
-        self.__text = value
-
-    @property
-    def left(self):
-        return self.__left
-
-    @left.setter
-    def left(self, value: float):
-        self.__left = value
-
-    @property
-    def top(self):
-        return self.__top
-
-    @top.setter
-    def top(self, value: float):
-        self.__top = value
-
-    @property
-    def right(self):
-        return self.__right
-
-    @right.setter
-    def right(self, value: float):
-        self.__right = value
-
-    @property
-    def bottom(self):
-        return self.__bottom
-
-    @bottom.setter
-    def bottom(self, value: float):
-        self.__bottom = value
-
-    @property
-    def top_left(self):
-        return Point(self.__left, self.__top)
-
-    @top_left.setter
-    def top_left(self, value: Point):
-        self.__left = value.x
-        self.__top = value.y
-
-    @property
-    def top_right(self):
-        return Point(self.__right, self.__bottom)
-
-    @top_right.setter
-    def top_right(self, value: Point):
-        self.__right = value.x
-        self.__bottom = value.y
-
-    @property
-    def bottom_left(self):
-        return Point(self.__left, self.__top)
-
-    @bottom_left.setter
-    def bottom_left(self, value: Point):
-        self.__left = value.x
-        self.__top = value.y
-
-    @property
-    def bottom_right(self):
-        return Point(self.__right, self.__bottom)
-
-    @bottom_right.setter
-    def bottom_right(self, value: Point):
-        self.__right = value.x
-        self.__bottom = value.y
+from mycell.rectcell import MyRectCell
 
 
 class PdfLoad:
@@ -175,19 +82,14 @@ class PdfLoad:
         for page_num in range(len(pdf)):
             textpage = pdf[page_num].get_textpage()
             n_rects = textpage.count_rects()
-
+            apage = []
             for i in range(n_rects):
                 bbox = textpage.get_rect(i)
-
-            text_all = textpage.get_text_bounded()
-            self.__pageList.append(text_all)
+                text = textpage.get_text_bounded(*bbox)
+                c = MyRectCell(text = text, left = bbox[0], bottom = bbox[1], right = bbox[2], top = bbox[3])
+                apage.append(c)
+            self.__pageList.append(apage)
         pdf.close()
 
-        # with pdfium.PdfDocument(self.__path) as doc:
-        #     for page in doc.pages:
-        #         page_text = page.get_text()
-        #         self.__pageList.append(page_text)
 
-
-a = PdfLoad('./组织推荐班委-李炘宇.pdf', table_only = False)
-print(a.pages)
+# a = PdfLoad('./组织推荐班委-李炘宇.pdf', table_only = True)

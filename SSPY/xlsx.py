@@ -3,7 +3,7 @@
 """
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Border, Alignment
-from globalconstants import GlobalConstants as gc
+from .globalconstants import GlobalConstants as gc
 
 
 class XlsxLoad:
