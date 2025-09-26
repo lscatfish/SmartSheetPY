@@ -6,8 +6,8 @@ from .globalconstants import GlobalConstants as gc
 class DefPerson:
     """表示一个人的结构体类，包含基本个人报名信息"""
     __keyWordTuple = {
-        gc.chstrClassname       : (gc.chstrClassname, '班级名', '班级名字'
-                                                                '青字班', '青字班级', '青字班级名', '青字班级名字'),
+        gc.chstrClassname       : (gc.chstrClassname, '班级名', '班级名字',
+                                   '青字班', '青字班级', '青字班级名', '青字班级名字'),
         gc.chstrName            : (gc.chstrName, '名字'),
         gc.chstrGrade           : (gc.chstrGrade, '所在年级'),
         gc.chstrStudentID       : (gc.chstrStudentID,),
@@ -114,18 +114,29 @@ class DefPerson:
             elif '组' in self.__classname:
                 self.__classname = '青组班'
 
-    def set_information(self, key: str, value: str):
+    def set_information(self, inkey: str, value: str):
         """添加信息"""
-        if key == gc.chstrClassname or key == '班级名' or key == '青字班' or key == '青字班级' or key == '青字班级名':
+        key = self.get_stdkey(inkey)
+        if key == gc.chstrClassname:
             self.__classname = value
         self.__information[key] = value
 
-    def get_information(self, key: str) -> str:
-        if key == gc.chstrClassname or key == '班级名' or key == '青字班' or key == '青字班级' or key == '青字班级名':
+    def get_information(self, inkey: str) -> str:
+        key = self.get_stdkey(inkey)
+        if key == gc.chstrClassname:
             return self.__classname
         else:
             outstr = self.__information.get(key, '')
             return outstr
+
+    @staticmethod
+    def get_stdkey(inkey: str) -> str:
+        """获取标准键"""
+        for k in DefPerson.__keyWordTuple.keys():
+            for item in DefPerson.__keyWordTuple[k]:
+                if inkey == item:
+                    return k
+        return inkey
 
     @property
     def keyWordTuple(self):
