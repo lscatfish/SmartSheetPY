@@ -10,7 +10,7 @@ class DefPerson:
     def __init__(self,
                  cname: str = None,
                  name: str = None,
-                 studentID = None) -> None:
+                 studentID = str) -> None:
         """
         Parameters
         ---------------
@@ -23,7 +23,7 @@ class DefPerson:
         """
         self.__classname: str
         self.__ifcheck = False
-        self.__ifsign = True
+        self.__ifsign = False
         self.__information = dict(
             ((gc.chstrName, ''),
              (gc.chstrGrade, ''),
@@ -41,10 +41,7 @@ class DefPerson:
         if cname is not None: self.__classname = cname
         if name is not None: self.__information[gc.chstrName] = name
         if studentID is not None:
-            if studentID is int:
-                self.__information[gc.chstrStudentID] = str(studentID)
-            elif studentID is str:
-                self.__information[gc.chstrStudentID] = studentID
+            self.__information[gc.chstrStudentID] = studentID
 
     def optimize(self):
         """用于优化储存的信息"""
@@ -96,6 +93,12 @@ class DefPerson:
                 self.__classname = '青志班'
             elif '组' in self.__classname:
                 self.__classname = '青组班'
+
+    def set_information(self, key: str, value: str):
+        """添加信息"""
+        if key == '班级' or key == '班级名' or key == '青字班' or key == '青字班级' or key == '青字班级名':
+            self.__classname = value
+        self.__information[key] = value
 
     @classname.setter
     def classname(self, value: str):
@@ -159,7 +162,7 @@ class DefPerson:
 
     @property
     def information(self):
-        return self.__information
+        return copy.deepcopy(self.__information)
 
     @property
     def classname(self):

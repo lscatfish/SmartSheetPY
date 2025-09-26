@@ -1,3 +1,5 @@
+import copy
+
 from point import Point
 
 
@@ -9,10 +11,10 @@ class MyCell:
         top_right: Point = None,
         bottom_left: Point = None,
         bottom_right: Point = None):
-        self.__top_left = top_left
-        self.__top_right = top_right
-        self.__bottom_left = bottom_left
-        self.__bottom_right = bottom_right
+        self.__top_left = copy.deepcopy(top_left)
+        self.__top_right = copy.deepcopy(top_right)
+        self.__bottom_left = copy.deepcopy(bottom_left)
+        self.__bottom_right = copy.deepcopy(bottom_right)
         self.__text = text
 
     def init_by_rect(self, rect = None):
@@ -36,32 +38,32 @@ class MyCell:
 
     @property
     def top_left(self):
-        return self.__top_left
+        return copy.deepcopy(self.__top_left)
 
     @top_left.setter
     def top_left(self, value: Point):
-        self.__top_left = value
+        self.__top_left = copy.deepcopy(value)
 
     @property
     def top_right(self):
-        return self.__top_right
+        return copy.deepcopy(self.__top_right)
 
     @top_right.setter
     def top_right(self, value: Point):
-        self.__top_right = value
+        self.__top_right = copy.deepcopy(value)
 
     @property
     def bottom_left(self):
-        return self.__bottom_left
+        return copy.deepcopy(self.__bottom_left)
 
     @bottom_left.setter
     def bottom_left(self, value: Point):
-        self.__bottom_left = value
+        self.__bottom_left = copy.deepcopy(value)
 
     @property
     def bottom_right(self):
-        return self.__bottom_right
+        return copy.deepcopy(self.__bottom_right)
 
     @bottom_right.setter
     def bottom_right(self, value: Point):
-        self.__bottom_right = value
+        self.__bottom_right = copy.deepcopy(value)

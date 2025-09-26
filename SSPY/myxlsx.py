@@ -1,6 +1,7 @@
 """
 这是用于解析xlsx文件的py文件
 """
+import copy
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Border, Alignment
 from .globalconstants import GlobalConstants as gc
@@ -17,8 +18,7 @@ class XlsxLoad:
     def __load(self):
         """读取文件"""
         print('xlsx文件读取\"' + self.__path + '\"', end = '')
-        wb = load_workbook(self.__path)
-        wb = load_workbook(self.path, data_only = True, read_only = True)
+        wb = load_workbook(self.__path, data_only = True, read_only = True)
         ws = wb.worksheets[0]
         for row in ws.iter_rows(values_only = True):  # 遍历全部
             self.__sheet.append(row)
@@ -33,7 +33,7 @@ class XlsxLoad:
     @property
     def sheet(self):
         """返回解析到的sheet"""
-        return self.__sheet
+        return copy.deepcopy(self.__sheet)
 
 
 class XlsxWrite:
@@ -87,7 +87,7 @@ class XlsxWrite:
         """
         if widths is None: widths = []
         self.__path = path
-        self.__sheet = sheet
+        self.__sheet = copy.deepcopy(sheet)
         self.__title = title
         self.__fontRegular = font_regular
         self.__fontTitle = font_title
@@ -98,7 +98,7 @@ class XlsxWrite:
         self.__hasTitle = has_title
         self.__hasHeader = has_header
         self.__fontHeader = font_header
-        self.__widths = widths
+        self.__widths = copy.deepcopy(widths)
         self.__height = height
 
     def can_write(self) -> bool:
@@ -148,7 +148,7 @@ class XlsxWrite:
             ws.merge_cells(start_row = 1, end_row = 1, start_column = 1, end_column = ws.max_column)
             ws.cell(row = 1, column = 1).value = self.__title
             ws.cell(row = 1, column = 1).font = self.__fontTitle
-            ws.cell(row = 1, column = 1).alignment=self.__alignment
+            ws.cell(row = 1, column = 1).alignment = self.__alignment
         wb.save(self.__path)
         wb.close()
         if ifp: print(' - Done!')
@@ -167,12 +167,12 @@ class XlsxWrite:
 
     @property
     def sheet(self):
-        return self.__sheet
+        return copy.deepcopy(self.__sheet)
 
     @sheet.setter
     def sheet(self, value: list):
         if isinstance(value, list):
-            self.__sheet = value
+            self.__sheet = copy.deepcopy(value)
         else:
             raise TypeError("sheet必须是list类型")
 
@@ -201,28 +201,28 @@ class XlsxWrite:
 
     @property
     def fontRegular(self):
-        return self.__fontRegular
+        return copy.deepcopy(self.__fontRegular)
 
     @fontRegular.setter
     def fontRegular(self, fontRegular: Font):
-        self.__fontRegular = fontRegular
+        self.__fontRegular = copy.deepcopy(fontRegular)
 
     @property
     def fontTitle(self):
-        return self.__fontTitle
+        return copy.deepcopy(self.__fontTitle)
 
     @fontTitle.setter
     def fontTitle(self, fontTitle: Font):
-        self.__fontTitle = fontTitle
+        self.__fontTitle = copy.deepcopy(fontTitle)
         self.__hasTitle = True
 
     @property
     def border(self):
-        return self.__border
+        return copy.deepcopy(self.__border)
 
     @border.setter
     def border(self, border: Border):
-        self.__border = border
+        self.__border = copy.deepcopy(border)
         self.__hasBorder = True
 
     @property
@@ -235,19 +235,19 @@ class XlsxWrite:
 
     @property
     def alignment(self):
-        return self.__alignment
+        return copy.deepcopy(self.__alignment)
 
     @alignment.setter
     def alignment(self, alignment: Alignment):
-        self.__alignment = alignment
+        self.__alignment = copy.deepcopy(alignment)
 
     @property
     def widths(self):
-        return self.__widths
+        return copy.deepcopy(self.__widths)
 
     @widths.setter
     def widths(self, widths: list):
-        self.__widths = widths
+        self.__widths = copy.deepcopy(widths)
 
     @property
     def height(self):
@@ -267,9 +267,9 @@ class XlsxWrite:
 
     @property
     def fontHeader(self):
-        return self.__fontHeader
+        return copy.deepcopy(self.__fontHeader)
 
     @fontHeader.setter
     def fontHeader(self, fontHeader: Font):
-        self.__fontHeader = fontHeader
+        self.__fontHeader = copy.deepcopy(fontHeader)
         self.__hasHeader = True

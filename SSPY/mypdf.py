@@ -1,3 +1,5 @@
+import copy
+
 import pdfplumber
 import pypdfium2
 from .helperfunction import *
@@ -31,19 +33,19 @@ class PdfLoad:
     @property
     def sheets(self):
         if self.__tableOnly:
-            return self.__sheets
+            return copy.deepcopy(self.__sheets)
         else:
             return None
 
     @property
     def pages(self):
-        return self.__pageList
+        return copy.deepcopy(self.__pageList)
 
     def get_pages(self, target_pagenum: list | int):
         if self.__tableOnly: return None
         if isinstance(target_pagenum, int):
             if len(self.__pageList) >= target_pagenum >= 1:
-                return self.__pageList[target_pagenum - 1]
+                return copy.deepcopy(self.__pageList[target_pagenum - 1])
         if isinstance(target_pagenum, list):
             outp = []
             for i in target_pagenum:
@@ -52,20 +54,21 @@ class PdfLoad:
                         outp.append(self.__pageList[i - 1])
                 else:
                     return None
-            return outp
+            return copy.deepcopy(outp)
         return None
 
     def get_sheet(self, index = None):
         if not self.__tableOnly: return None
         if isinstance(index, int):
             if len(self.__sheets) > index:
-                return self.__sheets[index]
+                return copy.deepcopy(self.__sheets[index])
         if isinstance(index, str):  # 按照关键值查找sheet
             for sheet in self.__sheets:
-                if check_value(in_list = sheet, target_value = index, part = False): return sheet
+                if check_value(in_list = sheet, target_value = index, part = False): return copy.deepcopy(sheet)
         if isinstance(index, list):
+            ind=copy.deepcopy(index)
             for sheet in self.__sheets:
-                if check_value(in_list = sheet, target_value = index, part = True): return sheet
+                if check_value(in_list = sheet, target_value = ind, part = True): return copy.deepcopy(sheet)
         return None
 
     def __extract_tables(self):

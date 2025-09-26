@@ -1,3 +1,4 @@
+import copy
 from docx import Document
 from docx.oxml.ns import qn
 
@@ -68,8 +69,26 @@ class DocxLoad:
 
     @property
     def sheets(self):
-        return self.__sheets
+        return copy.deepcopy(self.__sheets)
 
     @property
     def path(self):
         return self.__path
+
+    def get_sheet(self, index = None):
+        from helperfunction import check_value
+        if isinstance(index, int):
+            if len(self.__sheets) > index:
+                return copy.deepcopy(self.__sheets[index])
+        if isinstance(index, str):  # 按照关键值查找sheet
+            for sheet in self.__sheets:
+                if check_value(in_list = sheet, target_value = index, part = False): return copy.deepcopy(sheet)
+        if isinstance(index, list):
+            ind = copy.deepcopy(index)
+            for sheet in self.__sheets:
+                if check_value(in_list = sheet, target_value = ind, part = True): return copy.deepcopy(sheet)
+        return None
+
+# a=DocxLoad('刘.docx')
+# s=a.get_sheet('姓名')
+# print(s)
