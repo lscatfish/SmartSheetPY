@@ -3,6 +3,7 @@ from openpyxl.styles import Font, Side, Border, Alignment
 
 class GlobalConstants:
     """全局常量储存"""
+    chstrClassname= '班级'
     chstrName = '姓名'
     chstrGrade = '年级'
     chstrStudentID = '学号'
@@ -39,3 +40,4 @@ class GlobalConstants:
 
     def __setattr__(self, name, value):
         raise AttributeError("Can't set attribute")
+

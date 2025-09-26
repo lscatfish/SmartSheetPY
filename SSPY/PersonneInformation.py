@@ -1,11 +1,31 @@
-﻿import email
-from dis import name
+﻿from dis import name
 from functools import singledispatchmethod
 from .globalconstants import GlobalConstants as gc
 
 
 class DefPerson:
     """表示一个人的结构体类，包含基本个人报名信息"""
+    __keyWordTuple = {
+        gc.chstrClassname       : (gc.chstrClassname, '班级名', '班级名字'
+                                                                '青字班', '青字班级', '青字班级名', '青字班级名字'),
+        gc.chstrName            : (gc.chstrName, '名字'),
+        gc.chstrGrade           : (gc.chstrGrade, '所在年级'),
+        gc.chstrStudentID       : (gc.chstrStudentID,),
+        gc.chstrPoliticalOutlook: (gc.chstrPoliticalOutlook,),
+        gc.chstrAcademy         : (gc.chstrAcademy,),
+        gc.chstrMajors          : (gc.chstrMajors,),
+        gc.chstrPhone           : (gc.chstrPhone, '联系方式', '电话号码', '联系电话'),
+        gc.chstrQQ              : (gc.chstrQQ, 'QQ', 'qq', 'qq号', 'Qq', 'qQ',
+                                   'Qq号', 'qQ号', 'QQ号码', 'qq号码'),
+        gc.chstrPosition        : (gc.chstrPosition, '担任职务', '当前职务', '所任岗位',
+                                   '职务', '职位', '所任职位', '担任职位', '当前岗位'),
+        gc.chstrEmail           : (gc.chstrEmail, '邮箱地址'),
+        gc.chstrEthnicity       : (gc.chstrEthnicity,),
+        gc.chstrClub            : (gc.chstrClub, '所在社团', '组织', '所在组织',
+                                   '所属组织', '所属社团'),
+        gc.chstrSignPosition    : (gc.chstrSignPosition, '报名职务', '报名位置'),
+        gc.chstrGender          : (gc.chstrGender,),
+    }
 
     def __init__(self,
                  cname: str = None,
@@ -96,69 +116,20 @@ class DefPerson:
 
     def set_information(self, key: str, value: str):
         """添加信息"""
-        if key == '班级' or key == '班级名' or key == '青字班' or key == '青字班级' or key == '青字班级名':
+        if key == gc.chstrClassname or key == '班级名' or key == '青字班' or key == '青字班级' or key == '青字班级名':
             self.__classname = value
         self.__information[key] = value
 
-    @classname.setter
-    def classname(self, value: str):
-        self.__classname = value
+    def get_information(self, key: str) -> str:
+        if key == gc.chstrClassname or key == '班级名' or key == '青字班' or key == '青字班级' or key == '青字班级名':
+            return self.__classname
+        else:
+            outstr = self.__information.get(key, '')
+            return outstr
 
-    @name.setter
-    def name(self, value: str):
-        self.__information[gc.chstrName] = value
-
-    @grade.setter
-    def grade(self, value: str):
-        self.__information[gc.chstrGrade] = value
-
-    @studentID.setter
-    def studentID(self, value: str):
-        self.__information[gc.chstrStudentID] = value
-
-    @politicalOutlook.setter
-    def politicalOutlook(self, value: str):
-        self.__information[gc.chstrPoliticalOutlook] = value
-
-    @academy.setter
-    def academy(self, value: str):
-        self.__information[gc.chstrAcademy] = value
-
-    @majors.setter
-    def majors(self, value: str):
-        self.__information[gc.chstrMajor] = value
-
-    @phone.setter
-    def phone(self, value: str):
-        self.__information[gc.chstrPhone] = value
-
-    @qq.setter
-    def qq(self, value: str | int):
-        self.__information[gc.chstrQq] = str(value)
-
-    @position.setter
-    def position(self, value: str):
-        self.__information[gc.chstrPosition] = str(value)
-
-    @Email.setter
-    def Email(self, value: str):
-        self.__information[gc.chstrEmail] = str(value)
-
-    @ethnicity.setter
-    def ethnicity(self, value: str):
-        self.__information[gc.chstrEthnicity] = str(value)
-
-    @club.setter
-    def club(self, value: str):
-        self.__information[gc.chstrClub] = str(value)
-
-    @signPosition.setter
-    def signPosition(self, value: str):
-        self.__information[gc.chstrSignPosition] = str(value)
-
-    @gender.setter
-    def gender(self, value: str):
-        self.__information[gc.chstrGender] = str(value)
+    @property
+    def keyWordTuple(self):
+        return copy.deepcopy(self.__keyWordTuple)
 
     @property
     def information(self):
@@ -265,3 +236,63 @@ class DefPerson:
             self.__information[gc.chstrGender] = ''
             return ''
         return self.__information[gc.chstrGender]
+
+    @classname.setter
+    def classname(self, value: str):
+        self.__classname = value
+
+    @name.setter
+    def name(self, value: str):
+        self.__information[gc.chstrName] = value
+
+    @grade.setter
+    def grade(self, value: str):
+        self.__information[gc.chstrGrade] = value
+
+    @studentID.setter
+    def studentID(self, value: str):
+        self.__information[gc.chstrStudentID] = value
+
+    @politicalOutlook.setter
+    def politicalOutlook(self, value: str):
+        self.__information[gc.chstrPoliticalOutlook] = value
+
+    @academy.setter
+    def academy(self, value: str):
+        self.__information[gc.chstrAcademy] = value
+
+    @majors.setter
+    def majors(self, value: str):
+        self.__information[gc.chstrMajor] = value
+
+    @phone.setter
+    def phone(self, value: str):
+        self.__information[gc.chstrPhone] = value
+
+    @qq.setter
+    def qq(self, value: str | int):
+        self.__information[gc.chstrQq] = str(value)
+
+    @position.setter
+    def position(self, value: str):
+        self.__information[gc.chstrPosition] = str(value)
+
+    @Email.setter
+    def Email(self, value: str):
+        self.__information[gc.chstrEmail] = str(value)
+
+    @ethnicity.setter
+    def ethnicity(self, value: str):
+        self.__information[gc.chstrEthnicity] = str(value)
+
+    @club.setter
+    def club(self, value: str):
+        self.__information[gc.chstrClub] = str(value)
+
+    @signPosition.setter
+    def signPosition(self, value: str):
+        self.__information[gc.chstrSignPosition] = str(value)
+
+    @gender.setter
+    def gender(self, value: str):
+        self.__information[gc.chstrGender] = str(value)
