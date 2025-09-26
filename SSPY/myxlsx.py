@@ -273,13 +273,3 @@ class XlsxWrite:
     def fontHeader(self, fontHeader: Font):
         self.__fontHeader = fontHeader
         self.__hasHeader = True
-
-
-
-# content = [('we', 'fhds', 'fjjf'),
-#            ('df', 'dfdsafds', 'dfasd', 'dfsdafsda', 'dsfsad','房键'),
-#            ('dsafdasf', 'dfsda', 'dfrgioehbn'),
-#            ['dfadjonf', 'dfnfd', 'dsfnsnj', 'dsnfiu']]
-# a = XlsxWrite(path = 'text.xlsx', sheet = content, widths = [35, 25])
-# a.title='myTest.xlsx'
-# if a.can_write(): a.write(True)
