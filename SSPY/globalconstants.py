@@ -28,6 +28,7 @@ class GlobalConstants:
     chstrMainAchievements='主要事迹'
 
     fontRegularGBK = Font(name = '仿宋_GB2312', size = 14)
+    fontRegularSong=Font(name = '宋体',size = 14)
     fontTitleGBK = Font(name = '宋体', size = 24, bold = True)
     fontHeaderGBK = Font(name = '仿宋_GB2312', size = 14, bold = True)
     borderThinBlack = Border(

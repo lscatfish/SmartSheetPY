@@ -40,7 +40,7 @@ class DefPerson:
     def __init__(self,
                  cname: str = None,
                  name: str = None,
-                 studentID = str) -> None:
+                 studentID: str = None) -> None:
         """
         Parameters
         ---------------
@@ -54,20 +54,20 @@ class DefPerson:
         self.__classname: str
         self.__ifcheck = False
         self.__ifsign = False
-        self.__information = dict(
-            ((gc.chstrName, ''),
-             (gc.chstrGrade, ''),
-             (gc.chstrStudentID, ''),
-             (gc.chstrPoliticalOutlook, ''),
-             (gc.chstrAcademy, ''),
-             (gc.chstrMajors, ''),
-             (gc.chstrPhone, ''),
-             (gc.chstrQQ, ''),
-             (gc.chstrPosition, ''),
-             (gc.chstrEmail, ''),
-             (gc.chstrEthnicity, ''),
-             (gc.chstrClub, ''),
-             (gc.chstrSignPosition, '')))  # 信息
+        self.__information = {
+            gc.chstrName            : '',
+            gc.chstrGrade           : '',
+            gc.chstrStudentID       : '',
+            gc.chstrPoliticalOutlook: '',
+            gc.chstrAcademy         : '',
+            gc.chstrMajors          : '',
+            gc.chstrPhone           : '',
+            gc.chstrQQ              : '',
+            gc.chstrPosition        : '',
+            gc.chstrEmail           : '',
+            gc.chstrEthnicity       : '',
+            gc.chstrClub            : '',
+            gc.chstrSignPosition    : ''}  # 信息
         if cname is not None: self.__classname = cname
         if name is not None: self.__information[gc.chstrName] = name
         if studentID is not None:
@@ -136,7 +136,7 @@ class DefPerson:
                     self.__information[gc.chstrPoliticalOutlook] = '中共预备党员'
                 else:
                     self.__information[gc.chstrPoliticalOutlook] = '中共党员'
-        if self.__information.get(gc.chstrStudentID, '') != '' and len(self.__information[gc.chstrStudentID]) > 4:
+        if self.__information.get(gc.chstrStudentID, '') != '' and len(str(self.__information[gc.chstrStudentID])) > 4:
             first4 = self.__information[gc.chstrStudentID][:4]
             if first4.isdigit():
                 if self.__information.get(gc.chstrGrade, '') != '':
@@ -397,15 +397,14 @@ class DefPerson:
     def gender(self, value: str):
         self.__information[gc.chstrGender] = str(value)
 
-    def to_list(self, in_std: list) -> list | None:
+    def to_list(self, in_std: list[str]) -> list | None:
         """
         Parameters
         -------
-        in_std : list
+        in_std : list[str]
             提取标准
         """
         outList = []
-        std = copy.deepcopy(in_std)
-        for s in std:
+        for s in in_std:
             outList.append(self.get_information(s))
         return outList

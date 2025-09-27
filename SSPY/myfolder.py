@@ -158,7 +158,7 @@ class DefFolder:
 
     @property
     def pure_filenames(self):
-        filenames = []
+        filenames:list[str] = []
         for file in self.paths:
             filenames.append(split_filename_and_extension(file)[0])
         return filenames

@@ -111,9 +111,10 @@ class XlsxWrite:
         self,
         path: str = None,
         sheet: list = None,
-        title: str = '',
         widths: list = None,
         height: int = None,
+        title: str = '',
+        height_title: int = 40,
         font_regular: Font = gc.fontRegularGBK,
         font_title: Font = gc.fontTitleGBK,
         font_header: Font = gc.fontHeaderGBK,
@@ -168,7 +169,9 @@ class XlsxWrite:
         self.__fontHeader = font_header
         self.__widths = copy.deepcopy(widths)
         self.__height = height
+        self.__heightTitle = height_title
 
+    @property
     def can_write(self) -> bool:
         """检查能否开始写入表格"""
         if self.__path is None or self.__path == '': return False
@@ -179,7 +182,7 @@ class XlsxWrite:
     def write(self, ifp: bool = False) -> bool:
         """写入文件"""
         width_default = 8.43
-        if not self.can_write(): return False
+        if not self.can_write: return False
         if ifp: print('write xlsx file as \"' + self.__path + '\"', end = '')
         # 创建wb
         wb = Workbook()
@@ -187,7 +190,7 @@ class XlsxWrite:
         if self.__hasTitle: ws.title = self.__title
         for row in self.__sheet:
             ws.append(row)
-        for i in range(1, ws.max_row + 1):
+        for i in range(1, ws.max_row + 2):  # 这里我不晓得为什么是2
             ws.row_dimensions[i].height = self.__height
         for i in range(1, ws.max_column + 1):
             col_letter = ws.cell(row = 1, column = i).column_letter
@@ -217,6 +220,7 @@ class XlsxWrite:
             ws.cell(row = 1, column = 1).value = self.__title
             ws.cell(row = 1, column = 1).font = self.__fontTitle
             ws.cell(row = 1, column = 1).alignment = self.__alignment
+            ws.row_dimensions[1].height = self.__heightTitle
         wb.save(self.__path)
         wb.close()
         if ifp: print(' - Done!')
