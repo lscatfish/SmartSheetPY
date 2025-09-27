@@ -14,7 +14,6 @@ class DoQingziClass:
     def __init__(self):
         self.__person_all = []  # """所有人员的名单"""
         self.__classname_all = []  # 所有的班级名
-        pass
 
     def __self_check(self):
         """自检方法"""
@@ -23,7 +22,7 @@ class DoQingziClass:
         """加载所有的学员信息"""
         folder = DefFolder(gc.dir_INPUT_ALL_)
         self.__classname_all = folder.get_pure_filenames_by(['.xlsx', '.XLSX'])
-        files = folder.get_paths_by(['.xlsx', '.XLSX'])
+        paths = folder.get_paths_by(['.xlsx', '.XLSX'])
 
 
 print()

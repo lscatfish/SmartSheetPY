@@ -5,14 +5,68 @@ import copy
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Border, Alignment
 from .globalconstants import GlobalConstants as gc
+from .PersonneInformation import DefPerson
+
+
+def trans_list_to_person(header: tuple, in_info: list, classname: str = None, if_fuzzy: bool = False) -> DefPerson | None:
+    per = DefPerson()
+    info = copy.deepcopy(in_info)
+    if classname is not None:
+        per.classname = classname
+    for i in range(len(header)):
+        if i >= len(info): break
+        per.set_information(header[i], str(info[i]).strip(), if_fuzzy = if_fuzzy)
+    if per.classname is None or per.classname == "": return None
+    if per.studentID == '': return None
+    per.optimize()
+    return per
+
+
+def get_header_from_xlsx(in_sheet: list, if_fuzzy: bool = False) -> tuple | None:
+    """
+    从in_sheet中获取表头，并返回去除表头后的列表和表头元组
+
+    Parameters:
+        if_fuzzy: 是否启用模糊检索
+        in_sheet: 包含表格数据的列表（每行是一个子列表）
+
+    Returns:
+        元组 (header, new_sheet)，其中：
+        - header: 表头元组（若找到），否则为 None
+        - new_sheet: 去除表头后的列表（若找到表头），否则为原列表
+    """
+    header = None
+    has_found = False  # 是否找到表头
+    new_sheet = []
+
+    for i, row in enumerate(in_sheet):
+        if not has_found:
+            # 检查当前行是否包含表头标识（通过DefPerson.get_stdkey判断）
+            for cell in row:
+                if DefPerson.get_stdkey(cell, if_fuzzy = if_fuzzy) is not None:
+                    header = tuple(row)  # 表头所在行转换为元组
+                    has_found = True
+                    break  # 找到表头后跳出单元格循环
+            # 如果找到表头，不将当前行加入新列表
+            if has_found:
+                continue
+        # 非表头行加入新列表
+        new_sheet.append(row)
+
+    return header, new_sheet
 
 
 class XlsxLoad:
     """读取xlsx文件的类"""
 
-    def __init__(self, _path: str):
+    def __init__(self, _path: str, classname: str = None):
         self.__path = _path
         self.__sheet = []
+        from myfolder import split_filename_and_extension
+        if classname is None:
+            self.__classname = split_filename_and_extension(self.__path)[0]
+        else:
+            self.__classname = classname
         self.__load()
 
     def __load(self):
@@ -34,6 +88,16 @@ class XlsxLoad:
     def sheet(self):
         """返回解析到的sheet"""
         return copy.deepcopy(self.__sheet)
+
+    @property
+    def personList(self, if_fuzzy = False):
+        pers = []
+        header, only_sheet = get_header_from_xlsx(self.sheet, if_fuzzy = if_fuzzy)
+        for row in only_sheet:
+            p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
+            if p is not None:
+                pers.append(p)
+        return pers
 
 
 class XlsxWrite:

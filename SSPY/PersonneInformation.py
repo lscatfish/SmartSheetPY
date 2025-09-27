@@ -124,9 +124,9 @@ class DefPerson:
                 elif '组' in self.__classname:
                     self.__classname = '青组班'
 
-    def set_information(self, inkey: str, value: str):
+    def set_information(self, inkey: str, value: str, if_fuzzy: bool = False):
         """添加信息"""
-        key = self.get_stdkey(inkey)
+        key = self.get_stdkey(inkey, if_fuzzy)
         if key is None:
             self.__information[inkey] = value
         elif key == gc.chstrClassname:
@@ -134,8 +134,8 @@ class DefPerson:
         else:
             self.__information[key] = value
 
-    def get_information(self, inkey: str) -> str:
-        key = self.get_stdkey(inkey)
+    def get_information(self, inkey: str, if_fuzzy: bool = False) -> str:
+        key = self.get_stdkey(inkey, if_fuzzy)
         if key is None:
             return self.__information.get(inkey, '')
         elif key == gc.chstrClassname:
@@ -145,20 +145,21 @@ class DefPerson:
 
 
     @staticmethod
-    def get_stdkey(inkey: str) -> str | None:
+    def get_stdkey(inkey: str, if_fuzzy: bool = False) -> str | None:
         """获取标准键"""
         for k in DefPerson.__keyWordTuple.keys():
             for item in DefPerson.__keyWordTuple[k]:
                 if inkey == item:  # 采用字串检测
                     return k
-        for k in DefPerson.__keyWordTuple.keys():
-            for item in DefPerson.__keyWordTuple[k]:
-                if item in inkey:
-                    return k
-        for k in DefPerson.__keyWordTuple.keys():
-            for item in DefPerson.__keyWordTuple[k]:
-                if inkey in item:
-                    return k
+        if if_fuzzy:
+            for k in DefPerson.__keyWordTuple.keys():
+                for item in DefPerson.__keyWordTuple[k]:
+                    if item in inkey:
+                        return k
+            for k in DefPerson.__keyWordTuple.keys():
+                for item in DefPerson.__keyWordTuple[k]:
+                    if inkey in item:
+                        return k
         return None
 
     @property
@@ -330,3 +331,16 @@ class DefPerson:
     @gender.setter
     def gender(self, value: str):
         self.__information[gc.chstrGender] = str(value)
+
+    def to_list(self, in_std: list) -> list | None:
+        """
+        Parameters
+        -------
+        in_std : list
+            提取标准
+        """
+        outList = []
+        std = copy.deepcopy(in_std)
+        for s in std:
+            outList.append(self.get_information(s))
+        return outList
