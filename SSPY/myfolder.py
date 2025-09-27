@@ -86,11 +86,13 @@ def copy_file(source_path: str, target_path: str) -> bool:
 
 
 class DefFolder:
-    def __init__(self, root_dir: str, if_print: bool = False):
+    def __init__(self, root_dir: str, if_print: bool = False,extensions:list = None):
         self.__root_dir = root_dir
         self.__if_print = if_print
         if self.__if_print: print('加载文件夹 \"' + self.__root_dir + '\"')
         self.__paths = self.collect_file_paths(self.__root_dir, if_print = self.__if_print)
+        if extensions is not None:
+            self.__paths=self.get_paths_by(extensions)
         if self.__if_print: print('Done!')
 
     @staticmethod
@@ -155,7 +157,7 @@ class DefFolder:
         return filenames
 
     @property
-    def filenames_without_extension(self):
+    def pure_filenames(self):
         filenames = []
         for file in self.paths:
             filenames.append(split_filename_and_extension(file)[0])

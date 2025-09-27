@@ -15,6 +15,7 @@ def trans_list_to_person(header: tuple, in_info: list, classname: str = None, if
         per.classname = classname
     for i in range(len(header)):
         if i >= len(info): break
+        if header[i] == '序号': continue
         per.set_information(header[i], str(info[i]).strip(), if_fuzzy = if_fuzzy)
     if per.classname is None or per.classname == "": return None
     if per.studentID == '': return None
@@ -59,10 +60,11 @@ def get_header_from_xlsx(in_sheet: list, if_fuzzy: bool = False) -> tuple | None
 class XlsxLoad:
     """读取xlsx文件的类"""
 
-    def __init__(self, _path: str, classname: str = None):
+    def __init__(self, _path: str, classname: str = None, ifp: bool = False) -> None:
+        from .myfolder import split_filename_and_extension
         self.__path = _path
         self.__sheet = []
-        from myfolder import split_filename_and_extension
+        self.__ifp = ifp
         if classname is None:
             self.__classname = split_filename_and_extension(self.__path)[0]
         else:
@@ -71,13 +73,15 @@ class XlsxLoad:
 
     def __load(self):
         """读取文件"""
-        print('xlsx文件读取\"' + self.__path + '\"', end = '')
+        if self.__ifp:
+            print('xlsx文件读取\"' + self.__path + '\"', end = '')
         wb = load_workbook(self.__path, data_only = True, read_only = True)
         ws = wb.worksheets[0]
         for row in ws.iter_rows(values_only = True):  # 遍历全部
             self.__sheet.append(row)
         wb.close()
-        print(' - Done!')
+        if self.__ifp:
+            print(' - Done!')
 
     @property
     def path(self):

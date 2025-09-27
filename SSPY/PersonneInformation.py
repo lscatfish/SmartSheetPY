@@ -1,4 +1,5 @@
-﻿from dis import name
+﻿import copy
+from dis import name
 from functools import singledispatchmethod
 from .globalconstants import GlobalConstants as gc
 
@@ -71,6 +72,54 @@ class DefPerson:
         if name is not None: self.__information[gc.chstrName] = name
         if studentID is not None:
             self.__information[gc.chstrStudentID] = studentID
+
+    def __str__(self) -> str:
+        """适配print函数"""
+        d = {'班级': self.__classname, }
+        d.update(self.__information)
+        return str(d)
+
+    def __deepcopy__(self, memo: dict | None = None) -> 'DefPerson':
+        """
+        自定义深拷贝逻辑：确保拷贝对象与原对象独立
+        :param memo: 缓存已拷贝对象，避免循环引用
+        :return: DefPerson 深拷贝实例
+        """
+        # 1. 初始化memo（若未传入）
+        if memo is None:
+            memo = {}
+
+        # 2. 检查当前实例是否已拷贝（避免循环引用重复拷贝）
+        if id(self) in memo:
+            return memo[id(self)]
+
+        # 3. 深拷贝核心可变属性：__information（字典需递归拷贝）
+        new_information = copy.deepcopy(self.__information, memo)
+
+        # 4. 初始化新实例（不可变属性直接赋值，无需深拷贝）
+        new_instance = DefPerson(
+            cname = self.__classname,  # __classname是字符串（不可变）
+            name = self.__information[gc.chstrName],  # 从原信息中取姓名（避免重复处理）
+            studentID = self.__information[gc.chstrStudentID]  # 同理取学号
+        )
+
+        # 5. 补充赋值其他私有属性（__ifcheck、__ifsign是布尔值，不可变）
+        new_instance.__ifcheck = self.__ifcheck
+        new_instance.__ifsign = self.__ifsign
+        # 覆盖__information：因为DefPerson.__init__会初始化空字典，需替换为深拷贝的字典
+        new_instance.__information = new_information
+
+        # 6. 将新实例存入memo，标记为已拷贝
+        memo[id(self)] = new_instance
+
+        return new_instance
+
+    def __str__(self) -> str:
+        """适配print函数"""
+        d = {'班级': self.__classname, }
+        d.update(self.__information)
+        return str(d)
+
 
     def optimize(self):
         """用于优化储存的信息"""
@@ -271,6 +320,22 @@ class DefPerson:
             self.__information[gc.chstrGender] = ''
             return ''
         return self.__information[gc.chstrGender]
+
+    @property
+    def ifsign(self):
+        return self.__ifsign
+
+    @property
+    def ifcheck(self):
+        return self.__ifcheck
+
+    @ifcheck.setter
+    def ifcheck(self, value: bool):
+        self.__ifcheck = value
+
+    @ifsign.setter
+    def ifsign(self, value: bool):
+        self.__ifsign = value
 
     @classname.setter
     def classname(self, value: str):

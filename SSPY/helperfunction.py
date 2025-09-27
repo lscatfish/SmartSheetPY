@@ -11,6 +11,7 @@ def clean_enter(in_list: list | tuple) -> list:
     return out_list
 
 def check_value(in_list: list | tuple, target_value = None, part: bool = False) -> bool:
+    """检查in_list中是否含有target_value"""
     if target_value is None: return True
     if target_value not in in_list:
         for cell in in_list:
