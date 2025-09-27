@@ -1,16 +1,17 @@
-"""此文件用于解析遍历文件夹"""
+"""此文件用于解析遍历文件夹以及拷贝文件"""
 import copy
 import os
+import shutil
 
 
 def get_filename_with_extension(file_path):
     """
     从文件路径中获取带扩展名的文件名
 
-    参数:
+    Parameters:
         file_path: 文件的完整路径字符串
 
-    返回:
+    Returns:
         带扩展名的文件名（如 'report.txt'）
     """
     return os.path.basename(file_path)
@@ -19,11 +20,10 @@ def get_filename_with_extension(file_path):
 def split_filename_and_extension(file_path):
     """
     从文件路径中获取不带扩展名的文件名
-
-    参数:
+    Parameters:
         file_path: 文件的完整路径字符串
 
-    返回:
+    Returns:
         不带扩展名的文件名（如 'report'）
     """
     # 先获取带扩展名的文件名，再分割扩展名
@@ -31,6 +31,58 @@ def split_filename_and_extension(file_path):
     name_part, ext_part = os.path.splitext(full_filename)
 
     return (name_part, ext_part)
+
+
+def create_nested_folders(folder_path: str, exist_ok: bool = True) -> None:
+    """
+    创建嵌套的文件夹（支持多层目录结构）
+
+    Parameters:
+        folder_path: 要创建的嵌套文件夹路径（如 "a/b/c/d"）
+        exist_ok: 如果为 True，当文件夹已存在时不抛出错误；默认为 True
+    """
+    try:
+        # 递归创建目录，exist_ok=True 避免目录已存在时的错误
+        os.makedirs(folder_path, exist_ok = exist_ok)
+        print(f"成功创建嵌套文件夹：{folder_path}")
+    except OSError as e:
+        print(f"创建文件夹失败：{e}")
+
+
+def copy_file(source_path: str, target_path: str) -> bool:
+    """
+    将源文件复制到目标地址
+
+    Parameters:
+        source_path: 源文件的完整路径（如 "data/file.txt"）
+        target_path: 目标地址，可以是目录或完整文件路径
+                     (若为目录：文件会复制到该目录下，文件名与源文件相同)
+                     (若为文件路径：文件会复制到指定位置并使用新文件名
+
+    Returns:
+        复制成功返回 True，失败返回 False
+    """
+    try:
+        # 检查源文件是否存在
+        if not os.path.isfile(source_path):
+            print(f"错误：源文件不存在 - {source_path}")
+            return False
+
+        # 复制文件（保留元数据）
+        shutil.copy2(source_path, target_path)
+
+        # 输出成功信息
+        if os.path.isdir(target_path):
+            # 目标是目录时，拼接完整目标路径
+            target_full_path = os.path.join(target_path, os.path.basename(source_path))
+        else:
+            target_full_path = target_path
+        print(f"文件复制成功：{source_path} → {target_full_path}")
+        return True
+
+    except Exception as e:
+        print(f"文件复制失败：{str(e)}")
+        return False
 
 
 class DefFolder:
@@ -119,7 +171,7 @@ class DefFolder:
             filenames.append(get_filename_with_extension(file))
         return filenames
 
-    def get_filenames_without_extension_by(self, extensions: list):
+    def get_pure_filenames_by(self, extensions: list):
         pure_filenames = []
         ps = self.get_paths_by(extensions)
         for file in ps:

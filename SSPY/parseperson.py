@@ -54,3 +54,6 @@ def trans_lists_to_person(in_header: list, in_info: list, classname: str = None)
         per.set_information(header[i], str(info[i]).strip())
     per.optimize()
     return per
+
+def get_header_from_sheet(in_sheet: list, classname: str = None) -> tuple:
+    """从in_sheet中获取表头，并删除表头所在的行"""
