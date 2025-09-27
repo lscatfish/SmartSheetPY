@@ -47,5 +47,19 @@ class GlobalConstants:
     alignmentStd = Alignment(horizontal = 'center', vertical = 'center')
     """标准对齐方式"""
 
+    dir_INPUT_='.\\input\\'
+    dir_STORAGE_='.\\storage\\'
+    dir_OUTPUT_='.\\output\\'
+
+    dir_INPUT_ALL_='.\\input\\all\\'
+    dir_INPUT_APP_='.\\input\\app\\'
+    dir_INPUT_ATTIMGS_='.\\input\\att_imgs\\'
+    dir_INPUT_SIGNFORQC_='.\\input\\sign_for_QingziClass\\'
+
+    dir_OUTPUT_APP_='.\\output\\app_out\\'
+    dir_OUTPUT_ATT='.\\output\\att_out\\'
+    dir_OUTPUT_SIGNFORQC_='.\\output\\sign_for_QingziClass_out\\'
+
+
     def __setattr__(self, name, value):
         raise AttributeError("Can't set attribute")

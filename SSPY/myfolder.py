@@ -86,16 +86,20 @@ def copy_file(source_path: str, target_path: str) -> bool:
 
 
 class DefFolder:
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str, if_print: bool = False):
         self.__root_dir = root_dir
-        self.__paths = self.collect_file_paths(self.__root_dir)
+        self.__if_print = if_print
+        if self.__if_print: print('加载文件夹 \"' + self.__root_dir + '\"')
+        self.__paths = self.collect_file_paths(self.__root_dir, if_print = self.__if_print)
+        if self.__if_print: print('Done!')
 
     @staticmethod
-    def collect_file_paths(root_dir: str):
+    def collect_file_paths(root_dir: str, if_print: bool = False):
         """
         递归遍历文件夹及其子目录，收集所有文件的绝对路径
         排除预加载文件如~$xxx和__MACOSX文件夹
         Parameters:
+            if_print: 是否打印检测到的文件
             root_dir: 要遍历的根文件夹路径
         Returns:
             包含所有符合条件的文件绝对路径的列表
@@ -129,6 +133,8 @@ class DefFolder:
                 if is_excluded_file(file):
                     continue  # 跳过不符合条件的文件
                 file_path = os.path.join(root, file)
+                if if_print:
+                    print(file_path)
                 file_paths.append(file_path)
 
         return file_paths
