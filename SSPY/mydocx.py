@@ -2,6 +2,8 @@ import copy
 from docx import Document
 from docx.oxml.ns import qn
 
+from SSPY.helperfunction import clean_enter
+
 
 class DocxLoad:
     """解析docx文件"""
@@ -72,6 +74,12 @@ class DocxLoad:
         return copy.deepcopy(self.__sheets)
 
     @property
+    def sheets_without_enter(self):
+        from helperfunction import clean_enter
+        outs = clean_enter(self.__sheets)
+        return outs
+
+    @property
     def path(self):
         return self.__path
 
@@ -88,6 +96,14 @@ class DocxLoad:
             for sheet in self.__sheets:
                 if check_value(in_list = sheet, target_value = ind, part = True): return copy.deepcopy(sheet)
         return None
+
+    def get_sheet_without_enter(self, index = None):
+        from helperfunction import clean_enter
+        outs = clean_enter(self.get_sheet(index = index))
+        if isinstance(outs, list):
+            return outs
+        else:
+            return None
 
 # a=DocxLoad('刘.docx')
 # s=a.get_sheet('姓名')
