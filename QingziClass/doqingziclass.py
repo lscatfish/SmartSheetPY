@@ -48,12 +48,15 @@ class DoQingziClass:
                 persons_app.extend(xlsx_sheet.personList)
             return persons_app, classnames
 
-        def __make_sheet(persons_app: list[DefPerson], classname: str) -> list[list[str]]:
-            """制表"""
+        def __person_sign(persons_app: list[DefPerson]):
+            """标记人员"""
             for per_app in persons_app:
                 per_all = self.search(per_app, push_unkown = True)
                 if per_all is not None:
                     per_all.ifsign = True
+
+        def __make_sheet(classname: str) -> list[list[str]]:
+            """制表"""
             header = ['姓名', '学号']
             outSheet: list[list[str]] = [['序号', '姓名', '学号', '签到'], ]
             i = 1
@@ -95,8 +98,9 @@ class DoQingziClass:
             ).write()
 
         pers_app, cns = __load_person_app()
+        __person_sign(pers_app)
         for cn in cns:
-            sh = __make_sheet(pers_app, cn)
+            sh = __make_sheet(cn)
             __save(sh, cn)
         __storage()
         self.unknownSheet()
@@ -148,6 +152,8 @@ class DoQingziClass:
             for per_a in self.__persons_all:
                 if per_a.classname == target.classname:
                     if self.is_fuzzy_studentID(target.studentID, per_a.studentID):
+                        likely.append(copy.deepcopy(per_a))
+                    elif fuzzy_search.match_by(per_a.name, target.name, fuzzy_search.LEVEL.High):
                         likely.append(copy.deepcopy(per_a))
             self.__unknownPersons.append((copy.deepcopy(target), likely))
 
