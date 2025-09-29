@@ -5,4 +5,4 @@ from SSPY.globalconstants import GlobalConstants as gc
 from QingziClass.doqingziclass import DoQingziClass
 
 qc = DoQingziClass()
-qc.attSheet()
+qc.appSheet()

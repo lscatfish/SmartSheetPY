@@ -35,6 +35,7 @@ class DoQingziClass:
 
 
     def appSheet(self):
+        """签到表"""
         def __load_person_app():
             """解析报集会名表中的人员"""
             folder = DefFolder(gc.dir_INPUT_APP_, extensions = ['.xlsx', '.XLSX'])

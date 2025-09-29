@@ -108,40 +108,24 @@ class XlsxLoad:
 
     @property
     def personList(self, if_fuzzy = False):
-        pers:list[DefPerson] = []
+        pers: list[DefPerson] = []
         header, only_sheet = get_header_from_xlsx(self.sheet, if_fuzzy = if_fuzzy)
-        if self.__const_classname and self.__header is None:
-            if header is None:
-                print('文件 \"' + self.__path + '\" 未找到表头')
-                return pers
+        if self.__header is None and header is None:
+            print('文件 \"' + self.__path + '\" 未找到表头')
+            return pers
+        elif self.__header is not None and header is None:
+            header = self.__header
+        if self.__const_classname:
             for row in only_sheet:
                 p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
                 if p is not None:
                     pers.append(p)
-            return pers
-        elif self.__const_classname and self.__header is not None:
-            if header is None: header = self.__header.copy()
-            for row in only_sheet:
-                p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
-                if p is not None:
-                    pers.append(p)
-            return pers
-        elif not self.__const_classname and self.__header is None:
-            if header is None:
-                print('文件 \"' + self.__path + '\" 未找到表头')
-                return pers
-            for row in only_sheet:
-                p = trans_list_to_person(header, row, if_fuzzy = if_fuzzy)
-                if p is not None:
-                    pers.append(p)
-            return pers
         else:
-            if header is None: header = self.__header.copy()
             for row in only_sheet:
                 p = trans_list_to_person(header, row, if_fuzzy = if_fuzzy)
                 if p is not None:
                     pers.append(p)
-            return pers
+        return pers
 
 
 class XlsxWrite:
