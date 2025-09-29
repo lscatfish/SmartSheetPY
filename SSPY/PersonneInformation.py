@@ -77,6 +77,8 @@ class DefPerson:
         """适配print函数"""
         d = {'班级': self.__classname, }
         d.update(self.__information)
+        d['ifsign'] = str(self.__ifsign)
+        d['ifcheck'] = str(self.__ifcheck)
         return str(d)
 
     def __deepcopy__(self, memo: dict | None = None) -> 'DefPerson':
@@ -113,12 +115,6 @@ class DefPerson:
         memo[id(self)] = new_instance
 
         return new_instance
-
-    def __str__(self) -> str:
-        """适配print函数"""
-        d = {'班级': self.__classname, }
-        d.update(self.__information)
-        return str(d)
 
 
     def optimize(self):

@@ -32,8 +32,6 @@ class DoQingziClass:
         for p in paths:
             xlsx_sheet = XlsxLoad(p)  # 自动识别班级
             self.__persons_all.extend(xlsx_sheet.personList)
-        # for p in self.__persons_all:
-        #     print(copy.deepcopy(p))
 
 
     def appSheet(self):
@@ -51,7 +49,7 @@ class DoQingziClass:
         def __person_sign(persons_app: list[DefPerson]):
             """标记人员"""
             for per_app in persons_app:
-                per_all = self.search(per_app, push_unkown = True)
+                per_all = self.search(per_app, push_unknown = True)
                 if per_all is not None:
                     per_all.ifsign = True
 
@@ -88,6 +86,7 @@ class DoQingziClass:
             """储存报名信息"""
             sheet: list[list[str]] = []
             header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
+            sheet.append(header)
             for per in self.__persons_all:
                 if per.ifsign:
                     sheet.append(per.to_list(header))
@@ -103,18 +102,34 @@ class DoQingziClass:
             sh = __make_sheet(cn)
             __save(sh, cn)
         __storage()
-        self.unknownSheet()
+        self.__unknownSheet()
+
+    def attSheet(self):
+        self.__load_storage()
+        # i=0
+        # for per in self.__persons_all:
+        #     if per.ifsign:
+        #         i+=1
+        #         print(per)
+        # print(i)
 
     def __load_storage(self):
-        pass
+        pers_app = XlsxLoad(
+            _path = gc.dir_STORAGE_ + 'storage.xlsx',
+            const_classname = False,
+        ).personList
+        for p_app in pers_app:
+            for per in self.__persons_all:
+                if per.classname == p_app.classname and self.is_same_studentID(per.studentID, p_app.studentID):
+                    per.ifsign = True
 
-    def unknownSheet(self):
+    def __unknownSheet(self):
         sheet: list[list[str]] = [['类型', gc.chstrClassname, '姓名', '学号'], ]
         header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
         if len(self.__unknownPersons) > 0:
             for per in self.__unknownPersons:
                 # print(per[0])
-                l: list[str] = ['*UNKOWN', ]
+                l: list[str] = ['*UNKNOWN', ]
                 l.extend(per[0].to_list(header))
                 sheet.append(l)
                 for lp in per[1]:
@@ -134,9 +149,8 @@ class DoQingziClass:
             widths = [24, ]
         ).write()
 
-    def search(self, target: DefPerson, push_unkown = False) -> DefPerson | None:
+    def search(self, target: DefPerson, push_unknown = False) -> DefPerson | None:
         """从全部的库中搜索目标人员，返回总表人员的指针"""
-        # up: tuple[DefPerson, list[DefPerson]]
         same_name = 0
         for per_a in self.__persons_all:
             if per_a.classname == target.classname:
@@ -147,7 +161,7 @@ class DoQingziClass:
                     same_name += 1
         if same_name == 1:
             return maybe_per
-        if push_unkown:
+        if push_unknown:
             likely: list[DefPerson] = []
             for per_a in self.__persons_all:
                 if per_a.classname == target.classname:

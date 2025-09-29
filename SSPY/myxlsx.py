@@ -8,7 +8,11 @@ from .globalconstants import GlobalConstants as gc
 from .PersonneInformation import DefPerson
 
 
-def trans_list_to_person(header: tuple, in_info: list, classname: str = None, if_fuzzy: bool = False) -> DefPerson | None:
+def trans_list_to_person(
+    header: tuple | list,
+    in_info: list,
+    classname: str = None,
+    if_fuzzy: bool = False) -> DefPerson | None:
     per = DefPerson()
     info = copy.deepcopy(in_info)
     if classname is not None:
@@ -60,15 +64,24 @@ def get_header_from_xlsx(in_sheet: list, if_fuzzy: bool = False) -> tuple | None
 class XlsxLoad:
     """读取xlsx文件的类"""
 
-    def __init__(self, _path: str, classname: str = None, ifp: bool = False) -> None:
+    def __init__(
+        self,
+        _path: str,
+        const_classname: bool = True,
+        classname: str = None,
+        ifp: bool = False,
+        header: list[str] = None) -> None:
         from .myfolder import split_filename_and_extension
         self.__path = _path
         self.__sheet = []
         self.__ifp = ifp
-        if classname is None:
-            self.__classname = split_filename_and_extension(self.__path)[0]
-        else:
-            self.__classname = classname
+        self.__const_classname = const_classname
+        if const_classname:
+            if classname is None:
+                self.__classname = split_filename_and_extension(self.__path)[0]
+            else:
+                self.__classname = classname
+        self.__header = header
         self.__load()
 
     def __load(self):
@@ -95,13 +108,40 @@ class XlsxLoad:
 
     @property
     def personList(self, if_fuzzy = False):
-        pers = []
+        pers:list[DefPerson] = []
         header, only_sheet = get_header_from_xlsx(self.sheet, if_fuzzy = if_fuzzy)
-        for row in only_sheet:
-            p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
-            if p is not None:
-                pers.append(p)
-        return pers
+        if self.__const_classname and self.__header is None:
+            if header is None:
+                print('文件 \"' + self.__path + '\" 未找到表头')
+                return pers
+            for row in only_sheet:
+                p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
+                if p is not None:
+                    pers.append(p)
+            return pers
+        elif self.__const_classname and self.__header is not None:
+            if header is None: header = self.__header.copy()
+            for row in only_sheet:
+                p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
+                if p is not None:
+                    pers.append(p)
+            return pers
+        elif not self.__const_classname and self.__header is None:
+            if header is None:
+                print('文件 \"' + self.__path + '\" 未找到表头')
+                return pers
+            for row in only_sheet:
+                p = trans_list_to_person(header, row, if_fuzzy = if_fuzzy)
+                if p is not None:
+                    pers.append(p)
+            return pers
+        else:
+            if header is None: header = self.__header.copy()
+            for row in only_sheet:
+                p = trans_list_to_person(header, row, if_fuzzy = if_fuzzy)
+                if p is not None:
+                    pers.append(p)
+            return pers
 
 
 class XlsxWrite:
