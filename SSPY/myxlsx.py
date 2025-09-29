@@ -17,7 +17,8 @@ def trans_list_to_person(header: tuple, in_info: list, classname: str = None, if
         if i >= len(info): break
         if header[i] == '序号': continue
         per.set_information(header[i], str(info[i]).strip(), if_fuzzy = if_fuzzy)
-    if (per.classname is None or per.classname == "") and per.studentID == '': return None
+    if per.classname is None or per.classname == "": return None
+    if per.name == '' or per.studentID == '': return None
     per.optimize()
     return per
 
@@ -110,7 +111,7 @@ class XlsxWrite:
         self,
         path: str = None,
         sheet: list = None,
-        widths: list = None,
+        widths: list[float] = None,
         height: int = None,
         title: str = '',
         height_title: int = 40,
@@ -189,21 +190,24 @@ class XlsxWrite:
         if self.__hasTitle: ws.title = self.__title
         for row in self.__sheet:
             ws.append(row)
-        for i in range(1, ws.max_row + 2):  # 这里我不晓得为什么是2
-            ws.row_dimensions[i].height = self.__height
-        for i in range(1, ws.max_column + 1):
-            col_letter = ws.cell(row = 1, column = i).column_letter
-            if i < len(self.__widths) and self.__widths[i - 1] > 0:
-                ws.column_dimensions[col_letter].width = self.__widths[i - 1]
-                width_default = self.__widths[i - 1]
-            elif i == len(self.__widths):
-                if self.__widths[i - 1] <= 0:
-                    ws.column_dimensions[col_letter].width = width_default
-                else:
+        if self.__height is not None:
+            for i in range(1, ws.max_row + 2):  # 这里我不晓得为什么是2
+                ws.row_dimensions[i].height = self.__height
+
+        if self.__widths is not None and len(self.__widths) > 0:
+            for i in range(1, ws.max_column + 1):
+                col_letter = ws.cell(row = 1, column = i).column_letter
+                if i < len(self.__widths) and self.__widths[i - 1] > 0:
                     ws.column_dimensions[col_letter].width = self.__widths[i - 1]
                     width_default = self.__widths[i - 1]
-            else:
-                ws.column_dimensions[col_letter].width = width_default
+                elif i == len(self.__widths):
+                    if self.__widths[i - 1] <= 0:
+                        ws.column_dimensions[col_letter].width = width_default
+                    else:
+                        ws.column_dimensions[col_letter].width = self.__widths[i - 1]
+                        width_default = self.__widths[i - 1]
+                else:
+                    ws.column_dimensions[col_letter].width = width_default
 
         for row in ws.iter_rows(values_only = False):
             for cell in row:

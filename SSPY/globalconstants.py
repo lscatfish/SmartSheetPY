@@ -21,14 +21,15 @@ class GlobalConstants:
 
     chstrNote = '备注'
     chstrPersonalProfile = '个人简介'
-    chstrPersonalExperience='个人经历'
+    chstrPersonalExperience = '个人经历'
     chstrPersonalStrengths = '个人特长'
     chstrWorkExperience = '工作经历'
     chstrAwardsAndHonors = '获奖情况'
-    chstrMainAchievements='主要事迹'
+    chstrMainAchievements = '主要事迹'
 
     fontRegularGBK = Font(name = '仿宋_GB2312', size = 14)
-    fontRegularSong=Font(name = '宋体',size = 14)
+    fontRegularSong = Font(name = '宋体', size = 14)
+    fontRegularSongSmall = Font(name = '宋体', size = 10)
     fontTitleGBK = Font(name = '宋体', size = 24, bold = True)
     fontHeaderGBK = Font(name = '仿宋_GB2312', size = 14, bold = True)
     borderThinBlack = Border(
@@ -48,18 +49,18 @@ class GlobalConstants:
     alignmentStd = Alignment(horizontal = 'center', vertical = 'center')
     """标准对齐方式"""
 
-    dir_INPUT_='.\\input\\'
-    dir_STORAGE_='.\\storage\\'
-    dir_OUTPUT_='.\\output\\'
+    dir_INPUT_ = '.\\input\\'
+    dir_STORAGE_ = '.\\storage\\'
+    dir_OUTPUT_ = '.\\output\\'
 
-    dir_INPUT_ALL_='.\\input\\all\\'
-    dir_INPUT_APP_='.\\input\\app\\'
-    dir_INPUT_ATTIMGS_='.\\input\\att_imgs\\'
-    dir_INPUT_SIGNFORQC_='.\\input\\sign_for_QingziClass\\'
+    dir_INPUT_ALL_ = '.\\input\\all\\'
+    dir_INPUT_APP_ = '.\\input\\app\\'
+    dir_INPUT_ATTIMGS_ = '.\\input\\att_imgs\\'
+    dir_INPUT_SIGNFORQC_ = '.\\input\\sign_for_QingziClass\\'
 
-    dir_OUTPUT_APP_='.\\output\\app_out\\'
-    dir_OUTPUT_ATT='.\\output\\att_out\\'
-    dir_OUTPUT_SIGNFORQC_='.\\output\\sign_for_QingziClass_out\\'
+    dir_OUTPUT_APP_ = '.\\output\\app_out\\'
+    dir_OUTPUT_ATT = '.\\output\\att_out\\'
+    dir_OUTPUT_SIGNFORQC_ = '.\\output\\sign_for_QingziClass_out\\'
 
 
     def __setattr__(self, name, value):

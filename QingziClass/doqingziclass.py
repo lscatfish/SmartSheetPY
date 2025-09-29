@@ -32,6 +32,8 @@ class DoQingziClass:
         for p in paths:
             xlsx_sheet = XlsxLoad(p)  # 自动识别班级
             self.__persons_all.extend(xlsx_sheet.personList)
+        # for p in self.__persons_all:
+        #     print(copy.deepcopy(p))
 
 
     def appSheet(self):
@@ -49,7 +51,7 @@ class DoQingziClass:
         def __make_sheet(persons_app: list[DefPerson], classname: str) -> list[list[str]]:
             """制表"""
             for per_app in persons_app:
-                per_all = self.search(per_app, push_unkown = False)
+                per_all = self.search(per_app, push_unkown = True)
                 if per_all is not None:
                     per_all.ifsign = True
             header = ['姓名', '学号']
@@ -79,30 +81,78 @@ class DoQingziClass:
             if writer.can_write:
                 writer.write()
 
+        def __storage():
+            """储存报名信息"""
+            sheet: list[list[str]] = []
+            header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
+            for per in self.__persons_all:
+                if per.ifsign:
+                    sheet.append(per.to_list(header))
+            XlsxWrite(
+                path = copy.copy(gc.dir_STORAGE_) + 'storage.xlsx',
+                sheet = sheet,
+                font_regular = gc.fontRegularSongSmall
+            ).write()
+
         pers_app, cns = __load_person_app()
         for cn in cns:
             sh = __make_sheet(pers_app, cn)
             __save(sh, cn)
+        __storage()
+        self.unknownSheet()
 
+    def __load_storage(self):
+        pass
+
+    def unknownSheet(self):
+        sheet: list[list[str]] = [['类型', gc.chstrClassname, '姓名', '学号'], ]
+        header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
+        if len(self.__unknownPersons) > 0:
+            for per in self.__unknownPersons:
+                # print(per[0])
+                l: list[str] = ['*UNKOWN', ]
+                l.extend(per[0].to_list(header))
+                sheet.append(l)
+                for lp in per[1]:
+                    l2: list[str] = ['-LIKELY', ]
+                    l2.extend(lp.to_list(header))
+                    sheet.append(l2)
+            for r in sheet:
+                for cell in r:
+                    print(cell, end = '\t')
+                print(end = '\n')
+        else:
+            print('没有未知人员')
+        XlsxWrite(
+            path = copy.copy(gc.dir_OUTPUT_) + 'unknown.xlsx',
+            sheet = sheet,
+            font_regular = gc.fontRegularSongSmall,
+            widths = [24, ]
+        ).write()
 
     def search(self, target: DefPerson, push_unkown = False) -> DefPerson | None:
         """从全部的库中搜索目标人员，返回总表人员的指针"""
         # up: tuple[DefPerson, list[DefPerson]]
+        same_name = 0
         for per_a in self.__persons_all:
-            if (per_a.classname == target.classname and
-                    (self.is_same_studentID(target.studentID, per_a.studentID) or
-                     target.name == per_a.name)):
-                # 这里如果没有检测到学号，而只有学号，应该对名字进行全班判断，直到只有一个同名人才能返回
-                return per_a
+            if per_a.classname == target.classname:
+                if self.is_same_studentID(target.studentID, per_a.studentID):
+                    return per_a
+                elif target.name == per_a.name:
+                    maybe_per = per_a
+                    same_name += 1
+        if same_name == 1:
+            return maybe_per
         if push_unkown:
-            likely = []
+            likely: list[DefPerson] = []
             for per_a in self.__persons_all:
                 if per_a.classname == target.classname:
                     if self.is_fuzzy_studentID(target.studentID, per_a.studentID):
                         likely.append(copy.deepcopy(per_a))
-            if len(likely) > 0:
-                self.__unknownPersons.append((copy.deepcopy(target), likely))
+            self.__unknownPersons.append((copy.deepcopy(target), likely))
+
         return None
+
 
     @staticmethod
     def is_same_studentID(a: str, b: str) -> bool:
@@ -114,6 +164,7 @@ class DoQingziClass:
             return a_number_part == b_number_part
         else:
             return a == b
+
 
     @staticmethod
     def is_fuzzy_studentID(a: str, b: str) -> bool:
