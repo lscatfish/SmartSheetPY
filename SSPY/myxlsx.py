@@ -17,8 +17,7 @@ def trans_list_to_person(header: tuple, in_info: list, classname: str = None, if
         if i >= len(info): break
         if header[i] == '序号': continue
         per.set_information(header[i], str(info[i]).strip(), if_fuzzy = if_fuzzy)
-    if per.classname is None or per.classname == "": return None
-    if per.studentID == '': return None
+    if (per.classname is None or per.classname == "") and per.studentID == '': return None
     per.optimize()
     return per
 

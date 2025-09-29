@@ -175,6 +175,7 @@ class DefPerson:
 
     def set_information(self, inkey: str, value: str, if_fuzzy: bool = False):
         """添加信息"""
+        if value == 'None': return
         key = self.get_stdkey(inkey, if_fuzzy)
         if key is None:
             self.__information[inkey] = value

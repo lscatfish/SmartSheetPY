@@ -75,6 +75,7 @@ class DoQingziClass:
             )
             writer.fontRegular = gc.fontRegularSong
             writer.fontTitle = gc.fontTitleGBK
+            writer.border = gc.borderThinBlack
             if writer.can_write:
                 writer.write()
 
@@ -88,7 +89,10 @@ class DoQingziClass:
         """从全部的库中搜索目标人员，返回总表人员的指针"""
         # up: tuple[DefPerson, list[DefPerson]]
         for per_a in self.__persons_all:
-            if per_a.classname == target.classname and self.is_same_studentID(target.studentID, per_a.studentID):
+            if (per_a.classname == target.classname and
+                    (self.is_same_studentID(target.studentID, per_a.studentID) or
+                     target.name == per_a.name)):
+                # 这里如果没有检测到学号，而只有学号，应该对名字进行全班判断，直到只有一个同名人才能返回
                 return per_a
         if push_unkown:
             likely = []
