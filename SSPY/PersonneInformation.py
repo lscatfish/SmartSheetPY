@@ -28,6 +28,7 @@ class DefPerson:
         gc.chstrSignPosition      : (gc.chstrSignPosition, '报名职务', '报名位置'),
         gc.chstrGender            : (gc.chstrGender,),
 
+        gc.chstrCheckIn           : (gc.chstrCheckIn,),
         gc.chstrNote              : (gc.chstrNote,),
         gc.chstrPersonalProfile   : (gc.chstrPersonalProfile,),
         gc.chstrPersonalExperience: (gc.chstrPersonalExperience,),
@@ -144,30 +145,33 @@ class DefPerson:
                     self.__information[gc.chstrGrade] = first4 + '级'
         if len(self.__classname) > 4:
             if '青' not in self.__classname or '班' not in self.__classname or '例' in self.__classname:
-                if '宣' in self.__classname:
-                    self.__classname = '青宣班'
-                elif '文' in self.__classname:
-                    self.__classname = '青文班'
-                elif '骨' in self.__classname:
-                    self.__classname = '青骨班'
-                elif '学' in self.__classname:
-                    self.__classname = '青学班'
-                elif '艺' in self.__classname:
-                    self.__classname = '青艺班'
-                elif '峰' in self.__classname:
-                    self.__classname = '青峰班'
-                elif '公' in self.__classname:
-                    self.__classname = '青公班'
-                elif '社' in self.__classname:
-                    self.__classname = '青社班'
-                elif '书' in self.__classname:
-                    self.__classname = '青书班'
-                elif '膺' in self.__classname:
-                    self.__classname = '青膺班'
-                elif '志' in self.__classname:
-                    self.__classname = '青志班'
-                elif '组' in self.__classname:
-                    self.__classname = '青组班'
+                for cn in gc.cns:
+                    if cn[0] in self.__classname:
+                        self.__classname = cn[1]
+                # if gc.cXuan[0] in self.__classname:
+                #     self.__classname = gc.cXuan[1]
+                # elif gc.cWen[0] in self.__classname:
+                #     self.__classname = gc.cWen[1]
+                # elif gc.cGu[0] in self.__classname:
+                #     self.__classname = gc.cGu[1]
+                # elif gc.cXue[0] in self.__classname:
+                #     self.__classname = gc.cXue[1]
+                # elif gc.cYi[0] in self.__classname:
+                #     self.__classname = gc.cYi[1]
+                # elif gc.cFeng[0] in self.__classname:
+                #     self.__classname = gc.cFeng[1]
+                # elif gc.cGong[0] in self.__classname:
+                #     self.__classname = gc.cGong[1]
+                # elif gc.cShe[0] in self.__classname:
+                #     self.__classname = gc.cShe[1]
+                # elif gc.cShu[0] in self.__classname:
+                #     self.__classname = gc.cShu[1]
+                # elif gc.cYing[0] in self.__classname:
+                #     self.__classname = gc.cYing[1]
+                # elif gc.cZhi[0] in self.__classname:
+                #     self.__classname = gc.cZhi[1]
+                # elif gc.cZu[0] in self.__classname:
+                #     self.__classname = gc.cZu[1]
 
     def set_information(self, inkey: str, value: str, if_fuzzy: bool = False):
         """添加信息"""

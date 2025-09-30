@@ -26,16 +26,17 @@ class DoQingziClass:
 
     def __load_person_all(self):
         """加载所有的学员信息"""
-        folder = DefFolder(gc.dir_INPUT_ALL_, extensions = ['.xlsx', '.XLSX'])
+        folder = DefFolder(gc.dir_INPUT_ALL_, extensions = gc.extensions_XLSX)
         self.__classname_all = folder.pure_filenames
         paths = folder.paths
         for p in paths:
             xlsx_sheet = XlsxLoad(p)  # 自动识别班级
-            self.__persons_all.extend(xlsx_sheet.personList)
+            self.__persons_all.extend(xlsx_sheet.get_personList())
 
 
     def appSheet(self):
         """签到表"""
+
         def __load_person_app():
             """解析报集会名表中的人员"""
             folder = DefFolder(gc.dir_INPUT_APP_, extensions = ['.xlsx', '.XLSX'])
@@ -44,7 +45,7 @@ class DoQingziClass:
             persons_app: list[DefPerson] = []
             for i in range(len(paths)):
                 xlsx_sheet = XlsxLoad(paths[i])  # 自动识别班级
-                persons_app.extend(xlsx_sheet.personList)
+                persons_app.extend(xlsx_sheet.get_personList())
             return persons_app, classnames
 
         def __person_sign(persons_app: list[DefPerson]):
@@ -107,25 +108,33 @@ class DoQingziClass:
 
     def attSheet(self):
         self.__load_storage()
-        # i=0
-        # for per in self.__persons_all:
-        #     if per.ifsign:
-        #         i+=1
-        #         print(per)
-        # print(i)
+        def __organize_imgs() -> dict[str, list[str]]:
+            """整理照片以及其地址"""
+            classname_imgpath: dict[str, list[str]] = {}
+            folder = DefFolder(gc.dir_INPUT_ATTIMGS_, extensions = gc.extensions_IMG)
+            for p in folder.paths:
+                for cn in gc.cns:
+                    if cn[0] in p:
+                        classname_imgpath[cn[1]] = p
+            return classname_imgpath
+        def __parse_imgs(c_i:dict[str, list[str]):
+            pass
+
+
 
     def __load_storage(self):
+        """加载临时文件，自动报名"""
         pers_app = XlsxLoad(
             _path = gc.dir_STORAGE_ + 'storage.xlsx',
             const_classname = False,
-        ).personList
+        ).get_personList()
         for p_app in pers_app:
             for per in self.__persons_all:
                 if per.classname == p_app.classname and self.is_same_studentID(per.studentID, p_app.studentID):
                     per.ifsign = True
 
     def __unknownSheet(self):
-        sheet: list[list[str]] = [['类型', gc.chstrClassname, '姓名', '学号'], ]
+        sheet: list[list[str]] = [['类型', gc.chstrClassname, gc.chstrName, gc.chstrStudentID], ]
         header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
         if len(self.__unknownPersons) > 0:
             for per in self.__unknownPersons:

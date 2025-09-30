@@ -20,12 +20,28 @@ class GlobalConstants:
     chstrGender = '性别'
 
     chstrNote = '备注'
+    chstrCheckIn = '签到'
     chstrPersonalProfile = '个人简介'
     chstrPersonalExperience = '个人经历'
     chstrPersonalStrengths = '个人特长'
     chstrWorkExperience = '工作经历'
     chstrAwardsAndHonors = '获奖情况'
     chstrMainAchievements = '主要事迹'
+
+    cXuan = ('宣', '青宣班')
+    cWen = ('文', '青文班')
+    cGu = ('骨', '青骨班')
+    cXue = ('学', '青学班')
+    cYi = ('艺', '青艺班')
+    cFeng = ('峰', '青峰班')
+    cGong = ('公', '青公班')
+    cShe = ('社', '青社班')
+    cShu = ('书', '青书班')
+    cYing = ('膺', '青膺班')
+    cZhi = ('志', '青志班')
+    cZu = ('组', '青组班')
+
+    cns = (cXuan, cWen, cGu, cXue, cYi, cFeng, cGong, cShe, cShu, cYing, cZhi, cZu)
 
     fontRegularGBK = Font(name = '仿宋_GB2312', size = 14)
     fontRegularSong = Font(name = '宋体', size = 14)
@@ -62,6 +78,10 @@ class GlobalConstants:
     dir_OUTPUT_ATT = '.\\output\\att_out\\'
     dir_OUTPUT_SIGNFORQC_ = '.\\output\\sign_for_QingziClass_out\\'
 
+    extensions_XLSX = ['.xlsx', '.XLSX']
+    extensions_DOCX = ['.docx', '.DOCX']
+    extensions_IMG = [".jpg", ".png", ".jpeg", ".tiff", ".tif ",
+                      ".jpe", ".bmp", ".dib", ".webp", ".raw"]
 
     def __setattr__(self, name, value):
         raise AttributeError("Can't set attribute")

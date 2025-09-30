@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from paddleocr import TableRecognitionPipelineV2
 import PIL.Image
 from .PersonneInformation import DefPerson
+from .globalconstants import GlobalConstants as gc
 
 
 def html_to_list(html_str: str) -> list[list[str]]:
@@ -143,8 +144,7 @@ class PPOCRImgByModel:
         else:
             return None
 
-    @property
-    def personList(self, classname: str, if_fuzzy = False) -> list[DefPerson]:
+    def get_personList(self, classname: str, if_fuzzy = False) -> list[DefPerson]:
         """
         输出为人员列表
         Parameters:

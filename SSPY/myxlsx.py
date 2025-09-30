@@ -119,8 +119,7 @@ class XlsxLoad:
         """返回解析到的sheet"""
         return copy.deepcopy(self.__sheet)
 
-    @property
-    def personList(self, if_fuzzy = False):
+    def get_personList(self, if_fuzzy = False):
         pers: list[DefPerson] = []
         header, only_sheet = get_header_from_xlsx(self.sheet, if_fuzzy = if_fuzzy)
         if self.__header is None and header is None:
