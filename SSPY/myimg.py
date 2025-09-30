@@ -5,6 +5,7 @@ import os
 from bs4 import BeautifulSoup
 from paddleocr import TableRecognitionPipelineV2
 import PIL.Image
+from .PersonneInformation import DefPerson
 
 
 def html_to_list(html_str: str) -> list[list[str]]:
@@ -43,7 +44,7 @@ def html_to_list(html_str: str) -> list[list[str]]:
             for nested in td.find_all("table"):
                 nested.decompose()
 
-            text = td.get_text(strip = True, separator = " ") or ""  # 防止 None
+            text = td.get_text(strip = True, separator = "") or ""  # 防止 None
             rowspan = max(1, int(td.get("rowspan", 1)))
             colspan = max(1, int(td.get("colspan", 1)))
             row_cells.append({"text": text, "rowspan": rowspan, "colspan": colspan})
@@ -84,8 +85,8 @@ def html_to_list(html_str: str) -> list[list[str]]:
                         table_list[nr][nc] = cell["text"]
                         filled[nr][nc] = True
             c_idx += cell["colspan"]
-
-    return table_list
+    from .myxlsx import clear_empty_lines
+    return clear_empty_lines(table_list)
 
 
 class PPOCRImgByModel:
@@ -102,8 +103,9 @@ class PPOCRImgByModel:
         self.__isOK = False
         print('ppocr模型加载完毕!!!')
 
-    def predict(self, path):
+    def predict(self, path, clear: bool = False):
         self.__isOK = False
+        if clear: self.__sheet = []
         import numpy
         if not os.path.exists(path):
             print('\"' + path + '\" 不存在')
@@ -114,11 +116,11 @@ class PPOCRImgByModel:
         if self.__output is None:
             return False
         self.__isOK = True
-        self.__sheet.extend(html_to_list(self.html))
+        self.__sheet.extend(html_to_list(self.html_this))
         return True
 
     @property
-    def result(self):
+    def result_this(self):
         """只能获取到本次的内容"""
         if self.__isOK:
             return copy.deepcopy(self.__output)
@@ -126,7 +128,7 @@ class PPOCRImgByModel:
             return None
 
     @property
-    def html(self):
+    def html_this(self):
         """只能获取到本次的内容"""
         if self.__isOK:
             return self.__output[0]['table_res_list'][0]['pred_html']
@@ -134,9 +136,34 @@ class PPOCRImgByModel:
             return None
 
     @property
-    def sheet(self) -> list[list[str]] | None:
+    def sheet_all(self) -> list[list[str]] | None:
         """可以获取到多次内容"""
         if self.__isOK:
             return copy.deepcopy(self.__sheet)
         else:
             return None
+
+    @property
+    def personList(self, classname: str, if_fuzzy = False) -> list[DefPerson]:
+        """
+        输出为人员列表
+        Parameters:
+            if_fuzzy (bool):是否启用键的部分检索
+            classname (str):班级
+        Return:
+            返回人员列表
+        """
+        pers: list[DefPerson] = []
+        if not self.__isOK: return pers
+        from .myxlsx import get_header_from_xlsx, trans_list_to_person
+        header, sheet = get_header_from_xlsx(self.sheet_all)
+
+        for row in sheet:
+            pers.append(
+                trans_list_to_person(
+                    header = header,
+                    in_info = row,
+                    if_fuzzy = if_fuzzy,
+                    classname = classname))
+        self.__sheet = []
+        return pers

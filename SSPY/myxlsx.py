@@ -61,6 +61,19 @@ def get_header_from_xlsx(in_sheet: list, if_fuzzy: bool = False) -> tuple | None
     return header, new_sheet
 
 
+def clear_empty_lines(in_sheet: list[list]) -> list:
+    """清理空行"""
+    if len(in_sheet) == 0:
+        return []
+    new_sheet = []
+    for row in in_sheet:
+        for cell in row:
+            if not (cell == '' or cell is None or str(cell).strip() == '' or str(cell) == 'None'):
+                new_sheet.append(row)
+                break
+    return new_sheet
+
+
 class XlsxLoad:
     """读取xlsx文件的类"""
 
