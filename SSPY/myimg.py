@@ -137,16 +137,72 @@ class PPOCRImgByModel:
 
     def __init__(self):
         """加载模型"""
+        # import paddleocr._common_args as _ca
+        # import shutil
+        #
+        # # 本地已有权重目录
+        # LOCAL_DIR = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori'
+        #
+        # # 把官方下载函数整体替换成“复制本地目录”
+        # def _fake_download_official_model(model_name, cache_dir):
+        #     dst = os.path.join(cache_dir, model_name)
+        #     if not os.path.exists(dst):
+        #         shutil.copytree(LOCAL_DIR, dst, dirs_exist_ok = True)
+        #     return dst
+        #
+        # _ca.download_official_model = _fake_download_official_model
+
         print('加载ppocr的模型')
         # 这个模型就是一坨
         self.__pipeline = TableRecognitionPipelineV2(
-            use_doc_orientation_classify = True,
-            use_doc_unwarping = True
+            # layout_detection_model_dir = gc.dir_MODEL_NATURE_ + 'PP-DocLayout-L',
+            # layout_detection_model_name = 'PP-DocLayout-L',
+            # table_classification_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_table_cls',
+            # table_classification_model_name = 'PP-LCNet_x1_0_table_cls',
+            #
+            # doc_orientation_classify_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori',
+            # doc_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori',
+            #
+            # wired_table_structure_recognition_model_dir = gc.dir_MODEL_NATURE_ + 'SLANeXt_wired',
+            # wired_table_structure_recognition_model_name = 'SLANeXt_wired',
+            # wireless_table_structure_recognition_model_dir = gc.dir_MODEL_NATURE_ + 'SLANeXt_wireless',
+            # wireless_table_structure_recognition_model_name = 'SLANeXt_wireless',
+            # wired_table_cells_detection_model_dir = gc.dir_MODEL_NATURE_ + 'RT-DETR-L_wired_table_cell_det',
+            # wired_table_cells_detection_model_name = 'RT-DETR-L_wired_table_cell_det',
+            # wireless_table_cells_detection_model_dir = gc.dir_MODEL_NATURE_ + 'RT-DETR-L_wireless_table_cell_det',
+            # wireless_table_cells_detection_model_name = 'RT-DETR-L_wireless_table_cell_det',
+            # text_recognition_model_dir = gc.dir_MODEL_NATURE_ + 'PP-OCRv4_server_rec_doc',
+            # text_recognition_model_name = 'PP-OCRv4_server_rec_doc',
+            # text_detection_model_dir = gc.dir_MODEL_NATURE_ + 'PP-OCRv4_server_det',
+            # text_detection_model_name = 'PP-OCRv4_server_det',
+            # doc_unwarping_model_dir = gc.dir_MODEL_NATURE_ + 'UVDoc',
+            # doc_unwarping_model_name = 'UVDoc',
+            # use_doc_orientation_classify = True,
+            use_doc_unwarping = True,
+
+            # table_orientation_classify_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori',
+            # table_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori',
+
         )
+        # 预加载模型：用一张空图触发首次predict，强制加载所有模型
+        self.__preload_model()
+
         self.__output = None
         self.__sheet: list[list[str]] = []
         self.__isOK = False
         print('ppocr模型加载完毕!!!')
+
+    def __preload_model(self):
+        """预加载模型，避免首次predict时加载"""
+        try:
+            # 创建一张1x1的空图（RGB模式）
+            import numpy as np
+            # 创建一张合理尺寸的空白图像（如 200x200 像素，RGB通道）
+            empty_img = np.ones((200, 200, 3), dtype = np.uint8) * 255  # 白色图像
+            self.__pipeline.predict(input = empty_img)
+            print("模型预加载完成")
+        except Exception as e:
+            print(f"预加载模型失败：{e}")
 
     def predict(self, path, clear: bool = False):
         self.__isOK = False
@@ -157,7 +213,10 @@ class PPOCRImgByModel:
             return False
         pil_img = PIL.Image.open(path).convert('RGB')
         img_np = numpy.array(pil_img)
-        self.__output = self.__pipeline.predict(img_np)
+        self.__output = self.__pipeline.predict(
+            input = img_np,
+
+        )
         if self.__output is None:
             return False
         self.__isOK = True

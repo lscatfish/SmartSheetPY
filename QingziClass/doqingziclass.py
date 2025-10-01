@@ -30,7 +30,7 @@ class DoQingziClass:
         self.__classname_all = folder.pure_filenames
         paths = folder.paths
         for p in paths:
-            xlsx_sheet = XlsxLoad(p)  # 自动识别班级
+            xlsx_sheet = XlsxLoad(_path = p, classname = gc.get_classname_from_path(path = p))  # 自动识别班级
             self.__persons_all.extend(xlsx_sheet.get_personList())
 
 
@@ -44,7 +44,7 @@ class DoQingziClass:
             classnames = folder.pure_filenames
             persons_app: list[DefPerson] = []
             for i in range(len(paths)):
-                xlsx_sheet = XlsxLoad(paths[i])  # 自动识别班级
+                xlsx_sheet = XlsxLoad(paths[i], classname = gc.get_classname_from_path(path = paths[i]))  # 自动识别班级
                 persons_app.extend(xlsx_sheet.get_personList())
             return persons_app, classnames
 
@@ -167,7 +167,7 @@ class DoQingziClass:
             """保存签到表"""
             from openpyxl.styles import Font, Border, Alignment
             writer = XlsxWrite(
-                path = copy.copy(gc.dir_OUTPUT_ATT) + classname + '线下签到汇总表.xlsx',
+                path = copy.copy(gc.dir_OUTPUT_ATT_) + classname + '线下签到汇总表.xlsx',
                 sheet = sheet,
                 widths = [40, 40],
                 height = 25,

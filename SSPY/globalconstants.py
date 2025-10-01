@@ -75,13 +75,30 @@ class GlobalConstants:
     dir_INPUT_SIGNFORQC_ = '.\\input\\sign_for_QingziClass\\'
 
     dir_OUTPUT_APP_ = '.\\output\\app_out\\'
-    dir_OUTPUT_ATT = '.\\output\\att_out\\'
+    dir_OUTPUT_ATT_ = '.\\output\\att_out\\'
     dir_OUTPUT_SIGNFORQC_ = '.\\output\\sign_for_QingziClass_out\\'
+
+    dir_MODEL_NATURE_ = '.\\official_models\\'
 
     extensions_XLSX = ['.xlsx', '.XLSX']
     extensions_DOCX = ['.docx', '.DOCX']
     extensions_IMG = [".jpg", ".png", ".jpeg", ".tiff", ".tif ",
                       ".jpe", ".bmp", ".dib", ".webp", ".raw"]
+
+    @staticmethod
+    def get_classname_from_path(path: str):
+        """从path中获取班级名"""
+        import re
+        match = re.search(r'青([\u4e00-\u9fa5])班', path)
+        if match:
+            for cn in GlobalConstants.cns:
+                if cn[0] == match.group(1):
+                    return cn[1]
+        for cn in GlobalConstants.cns:
+            if cn[0] in path:
+                return cn[1]
+        return None  # 未找到匹配的结构
+
 
     def __setattr__(self, name, value):
         raise AttributeError("Can't set attribute")
