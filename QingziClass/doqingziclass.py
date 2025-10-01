@@ -138,7 +138,7 @@ class DoQingziClass:
             for per_att in persons_att:
                 per_all = self.search(per_att, push_unknown = True)
                 if per_all is not None:
-                    qd = per_all.get_information('签到')
+                    qd = per_att.get_information('签到')
                     if qd != '' and qd != 'None':
                         per_all.ifcheck = True
 
@@ -152,6 +152,8 @@ class DoQingziClass:
                     l = per.to_list(in_header)
                     if per.ifcheck:
                         l.append('已签到')
+                    elif per.ifsign:
+                        l.append('缺席')
                     else:
                         l.append('')
                     if per.ifsign:

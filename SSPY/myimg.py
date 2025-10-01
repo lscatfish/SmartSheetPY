@@ -91,8 +91,45 @@ def html_to_list(html_str: str) -> list[list[str]]:
 
 
 def rotation_checklist_content(table: list[list[str]], header: list[str]) -> list[list[str]]:
-    """检查表格中的内容"""
+    """
+    检查表格中的内容
+    Parameters:
+        header: 表头
+        table:输入的表格
+    Returns:返回修正的新表
+    """
+    """关键检查方式：序号只能是数字，学号检测"""
+    from .PersonneInformation import is_studentID
+    out_table = []
 
+    for row in table:
+        is_problem = False
+        """是否有问题"""
+        idx_stID_header = -1
+        """表头的索引"""
+        idx_stID_row = -1
+        """row的索引"""
+        for i in range(min(len(row), len(header))):
+            if header[i] == gc.chstrStudentID:
+                if not is_studentID(row[i]):  # 说明此行有问题
+                    idx_stID_header = i
+                    for j in range(len(row)):
+                        if j == i: continue
+                        if is_studentID(row[j]): idx_stID_row = j
+                    is_problem = True
+                    break
+        if is_problem:
+            if idx_stID_header >= 0 and idx_stID_row >= 0:
+                start = idx_stID_row - len(row)
+                end = idx_stID_row
+                step = idx_stID_header - idx_stID_row
+                new_row = copy.deepcopy(row)
+                for i in range(start, end):
+                    new_row[step + i] = row[i]
+                out_table.append(new_row)
+        else:
+            out_table.append(row)
+    return out_table
 
 
 class PPOCRImgByModel:
@@ -164,12 +201,17 @@ class PPOCRImgByModel:
         pers: list[DefPerson] = []
         if not self.__isOK: return pers
         from .myxlsx import get_header_from_xlsx, trans_list_to_person
-        if ifp:
-            for row in self.__sheet:
-                print(row)
-        header, sheet = get_header_from_xlsx(self.sheet_all)
 
-        for row in sheet:
+        header, sheet = get_header_from_xlsx(self.sheet_all)
+        ok_sheet = rotation_checklist_content(sheet, header)
+        if ifp:
+            print(classname)
+            print(header)
+            for row in ok_sheet:
+                print(row)
+            print('\n')
+
+        for row in ok_sheet:
             pers.append(
                 trans_list_to_person(
                     header = header,
@@ -182,3 +224,6 @@ class PPOCRImgByModel:
 
 class PPOCRImgByAlgorithm:
     """通过算法来解析表格，仅使用部分模型"""
+
+    def __init__(self):
+        pass

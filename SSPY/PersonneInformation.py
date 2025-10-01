@@ -410,3 +410,21 @@ class DefPerson:
         for s in in_std:
             outList.append(self.get_information(s))
         return outList
+
+
+def is_studentID(s: str):
+    import re
+    # 1. 检查是否只包含数字和英文（排除所有其他字符，包括汉字）
+    # 正则说明：^ 匹配开头，$ 匹配结尾，[0-9a-zA-Z] 匹配数字和英文，+ 表示至少1个字符
+    if not re.fullmatch(r'^[0-9a-zA-Z]+$', s):
+        return False  # 包含非数字/英文的字符（如汉字、符号、空格等）
+
+    # 2. 提取纯数字部分（排除最后一位可能的字母）
+    # 匹配规则：前面全是数字，最后一位可以是数字或字母
+    match = re.fullmatch(r'(\d+)([a-zA-Z]?)', s)
+    if not match:
+        return False  # 不符合“数字+可选字母结尾”的结构（如字母在开头）
+
+    # 3. 检查数字部分长度是否 >6（即至少7位）
+    digits_part = match.group(1)  # 数字部分（不含末尾字母）
+    return len(digits_part) >= 6
