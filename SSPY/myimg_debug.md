@@ -57,36 +57,66 @@ ppocr模型加载完毕!!!
 
 # 我的解决方案
 
-直接劫持官方下载器，不联网下载
+直接劫持官方下载器，更改联网下载地址
 ````python
+"""
+PaddleX 官方模型下载目录劫持器
+author : you
+usage:
+    import paddlex_hijack      # 必须先导入
+    import paddlex
+"""
 import os
+import pathlib
+
+# ========== 1. 你想把模型放在哪里 ==========
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-os.environ['PADDLE_PDX_CACHE_HOME'] = BASE_DIR
+MY_MIRROR_ROOT = pathlib.Path(BASE_DIR) / "official_models"
+MY_MIRROR_ROOT.mkdir(parents = True, exist_ok = True)
 
-import os, pathlib
-from paddlex.inference.utils.official_models import _ModelManager
+# ========== 2. 把环境变量、默认目录全部改掉 ==========
+os.environ["PADDLE_PDX_CACHE_HOME"] = str(BASE_DIR)
 
-# 1. 本地镜像根目录（自己维护）
-PRIVATE_MIRROR = pathlib.Path(os.path.join(BASE_DIR, 'official_models'))
+from paddlex.inference.utils.official_models import (
+    _ModelManager,
+    _BosModelHoster,
+    _HuggingFaceModelHoster,
+    _ModelScopeModelHoster,
+    _AIStudioModelHoster,
+)
+
+_ModelManager._save_dir = MY_MIRROR_ROOT  # 新生成的 Manager 会用到
+
+# ========== 3. 强制给所有 hoster 类打补丁，让它们的 save_dir=MY_MIRROR_ROOT ==========
+for hoster_cls in (
+        _BosModelHoster,
+        _HuggingFaceModelHoster,
+        _ModelScopeModelHoster,
+        _AIStudioModelHoster,
+):
+    # 把 __init__ 里 self._save_dir = save_dir 改成 self._save_dir = MY_MIRROR_ROOT
+    _orig_init = hoster_cls.__init__
 
 
-# 2. 彻底替换 _get_model_local_path：永远不走 hoster
-def _offline_get_model_local_path(self, model_name):
-    local_dir = PRIVATE_MIRROR / model_name
-    if not local_dir.exists():
-        raise FileNotFoundError(
-            f'离线模式：本地镜像 {local_dir} 不存在，'
-            f'请将官方 tar 解压到 {PRIVATE_MIRROR} 并保证文件夹名与模型名一致。'
-        )
-    # 直接返回本地路径，框架后续会直接加载
-    return local_dir
+    def _new_init(self, save_dir, *, __orig_init = _orig_init):
+        __orig_init(self, MY_MIRROR_ROOT)  # 硬塞我们的目录
 
 
-# 3. 热补丁
-_ModelManager._get_model_local_path = _offline_get_model_local_path
+    hoster_cls.__init__ = _new_init
 
-# 4. 可选：把 save_dir 也指向同一目录，防止框架再创建默认路径
-_ModelManager._save_dir = PRIVATE_MIRROR
+
+# ========== 4. 劫持 _ModelManager._get_model_local_path，仍复用官方 _download_from_hoster ==========
+def _hijacked_get_model_local_path(self, model_name: str) -> pathlib.Path:
+    target_dir = MY_MIRROR_ROOT / model_name
+    # 本地命中
+    if target_dir.exists() and (target_dir / "inference.yml").exists():
+        return target_dir
+    # 缺失 → 复用官方“挑最优 hoster + 下载”逻辑
+    return self._download_from_hoster(self._hosters, model_name)
+
+
+_ModelManager._get_model_local_path = _hijacked_get_model_local_path
+
 ````
 
 ### 运行效果
@@ -94,28 +124,22 @@ _ModelManager._save_dir = PRIVATE_MIRROR
 ````
 D:\Python\python.exe D:\code\SmartSheetPY\SmartSheetPY.py 
 Active code page: 65001
-No model hoster is available! Please check your network connection to one of the following model hosts:
-HuggingFace (https://huggingface.co),
-ModelScope (https://modelscope.cn),
-AIStudio (https://aistudio.baidu.com), or
-BOS (https://paddle-model-ecology.bj.bcebos.com).
-Otherwise, only local models can be used.
 加载ppocr的模型
 INFO: Could not find files for the given pattern(s).
 D:\Python\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:718: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
   warnings.warn(warning_message)
-Creating model: ('PP-LCNet_x1_0_doc_ori', '.\\official_models\\PP-LCNet_x1_0_doc_ori')
+Creating model: ('PP-LCNet_x1_0_doc_ori', None)
 WARNING: Logging before InitGoogleLogging() is written to STDERR
-I1001 22:11:24.324975  1728 onednn_context.cc:81] oneDNN v3.6.2
-Creating model: ('UVDoc', '.\\official_models\\UVDoc')
-Creating model: ('PP-DocLayout-L', '.\\official_models\\PP-DocLayout-L')
-Creating model: ('PP-LCNet_x1_0_table_cls', '.\\official_models\\PP-LCNet_x1_0_table_cls')
-Creating model: ('SLANeXt_wired', '.\\official_models\\SLANeXt_wired')
-Creating model: ('SLANeXt_wireless', '.\\official_models\\SLANeXt_wireless')
-Creating model: ('RT-DETR-L_wired_table_cell_det', '.\\official_models\\RT-DETR-L_wired_table_cell_det')
-Creating model: ('RT-DETR-L_wireless_table_cell_det', '.\\official_models\\RT-DETR-L_wireless_table_cell_det')
-Creating model: ('PP-OCRv4_server_det', '.\\official_models\\PP-OCRv4_server_det')
-Creating model: ('PP-OCRv4_server_rec_doc', '.\\official_models\\PP-OCRv4_server_rec_doc')
+I1001 23:55:50.091296 16492 onednn_context.cc:81] oneDNN v3.6.2
+Creating model: ('UVDoc', None)
+Creating model: ('PP-DocLayout-L', None)
+Creating model: ('PP-LCNet_x1_0_table_cls', None)
+Creating model: ('SLANeXt_wired', None)
+Creating model: ('SLANeXt_wireless', None)
+Creating model: ('RT-DETR-L_wired_table_cell_det', None)
+Creating model: ('RT-DETR-L_wireless_table_cell_det', None)
+Creating model: ('PP-OCRv4_server_det', None)
+Creating model: ('PP-OCRv4_server_rec_doc', None)
 Creating model: ('PP-LCNet_x1_0_doc_ori', None)
 模型预加载完成
 ppocr模型加载完毕!!!
