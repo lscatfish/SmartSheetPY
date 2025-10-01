@@ -86,7 +86,13 @@ def copy_file(source_path: str, target_path: str) -> bool:
 
 
 class DefFolder:
-    def __init__(self, root_dir: str, if_print: bool = False, extensions: list = None):
+    def __init__(self, root_dir: str, if_print: bool = False, extensions: str | list = None):
+        """
+        Args:
+            root_dir:目标文件夹路径
+            if_print:是否打印提示
+            extensions:按照给定后缀提取文件
+        """
         self.__root_dir = root_dir
         self.__if_print = if_print
         if self.__if_print: print('加载文件夹 \"' + self.__root_dir + '\"')
@@ -163,23 +169,24 @@ class DefFolder:
             filenames.append(split_filename_and_extension(file)[0])
         return filenames
 
-    def get_paths_by(self, extensions: list):
+    def get_paths_by(self, extensions: list | str) -> list[str]:
         files = []
+        extn = extensions if isinstance(extensions, list) else [extensions, ]
         for file in self.paths:
-            for ext in extensions:
+            for ext in extn:
                 if file.endswith(ext):
                     files.append(file)
                     break
         return files
 
-    def get_filenames_by(self, extensions: list):
+    def get_filenames_by(self, extensions: list | str) -> list[str]:
         filenames = []
         ps = self.get_paths_by(extensions)
         for file in ps:
             filenames.append(get_filename_with_extension(file))
         return filenames
 
-    def get_pure_filenames_by(self, extensions: list):
+    def get_pure_filenames_by(self, extensions: list | str) -> list[str]:
         pure_filenames = []
         ps = self.get_paths_by(extensions)
         for file in ps:

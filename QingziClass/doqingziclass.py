@@ -2,6 +2,7 @@ import copy
 
 import SSPY.fuzzy.search as fuzzy_search
 from SSPY.mypdf import PdfLoad
+from SSPY.mydocx import DocxLoad
 from SSPY.PersonneInformation import DefPerson
 from SSPY.globalconstants import GlobalConstants as gc
 from SSPY.myfolder import DefFolder
@@ -107,6 +108,7 @@ class DoQingziClass:
         self.__unknownSheet()
 
     def attSheet(self):
+        """签到汇总"""
 
         def __organize_imgs() -> dict[str, list[str]]:
             """整理照片以及其地址"""
@@ -185,6 +187,42 @@ class DoQingziClass:
         for cn in self.__classname_all:
             __save(__make_sheet(cn), cn)
         self.__unknownSheet()
+
+    def signforqcSheet(self):
+        """青字班报名统计"""
+        unknown_paths: list[str] = []
+        """未知（无法解析）的文件的路径"""
+
+        def __organize_files():
+            """收集报名的各种文件"""
+            folder = DefFolder(gc.dir_INPUT_SIGNFORQC_)
+            pdf_paths = folder.get_paths_by(gc.extensions_XLSX)
+            docx_paths = folder.get_paths_by(gc.extensions_DOCX)
+            return pdf_paths, docx_paths
+
+        def __parse_docx(paths: list[str]) -> list[DefPerson]:
+            nonlocal unknown_paths
+            from SSPY.parseperson import trans_sheet_to_person
+            pers: list[DefPerson] = []
+            for p in paths:
+                word = DocxLoad(p)
+                sh_per = word.get_sheet_without_enter()
+                if sh_per is not None:
+                    per=trans_sheet_to_person(sh_per)
+                    if '自' in p:
+                        per.set_information('报名方式','自主报名')
+                    elif '组织'in p:
+                        per.set_information('报名方式','组织推荐')
+                    elif '重庆大学团校' in p:
+                        per.set_information('报名方式','自主报名')
+                    pers.append(per)
+                else:
+                    unknown_paths.append(p)
+
+
+
+
+        pdf_paths, docx_paths = __organize_files()
 
 
     def __load_storage(self):

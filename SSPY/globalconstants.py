@@ -77,8 +77,26 @@ class GlobalConstants:
     dir_OUTPUT_APP_ = '.\\output\\app_out\\'
     dir_OUTPUT_ATT_ = '.\\output\\att_out\\'
     dir_OUTPUT_SIGNFORQC_ = '.\\output\\sign_for_QingziClass_out\\'
+    dir_OUTPUT_SIGNFORQC_unknown = '.\\output\\sign_for_QingziClass_out\\unknown\\'
+    dir_OUTPUT_SIGNFORQC_committee = '.\\output\\sign_for_QingziClass_out\\committee\\'
 
     dir_MODEL_NATURE_ = '.\\official_models\\'
+
+    dirs_need = (
+        dir_INPUT_,
+        dir_STORAGE_,
+        dir_OUTPUT_,
+        dir_INPUT_ALL_,
+        dir_INPUT_APP_,
+        dir_INPUT_ATTIMGS_,
+        dir_INPUT_SIGNFORQC_,
+        dir_OUTPUT_APP_,
+        dir_OUTPUT_ATT_,
+        dir_OUTPUT_SIGNFORQC_,
+        dir_OUTPUT_SIGNFORQC_unknown,
+        dir_OUTPUT_SIGNFORQC_committee,
+        dir_MODEL_NATURE_,
+    )
 
     extensions_XLSX = ['.xlsx', '.XLSX']
     extensions_DOCX = ['.docx', '.DOCX']
@@ -98,6 +116,13 @@ class GlobalConstants:
             if cn[0] in path:
                 return cn[1]
         return None  # 未找到匹配的结构
+
+    @staticmethod
+    def create_folders_must():
+        """创建必要文件夹"""
+        from .myfolder import create_nested_folders
+        for d in GlobalConstants.dirs_need:
+            create_nested_folders(d)
 
 
     def __setattr__(self, name, value):

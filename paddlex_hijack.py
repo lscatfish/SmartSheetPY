@@ -1,6 +1,6 @@
 """
 PaddleX 官方模型下载目录劫持器
-author : you
+author : lscatfish
 usage:
     import paddlex_hijack      # 必须先导入
     import paddlex
@@ -55,3 +55,5 @@ def _hijacked_get_model_local_path(self, model_name: str) -> pathlib.Path:
 
 
 _ModelManager._get_model_local_path = _hijacked_get_model_local_path
+
+a: int = 0

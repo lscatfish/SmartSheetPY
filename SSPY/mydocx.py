@@ -1,14 +1,15 @@
 import copy
-from docx import Document
 from docx.oxml.ns import qn
-
-from SSPY.helperfunction import clean_enter
 
 
 class DocxLoad:
     """解析docx文件"""
 
     def __init__(self, _path: str = None):
+        """
+        Args:
+            _path: 文件路径
+        """
         self.__path = _path
         self.__sheets = []
         if self.__path is not None:
@@ -36,6 +37,7 @@ class DocxLoad:
     @staticmethod
     def parse_docx_tables(file_path: str):
         """解析Word表格，处理合并单元格，返回[[行1内容], [行2内容], ...]"""
+        from docx import Document
         doc = Document(file_path)
         all_tables = []
 
@@ -70,12 +72,12 @@ class DocxLoad:
         return all_tables
 
     @property
-    def sheets(self):
+    def sheets(self) -> list[list[list]]:
         return copy.deepcopy(self.__sheets)
 
     @property
-    def sheets_without_enter(self):
-        from helperfunction import clean_enter
+    def sheets_without_enter(self) -> list[list[list]]:
+        from .helperfunction import clean_enter
         outs = clean_enter(self.__sheets)
         return outs
 
@@ -84,7 +86,8 @@ class DocxLoad:
         return self.__path
 
     def get_sheet(self, index = None):
-        from helperfunction import check_value
+        """从文件中按照index内容读取一个表格"""
+        from .helperfunction import check_value
         if isinstance(index, int):
             if len(self.__sheets) > index:
                 return copy.deepcopy(self.__sheets[index])
@@ -97,14 +100,11 @@ class DocxLoad:
                 if check_value(in_list = sheet, target_value = ind, part = True): return copy.deepcopy(sheet)
         return None
 
-    def get_sheet_without_enter(self, index = None):
-        from helperfunction import clean_enter
+    def get_sheet_without_enter(self, index = None) -> list[list] | None:
+        """从文件中按照index内容读取一个表格"""
+        from .helperfunction import clean_enter
         outs = clean_enter(self.get_sheet(index = index))
         if isinstance(outs, list):
             return outs
         else:
             return None
-
-# a=DocxLoad('刘.docx')
-# s=a.get_sheet('姓名')
-# print(s)

@@ -137,23 +137,10 @@ class PPOCRImgByModel:
 
     def __init__(self):
         """加载模型"""
-        # import paddleocr._common_args as _ca
-        # import shutil
-        #
-        # # 本地已有权重目录
-        # LOCAL_DIR = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori'
-        #
-        # # 把官方下载函数整体替换成“复制本地目录”
-        # def _fake_download_official_model(model_name, cache_dir):
-        #     dst = os.path.join(cache_dir, model_name)
-        #     if not os.path.exists(dst):
-        #         shutil.copytree(LOCAL_DIR, dst, dirs_exist_ok = True)
-        #     return dst
-        #
-        # _ca.download_official_model = _fake_download_official_model
-
         print('加载ppocr的模型')
         # 这个模型就是一坨
+        # 这里使用本地时会有bug：https://github.com/PaddlePaddle/PaddleOCR/issues/16606
+        # doc_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori'，这个模型会被加载两遍
         self.__pipeline = TableRecognitionPipelineV2(
             # layout_detection_model_dir = gc.dir_MODEL_NATURE_ + 'PP-DocLayout-L',
             # layout_detection_model_name = 'PP-DocLayout-L',
@@ -179,10 +166,8 @@ class PPOCRImgByModel:
             # doc_unwarping_model_name = 'UVDoc',
             # use_doc_orientation_classify = True,
             use_doc_unwarping = True,
-
             # table_orientation_classify_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori',
             # table_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori',
-
         )
         # 预加载模型：用一张空图触发首次predict，强制加载所有模型
         self.__preload_model()
@@ -213,10 +198,7 @@ class PPOCRImgByModel:
             return False
         pil_img = PIL.Image.open(path).convert('RGB')
         img_np = numpy.array(pil_img)
-        self.__output = self.__pipeline.predict(
-            input = img_np,
-
-        )
+        self.__output = self.__pipeline.predict(input = img_np)
         if self.__output is None:
             return False
         self.__isOK = True
