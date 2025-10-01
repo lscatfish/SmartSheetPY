@@ -185,6 +185,7 @@ class DefPerson:
             self.__information[key] = value
 
     def get_information(self, inkey: str, if_fuzzy: bool = False) -> str:
+        """查找一个键，无论这个键是否存在都返回空字符"""
         key = self.get_stdkey(inkey, if_fuzzy)
         if key is None:
             return self.__information.get(inkey, '')

@@ -90,14 +90,21 @@ def html_to_list(html_str: str) -> list[list[str]]:
     return clear_empty_lines(table_list)
 
 
+def rotation_checklist_content(table: list[list[str]], header: list[str]) -> list[list[str]]:
+    """检查表格中的内容"""
+
+
+
 class PPOCRImgByModel:
     """进行ppocr img，所有解析方式全部采用模型"""
 
     def __init__(self):
         """加载模型"""
         print('加载ppocr的模型')
+        # 这个模型就是一坨
         self.__pipeline = TableRecognitionPipelineV2(
             use_doc_orientation_classify = True,
+            use_doc_unwarping = True
         )
         self.__output = None
         self.__sheet: list[list[str]] = []
@@ -106,7 +113,7 @@ class PPOCRImgByModel:
 
     def predict(self, path, clear: bool = False):
         self.__isOK = False
-        if clear: self.__sheet = []
+        if clear: self.__sheet.clear()
         import numpy
         if not os.path.exists(path):
             print('\"' + path + '\" 不存在')
@@ -144,10 +151,11 @@ class PPOCRImgByModel:
         else:
             return None
 
-    def get_personList(self, classname: str, if_fuzzy = False) -> list[DefPerson]:
+    def get_personList(self, classname: str, if_fuzzy = False, ifp = False) -> list[DefPerson]:
         """
         输出为人员列表
         Parameters:
+            ifp: 是否打印解析出的sheet
             if_fuzzy (bool):是否启用键的部分检索
             classname (str):班级
         Return:
@@ -156,6 +164,9 @@ class PPOCRImgByModel:
         pers: list[DefPerson] = []
         if not self.__isOK: return pers
         from .myxlsx import get_header_from_xlsx, trans_list_to_person
+        if ifp:
+            for row in self.__sheet:
+                print(row)
         header, sheet = get_header_from_xlsx(self.sheet_all)
 
         for row in sheet:
@@ -165,5 +176,9 @@ class PPOCRImgByModel:
                     in_info = row,
                     if_fuzzy = if_fuzzy,
                     classname = classname))
-        self.__sheet = []
+        self.__sheet.clear()
         return pers
+
+
+class PPOCRImgByAlgorithm:
+    """通过算法来解析表格，仅使用部分模型"""

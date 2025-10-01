@@ -148,9 +148,9 @@ class XlsxWrite:
         path: str = None,
         sheet: list = None,
         widths: list[float] = None,
-        height: int = None,
+        height: float = None,
         title: str = '',
-        height_title: int = 40,
+        height_title: float = 40,
         font_regular: Font = gc.fontRegularGBK,
         font_title: Font = gc.fontTitleGBK,
         font_header: Font = gc.fontHeaderGBK,
@@ -259,7 +259,7 @@ class XlsxWrite:
             ws.cell(row = 1, column = 1).value = self.__title
             ws.cell(row = 1, column = 1).font = self.__fontTitle
             ws.cell(row = 1, column = 1).alignment = self.__alignment
-            ws.row_dimensions[1].height = self.__heightTitle
+            ws.row_dimensions[1].height = self.__heightTitle if self.__heightTitle > 0 else 25
         wb.save(self.__path)
         wb.close()
         if ifp: print(' - Done!')
@@ -365,8 +365,24 @@ class XlsxWrite:
         return self.__height
 
     @height.setter
-    def height(self, height: int):
-        self.__height = height
+    def height(self, height: float):
+        if height > 0:
+            self.__height = height
+        else:
+            self.__height = 25
+
+    @property
+    def heightTitle(self):
+        return self.__heightTitle
+
+    @heightTitle.setter
+    def heightTitle(self, value: float):
+        if value <= 0:
+            self.__heightTitle = 25
+            self.__hasTitle = False
+        else:
+            self.__heightTitle = value
+            self.__hasTitle = True
 
     @property
     def hasHeader(self):

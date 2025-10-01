@@ -107,7 +107,7 @@ class DoQingziClass:
         self.__unknownSheet()
 
     def attSheet(self):
-        self.__load_storage()
+
         def __organize_imgs() -> dict[str, list[str]]:
             """整理照片以及其地址"""
             classname_imgpath: dict[str, list[str]] = {}
@@ -115,11 +115,74 @@ class DoQingziClass:
             for p in folder.paths:
                 for cn in gc.cns:
                     if cn[0] in p:
-                        classname_imgpath[cn[1]] = p
+                        if classname_imgpath.get(cn[1], '') == '':
+                            classname_imgpath[cn[1]] = [p, ]
+                        else:
+                            classname_imgpath[cn[1]].append(p)
+            # print(classname_imgpath)
             return classname_imgpath
-        def __parse_imgs(c_i:dict[str, list[str]):
-            pass
 
+        def __parse_imgs(cn_ip: dict[str, list[str]]) -> list[DefPerson]:
+            persons_att: list[DefPerson] = []
+            # 启用ocr
+            from SSPY.myimg import PPOCRImgByModel
+            ocr = PPOCRImgByModel()
+            for cn in cn_ip.keys():
+                for ip in cn_ip[cn]:
+                    ocr.predict(ip)
+                persons_att.extend(ocr.get_personList(cn, ifp = True))
+            return persons_att
+
+        def __person_checkin(persons_att: list[DefPerson]):
+            """检查是否签到"""
+            for per_att in persons_att:
+                per_all = self.search(per_att, push_unknown = True)
+                if per_all is not None:
+                    qd = per_all.get_information('签到')
+                    if qd != '' and qd != 'None':
+                        per_all.ifcheck = True
+
+        def __make_sheet(classname: str) -> list[list[str]]:
+            """制表"""
+            in_header = [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式']
+            out: list[list[str]] = [
+                [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式', gc.chstrCheckIn, '备注'], ]
+            for per in self.__persons_all:
+                if per.classname == classname:
+                    l = per.to_list(in_header)
+                    if per.ifcheck:
+                        l.append('已签到')
+                    else:
+                        l.append('')
+                    if per.ifsign:
+                        l.append('')
+                    else:
+                        l.append('未报名')
+                    out.append(l)
+            return out
+
+        def __save(sheet: list[list[str]], classname: str):
+            """保存签到表"""
+            from openpyxl.styles import Font, Border, Alignment
+            writer = XlsxWrite(
+                path = copy.copy(gc.dir_OUTPUT_ATT) + classname + '线下签到汇总表.xlsx',
+                sheet = sheet,
+                widths = [40, 40],
+                height = 25,
+                font_regular = Font(name = '宋体', size = 16)
+            )
+            writer.heightTitle = 45
+            writer.title = classname + '线下签到汇总表'
+            writer.fontTitle = Font(name = '方正小标宋简体', size = 26)
+            writer.border = gc.borderThinBlack
+            writer.write()
+
+        self.__load_storage()
+        pers_att = __parse_imgs(__organize_imgs())
+        __person_checkin(pers_att)
+        for cn in self.__classname_all:
+            __save(__make_sheet(cn), cn)
+        self.__unknownSheet()
 
 
     def __load_storage(self):
