@@ -51,19 +51,24 @@ class DoQingziClass:
             print('1.生成签到表')
             print('2.生成汇总表')
             print('3.统计青字班报名情况')
-            c = int(input('请选择：'))
-            if c == 1:
+            c = input('请选择：')
+            if len(c) == 0:
+                print(end = '\n')
+                print('你的选择错误')
+                sleep(1)
+                clear_console()
+            elif int(c) == 1:
                 break
-            elif c == 2:
+            elif int(c) == 2:
                 break
-            elif c == 3:
+            elif int(c) == 3:
                 break
             else:
                 print(end = '\n')
                 print('你的选择错误')
                 sleep(1)
                 clear_console()
-        return c
+        return int(c)
 
     def __load_person_all(self):
         """加载所有的学员信息"""

@@ -1,4 +1,5 @@
 ﻿import paddlex_hijack
+from SSPY.helperfunction import press_any_key_to_continue
 
 """调用一个a，避免idea把第一行优化删除"""
 a = paddlex_hijack.a
@@ -15,3 +16,4 @@ from QingziClass.doqingziclass import DoQingziClass
 
 qc = DoQingziClass()
 qc.start()
+press_any_key_to_continue()
