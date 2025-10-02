@@ -2,11 +2,12 @@
 from dis import name
 from functools import singledispatchmethod
 from .globalconstants import GlobalConstants as gc
+import types
 
 
 class DefPerson:
     """表示一个人的结构体类，包含基本个人报名信息"""
-    __keyWordTuple = {
+    __raw_key_word = {
         gc.chstrClassname         : (gc.chstrClassname, '班级名', '班级名字',
                                      '青字班', '青字班级', '青字班级名', '青字班级名字',
                                      '报名青字班', '报名班级'),
@@ -25,9 +26,10 @@ class DefPerson:
         gc.chstrEthnicity         : (gc.chstrEthnicity,),
         gc.chstrClub              : (gc.chstrClub, '所在社团', '组织', '所在组织',
                                      '所属组织', '所属社团'),
-        gc.chstrSignPosition      : (gc.chstrSignPosition, '报名职务', '报名位置'),
+        gc.chstrSignPosition      : (gc.chstrSignPosition, '报名职务', '报名位置', '报名岗位'),
         gc.chstrGender            : (gc.chstrGender,),
 
+        gc.chstrRegistrationMethod: (gc.chstrRegistrationMethod,),
         gc.chstrCheckIn           : (gc.chstrCheckIn,),
         gc.chstrNote              : (gc.chstrNote,),
         gc.chstrPersonalProfile   : (gc.chstrPersonalProfile,),
@@ -35,8 +37,9 @@ class DefPerson:
         gc.chstrPersonalStrengths : (gc.chstrPersonalStrengths,),
         gc.chstrWorkExperience    : (gc.chstrWorkExperience,),
         gc.chstrAwardsAndHonors   : (gc.chstrAwardsAndHonors,),
-        gc.chstrMainAchievements  : (gc.chstrMainAchievements,),
+        gc.chstrMainAchievements  : (gc.chstrMainAchievements,)
     }
+    __keyWordTuple = types.MappingProxyType(__raw_key_word)
 
     def __init__(self,
                  cname: str = None,
@@ -52,7 +55,7 @@ class DefPerson:
         studentID : None
             学号
         """
-        self.__classname: str
+        self.__classname: str = ''
         self.__ifcheck = False
         self.__ifsign = False
         self.__information = {
@@ -148,35 +151,15 @@ class DefPerson:
                 for cn in gc.cns:
                     if cn[0] in self.__classname:
                         self.__classname = cn[1]
-                # if gc.cXuan[0] in self.__classname:
-                #     self.__classname = gc.cXuan[1]
-                # elif gc.cWen[0] in self.__classname:
-                #     self.__classname = gc.cWen[1]
-                # elif gc.cGu[0] in self.__classname:
-                #     self.__classname = gc.cGu[1]
-                # elif gc.cXue[0] in self.__classname:
-                #     self.__classname = gc.cXue[1]
-                # elif gc.cYi[0] in self.__classname:
-                #     self.__classname = gc.cYi[1]
-                # elif gc.cFeng[0] in self.__classname:
-                #     self.__classname = gc.cFeng[1]
-                # elif gc.cGong[0] in self.__classname:
-                #     self.__classname = gc.cGong[1]
-                # elif gc.cShe[0] in self.__classname:
-                #     self.__classname = gc.cShe[1]
-                # elif gc.cShu[0] in self.__classname:
-                #     self.__classname = gc.cShu[1]
-                # elif gc.cYing[0] in self.__classname:
-                #     self.__classname = gc.cYing[1]
-                # elif gc.cZhi[0] in self.__classname:
-                #     self.__classname = gc.cZhi[1]
-                # elif gc.cZu[0] in self.__classname:
-                #     self.__classname = gc.cZu[1]
 
-    def set_information(self, inkey: str, value: str, if_fuzzy: bool = False):
+    def set_information(self,
+                        inkey: str,
+                        value: str,
+                        inkey_as_sub: bool = False,
+                        stdkey_as_sub: bool = False):
         """添加信息"""
         if value == 'None': return
-        key = self.get_stdkey(inkey, if_fuzzy)
+        key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
         if key is None:
             self.__information[inkey] = value
         elif key == gc.chstrClassname:
@@ -184,33 +167,53 @@ class DefPerson:
         else:
             self.__information[key] = value
 
-    def get_information(self, inkey: str, if_fuzzy: bool = False) -> str:
+    def get_information(
+        self, inkey: str,
+        inkey_as_sub: bool = False,
+        stdkey_as_sub: bool = False) -> str:
         """查找一个键，无论这个键是否存在都返回空字符"""
-        key = self.get_stdkey(inkey, if_fuzzy)
-        if key is None:
-            return self.__information.get(inkey, '')
-        elif key == gc.chstrClassname:
-            return self.__classname
+        if self.__information.get(inkey, None) is None:
+            key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
+            if key is None:
+                return self.__information.get(inkey, '')
+            elif key == gc.chstrClassname:
+                return self.__classname
+            else:
+                return self.__information.get(key, '')
         else:
-            return self.__information.get(key, '')
+            return self.__information.get(inkey, '')
 
 
     @staticmethod
-    def get_stdkey(inkey: str, if_fuzzy: bool = False) -> str | None:
-        """获取标准键"""
+    def get_stdkey(
+        inkey: str,
+        inkey_as_sub: bool = False,
+        stdkey_as_sub: bool = False) -> str | None:
+        """
+        获取标准键，
+        一般来说应该将输入键作为字串
+        Args:
+            inkey:查找的键
+            inkey_as_sub:查找键作为字串匹配
+            stdkey_as_sub:标准键作为字串匹配
+        Returns:
+            标准键参数
+        """
         for k in DefPerson.__keyWordTuple.keys():
             for item in DefPerson.__keyWordTuple[k]:
                 if inkey == item:  # 采用字串检测
                     return k
-        if if_fuzzy:
-            for k in DefPerson.__keyWordTuple.keys():
-                for item in DefPerson.__keyWordTuple[k]:
-                    if item in inkey:
-                        return k
+        if inkey_as_sub:
             for k in DefPerson.__keyWordTuple.keys():
                 for item in DefPerson.__keyWordTuple[k]:
                     if inkey in item:
                         return k
+        if stdkey_as_sub:
+            for k in DefPerson.__keyWordTuple.keys():
+                for item in DefPerson.__keyWordTuple[k]:
+                    if item in inkey:
+                        return k
+
         return None
 
     @property
@@ -410,6 +413,21 @@ class DefPerson:
         for s in in_std:
             outList.append(self.get_information(s))
         return outList
+
+    def merge(self, other: 'DefPerson'):
+        """合并other的信息到this"""
+        self.__ifsign = other.ifsign
+        self.__ifcheck = other.ifcheck
+        oinfo = other.information
+        for key in oinfo:
+            self_key_value = self.get_information(key)
+            if self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
+                continue
+            else:  # 为空
+                self.__information[key] = oinfo[key]
+        if '地址' not in self.__information:
+            self.__information['地址'] = ''
+        self.__information['地址'] += oinfo.get('地址', '')
 
 
 def is_studentID(s: str):
