@@ -1,5 +1,14 @@
 import copy
+import os
+import tempfile
+import zipfile
+from pathlib import Path
+
 from docx.oxml.ns import qn
+import xml.etree.ElementTree as ET
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DocxLoad:
@@ -11,9 +20,66 @@ class DocxLoad:
             _path: 文件路径
         """
         self.__path = _path
+        print(_path)
         self.__sheets = []
         if self.__path is not None:
             self.__sheets = self.parse_docx_tables(self.__path)
+
+    @staticmethod
+    def repair_docx_for_docx(src_path: Path) -> Path:
+        with zipfile.ZipFile(src_path, 'r') as zin:
+            # ① 真实存在集合
+            real_names = set(zin.namelist())
+
+            with tempfile.NamedTemporaryFile(suffix = '.docx', delete = False) as tmp:
+                tmp_path = tmp.name
+
+            with zipfile.ZipFile(tmp_path, 'w', compression = zipfile.ZIP_DEFLATED) as zout:
+                for info in zin.infolist():
+                    try:
+                        data = zin.read(info)
+                    except zipfile.BadZipFile:
+                        print(f"[WARN] 跳过损坏 entry：{info.filename}")
+                        continue
+
+                    # ② 对 .rels 文件做“幽灵引用”清理
+                    if info.filename.endswith('.rels'):
+                        data = DocxLoad._sanitize_rels(data, info.filename, real_names)
+
+                    zout.writestr(info, data)
+
+        return Path(tmp_path)
+
+    @staticmethod
+    def _sanitize_rels(data: bytes, rels_name: str, real_names: set[str]) -> bytes:
+        # 定义核心关系类型（只保留 key，不保留 URL 缩短）
+        CORE_RELS = {
+            'officeDocument',  # _rels/.rels -> word/document.xml
+            'styles', 'fontTable', 'settings', 'theme', 'webSettings',  # word/_rels/document.xml.rels
+            'footnotes', 'endnotes', 'header', 'footer',  # 可选但建议保留
+        }
+        try:
+            root = ET.fromstring(data)
+            namespace = {'r': 'http://schemas.openxmlformats.org/package/2006/relationships'}
+            for rel in root.findall('r:Relationship', namespace):
+                target = rel.get('Target')
+                rel_type = rel.get('Type', '').split('/')[-1]  # 取最后一段
+                if not target:
+                    continue
+
+                # ① 核心关系绝不删除
+                if rel_type in CORE_RELS:
+                    continue
+
+                # ② 非核心关系才检查文件是否存在
+                base = Path(rels_name).parent
+                full = (base / target).resolve().as_posix()
+                if full not in real_names:
+                    print(f"[WARN] 删除幽灵引用：{rels_name} -> {target}")
+                    root.remove(rel)
+            return ET.tostring(root, encoding = 'utf-8', xml_declaration = True)
+        except ET.ParseError:
+            return data
 
     @staticmethod
     def get_merge_info(cell):
@@ -36,40 +102,64 @@ class DocxLoad:
 
     @staticmethod
     def parse_docx_tables(file_path: str):
-        """解析Word表格，处理合并单元格，返回[[行1内容], [行2内容], ...]"""
         from docx import Document
-        doc = Document(file_path)
-        all_tables = []
+        file_path = Path(file_path)
+        tmp_path = None
+        doc = None
+        try:
+            tmp_path = DocxLoad.repair_docx_for_docx(file_path)
 
-        for table in doc.tables:
-            table_data = []
-            # 记录已处理的单元格位置，避免重复添加
-            processed = set()
+            doc = Document(tmp_path)
+            all_tables = []
 
-            for row_idx, row in enumerate(table.rows):
-                row_data = []
-                for col_idx, cell in enumerate(row.cells):
-                    # 如果该单元格已被合并处理过，跳过
-                    if (row_idx, col_idx) in processed:
-                        continue
+            for tbl_idx, table in enumerate(doc.tables):
+                try:
+                    table_data = []
+                    processed = set()
 
-                    content = cell.text.strip()
-                    row_data.append(content)
+                    for row_idx, row in enumerate(table.rows):
+                        try:
+                            row_data = []
+                            for col_idx, cell in enumerate(row.cells):
+                                if (row_idx, col_idx) in processed:
+                                    continue
+                                row_data.append(cell.text.strip())
+                                # 处理水平合并 …
+                                is_h, span, is_v = DocxLoad.get_merge_info(cell)
+                                if is_h:
+                                    for i in range(1, span):
+                                        processed.add((row_idx, col_idx + i))
+                            table_data.append(row_data)
+                        except ValueError as e:
+                            # ① 单行坏掉，只丢这一行
+                            logger.warning(f"表格 {tbl_idx} 第 {row_idx} 行结构损坏，已跳过：{e}")
+                            continue
 
-                    # 获取合并信息
-                    is_horizontal, span, is_vertical = DocxLoad.get_merge_info(cell)
+                    all_tables.append(table_data)
 
-                    # 标记水平合并的单元格为已处理
-                    if is_horizontal:
-                        for i in range(1, span):
-                            processed.add((row_idx, col_idx + i))
+                except ValueError as e:
+                    # ② 整个表格坏掉，直接丢
+                    logger.warning(f"表格 {tbl_idx} 完全损坏，已跳过：{e}")
+                    continue
 
-                    # 垂直合并暂不处理（如需完整处理需更复杂逻辑，此处只保证水平去重）
+            return all_tables
 
-                table_data.append(row_data)
+        except ValueError as e:
+            # 任何“不是 Word”的异常都抓
+            if 'content type' in str(e).lower() or 'officeDocument' in str(e):
+                # 再二次确认是不是 Excel
+                with zipfile.ZipFile(tmp_path, 'r') as z:
+                    ct = z.read('[Content_Types].xml').decode('utf-8', 'ignore').lower()
+                    if 'spreadsheetml.main' in ct:
+                        logging.info(f'{file_path.name} 实为 Excel，已跳过')
+                        return []  # 静默跳过
+                return []
 
-            all_tables.append(table_data)
-        return all_tables
+        finally:
+            if doc is not None:
+                del doc
+            if tmp_path:
+                tmp_path.unlink(missing_ok = True)
 
     @property
     def sheets(self) -> list[list[list]]:
@@ -85,7 +175,7 @@ class DocxLoad:
     def path(self):
         return self.__path
 
-    def get_sheet(self, index = None):
+    def get_sheet(self, index = None) -> list[list[str]]:
         """从文件中按照index内容读取一个表格"""
         from .helperfunction import check_value
         if isinstance(index, int):
@@ -103,7 +193,10 @@ class DocxLoad:
     def get_sheet_without_enter(self, index = None) -> list[list] | None:
         """从文件中按照index内容读取一个表格"""
         from .helperfunction import clean_enter
-        outs = clean_enter(self.get_sheet(index = index))
+        sh = self.get_sheet(index = index)
+        if sh is None:
+            return None
+        outs = clean_enter(sh)
         if isinstance(outs, list):
             return outs
         else:
