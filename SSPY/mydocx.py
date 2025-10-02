@@ -175,22 +175,18 @@ class DocxLoad:
     def path(self):
         return self.__path
 
-    def get_sheet(self, index = None) -> list[list[str]]:
+    def get_sheet(self, index:int|str = None) -> list[list[str]]|None:
         """从文件中按照index内容读取一个表格"""
-        from .helperfunction import check_value
+        from fuzzy.search import searched_recursive as if_in
         if isinstance(index, int):
             if len(self.__sheets) > index:
                 return copy.deepcopy(self.__sheets[index])
         if isinstance(index, str):  # 按照关键值查找sheet
             for sheet in self.__sheets:
-                if check_value(in_list = sheet, target_value = index, part = False): return copy.deepcopy(sheet)
-        if isinstance(index, list):
-            ind = copy.deepcopy(index)
-            for sheet in self.__sheets:
-                if check_value(in_list = sheet, target_value = ind, part = True): return copy.deepcopy(sheet)
+                if if_in(index, sheet):return copy.deepcopy(sheet)
         return None
 
-    def get_sheet_without_enter(self, index = None) -> list[list] | None:
+    def get_sheet_without_enter(self, index:int|str = None) -> list[list] | None:
         """从文件中按照index内容读取一个表格"""
         from .helperfunction import clean_enter
         sh = self.get_sheet(index = index)

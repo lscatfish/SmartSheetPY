@@ -13,6 +13,7 @@ class PdfLoad:
         self,
         pdf_path: str = None,
         table_only: bool = True):
+        print(pdf_path)
         self.__path = pdf_path
         self.__tableOnly = table_only
         self.__sheets = []
@@ -57,18 +58,23 @@ class PdfLoad:
             return copy.deepcopy(outp)
         return None
 
-    def get_sheet(self, index = None):
+    def get_sheet(self, index: int | str = None, part = False) -> list[list[str]] | None:
+        """
+        Args:
+            index:按照关键词获取
+            part:是否启用部分匹配
+        Returns:
+            具有特征值的一个表
+        """
+        from fuzzy.search import searched_recursive as if_in
         if not self.__tableOnly: return None
         if isinstance(index, int):
             if len(self.__sheets) > index:
                 return copy.deepcopy(self.__sheets[index])
         if isinstance(index, str):  # 按照关键值查找sheet
             for sheet in self.__sheets:
-                if check_value(in_list = sheet, target_value = index, part = False): return copy.deepcopy(sheet)
-        if isinstance(index, list):
-            ind=copy.deepcopy(index)
-            for sheet in self.__sheets:
-                if check_value(in_list = sheet, target_value = ind, part = True): return copy.deepcopy(sheet)
+                if if_in(index, sheet, target_as_sub = part, lib_as_sub = part):
+                    return copy.deepcopy(sheet)
         return None
 
     def __extract_tables(self):
@@ -76,7 +82,7 @@ class PdfLoad:
             if len(mypdf.pages) <= 0: return False
             tables = []
             for page in mypdf.pages:
-                tables.append(page.extract_tables())
+                tables.extend(page.extract_tables())
             self.__sheets = clean_enter(tables)
         return True
 
