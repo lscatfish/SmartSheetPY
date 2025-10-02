@@ -12,7 +12,8 @@ def trans_list_to_person(
     header: tuple | list,
     in_info: list,
     classname: str = None,
-    if_fuzzy: bool = False) -> DefPerson | None:
+    inkey_as_sub: bool = False,
+    stdkey_as_sub: bool = True) -> DefPerson | None:
     per = DefPerson()
     info = copy.deepcopy(in_info)
     if classname is not None:
@@ -20,19 +21,23 @@ def trans_list_to_person(
     for i in range(len(header)):
         if i >= len(info): break
         if header[i] == '序号': continue
-        per.set_information(header[i], str(info[i]).strip(), if_fuzzy = if_fuzzy)
-    if per.classname is None or per.classname == "": return None
-    if per.name == '' or per.studentID == '': return None
+        per.set_information(
+            header[i],
+            str(info[i]).strip(),
+            inkey_as_sub = inkey_as_sub,
+            stdkey_as_sub = stdkey_as_sub)
+    if per.classname is None or per.classname == "" or per.classname == 'None': return None
+    if per.name == '' and per.studentID == '': return None
     per.optimize()
     return per
 
 
-def get_header_from_xlsx(in_sheet: list, if_fuzzy: bool = False) -> tuple | None:
+def get_header_from_xlsx(in_sheet: list, stdkey_as_sub: bool = True) -> tuple | None:
     """
     从in_sheet中获取表头，并返回去除表头后的列表和表头元组
 
     Parameters:
-        if_fuzzy: 是否启用模糊检索
+        stdkey_as_sub: 自字典库判断表头
         in_sheet: 包含表格数据的列表（每行是一个子列表）
 
     Returns:
@@ -43,12 +48,12 @@ def get_header_from_xlsx(in_sheet: list, if_fuzzy: bool = False) -> tuple | None
     header = None
     has_found = False  # 是否找到表头
     new_sheet = []
-
+    """表头重复打印也会被清除"""
     for i, row in enumerate(in_sheet):
         if not has_found:
             # 检查当前行是否包含表头标识（通过DefPerson.get_stdkey判断）
             for cell in row:
-                if DefPerson.get_stdkey(cell, if_fuzzy = if_fuzzy) is not None:
+                if DefPerson.get_stdkey(cell, stdkey_as_sub = stdkey_as_sub) is not None:
                     header = tuple(row)  # 表头所在行转换为元组
                     has_found = True
                     break  # 找到表头后跳出单元格循环
@@ -119,9 +124,11 @@ class XlsxLoad:
         """返回解析到的sheet"""
         return copy.deepcopy(self.__sheet)
 
-    def get_personList(self, if_fuzzy = False):
+    def get_personList(self,
+                       inkey_as_sub: bool = False,
+                       stdkey_as_sub: bool = False):
         pers: list[DefPerson] = []
-        header, only_sheet = get_header_from_xlsx(self.sheet, if_fuzzy = if_fuzzy)
+        header, only_sheet = get_header_from_xlsx(self.sheet, stdkey_as_sub = stdkey_as_sub)
         if self.__header is None and header is None:
             print('文件 \"' + self.__path + '\" 未找到表头')
             return pers
@@ -129,12 +136,19 @@ class XlsxLoad:
             header = self.__header
         if self.__const_classname:
             for row in only_sheet:
-                p = trans_list_to_person(header, row, classname = self.__classname, if_fuzzy = if_fuzzy)
+                p = trans_list_to_person(
+                    header, row,
+                    classname = self.__classname,
+                    inkey_as_sub = inkey_as_sub,
+                    stdkey_as_sub = stdkey_as_sub)
                 if p is not None:
                     pers.append(p)
         else:
             for row in only_sheet:
-                p = trans_list_to_person(header, row, if_fuzzy = if_fuzzy)
+                p = trans_list_to_person(
+                    header, row,
+                    inkey_as_sub = inkey_as_sub,
+                    stdkey_as_sub = stdkey_as_sub)
                 if p is not None:
                     pers.append(p)
         return pers

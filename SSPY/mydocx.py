@@ -177,7 +177,7 @@ class DocxLoad:
 
     def get_sheet(self, index:int|str = None) -> list[list[str]]|None:
         """从文件中按照index内容读取一个表格"""
-        from fuzzy.search import searched_recursive as if_in
+        from .fuzzy.search import searched_recursive as if_in
         if isinstance(index, int):
             if len(self.__sheets) > index:
                 return copy.deepcopy(self.__sheets[index])

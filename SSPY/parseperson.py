@@ -3,7 +3,10 @@ import copy
 from .PersonneInformation import DefPerson
 
 
-def trans_sheet_to_person(in_sheet: list, classname: str = None) -> DefPerson:
+def trans_sheet_to_person(
+    in_sheet: list[list[str]],
+    classname: str = None,
+    inkey_as_sub = False, stdkey_as_sub = False) -> DefPerson:
     per = DefPerson()
     sheet = copy.deepcopy(in_sheet)
     if classname is not None:
@@ -12,7 +15,8 @@ def trans_sheet_to_person(in_sheet: list, classname: str = None) -> DefPerson:
     for row in sheet:
         i = 0
         while i < len(row):
-            stdkey = DefPerson.get_stdkey(row[i])
+            stdkey = DefPerson.get_stdkey(
+                row[i], inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
             if stdkey is not None:
                 # 将索引拉取到下一个非None
                 i += 1
@@ -28,8 +32,3 @@ def trans_sheet_to_person(in_sheet: list, classname: str = None) -> DefPerson:
                 i += 1
     per.optimize()
     return per
-
-
-
-
-

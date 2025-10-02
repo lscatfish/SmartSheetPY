@@ -66,7 +66,7 @@ class PdfLoad:
         Returns:
             具有特征值的一个表
         """
-        from fuzzy.search import searched_recursive as if_in
+        from .fuzzy.search import searched_recursive as if_in
         if not self.__tableOnly: return None
         if isinstance(index, int):
             if len(self.__sheets) > index:

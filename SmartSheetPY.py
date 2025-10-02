@@ -14,7 +14,7 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding = 'utf-8', line_buffer
 from QingziClass.doqingziclass import DoQingziClass
 
 qc = DoQingziClass()
-qc.attSheet()
+qc.signforqcSheet()
 
 
 # from paddleocr import PaddleOCR

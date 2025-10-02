@@ -3,7 +3,7 @@ from openpyxl.styles import Font, Side, Border, Alignment
 
 class GlobalConstants:
     """全局常量储存"""
-    chstrClassname = '班级'
+    chstrQClassname = '青字班'
     chstrName = '姓名'
     chstrGrade = '年级'
     chstrStudentID = '学号'
@@ -16,8 +16,10 @@ class GlobalConstants:
     chstrEmail = '邮箱'
     chstrEthnicity = '民族'
     chstrClub = '社团'
-    chstrSignPosition = '报名岗位'
+    chstrSignPosition = '应聘岗位'
     chstrGender = '性别'
+
+    chstrRegistrationMethod = '报名方式'
 
     chstrNote = '备注'
     chstrCheckIn = '签到'
@@ -100,6 +102,7 @@ class GlobalConstants:
 
     extensions_XLSX = ['.xlsx', '.XLSX']
     extensions_DOCX = ['.docx', '.DOCX']
+    extensions_PDF = ['.pdf', '.PDF']
     extensions_IMG = [".jpg", ".png", ".jpeg", ".tiff", ".tif ",
                       ".jpe", ".bmp", ".dib", ".webp", ".raw"]
 

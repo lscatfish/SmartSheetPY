@@ -257,7 +257,8 @@ class PPOCRImgByModel:
                 trans_list_to_person(
                     header = header,
                     in_info = row,
-                    if_fuzzy = if_fuzzy,
+                    inkey_as_sub = True,
+                    stdkey_as_sub = True,
                     classname = classname))
         self.__sheet.clear()
         return pers

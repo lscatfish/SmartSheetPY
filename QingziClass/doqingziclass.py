@@ -20,7 +20,7 @@ class DoQingziClass:
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
         self.__classname_all: list[str] = []  # 所有的班级名
         self.__unknownPersons: list[tuple[DefPerson, list[DefPerson]]] = []  # 未知的人员列表
-        self.__load_person_all()
+        # self.__load_person_all()
 
     def __self_check(self):
         """自检方法"""
@@ -46,7 +46,7 @@ class DoQingziClass:
             persons_app: list[DefPerson] = []
             for i in range(len(paths)):
                 xlsx_sheet = XlsxLoad(paths[i], classname = gc.get_classname_from_path(path = paths[i]))  # 自动识别班级
-                persons_app.extend(xlsx_sheet.get_personList())
+                persons_app.extend(xlsx_sheet.get_personList(stdkey_as_sub = True))
             return persons_app, classnames
 
         def __person_sign(persons_app: list[DefPerson]):
@@ -88,7 +88,7 @@ class DoQingziClass:
         def __storage():
             """储存报名信息"""
             sheet: list[list[str]] = []
-            header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
+            header = [gc.chstrQClassname, gc.chstrName, gc.chstrStudentID]
             sheet.append(header)
             for per in self.__persons_all:
                 if per.ifsign:
@@ -189,40 +189,99 @@ class DoQingziClass:
         self.__unknownSheet()
 
     def signforqcSheet(self):
-        """青字班报名统计"""
+        """青字班报名统计,per.ifsign表示是否报名班委"""
         unknown_paths: list[str] = []
         """未知（无法解析）的文件的路径"""
 
         def __organize_files():
             """收集报名的各种文件"""
             folder = DefFolder(gc.dir_INPUT_SIGNFORQC_)
-            pdf_paths = folder.get_paths_by(gc.extensions_XLSX)
+            pdf_paths = folder.get_paths_by(gc.extensions_PDF)
             docx_paths = folder.get_paths_by(gc.extensions_DOCX)
             return pdf_paths, docx_paths
 
-        def __parse_docx(paths: list[str]) -> list[DefPerson]:
+        def __parse_docxs(paths: list[str]) -> list[DefPerson]:
+            """解析docx文件"""
             nonlocal unknown_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
             for p in paths:
                 word = DocxLoad(p)
-                sh_per = word.get_sheet_without_enter()
+                sh_per = word.get_sheet_without_enter('姓名')
                 if sh_per is not None:
-                    per=trans_sheet_to_person(sh_per)
+                    per = trans_sheet_to_person(sh_per, inkey_as_sub = True)  # 启用模糊处理
+                    per.set_information('地址', value = p)
                     if '自' in p:
-                        per.set_information('报名方式','自主报名')
-                    elif '组织'in p:
-                        per.set_information('报名方式','组织推荐')
+                        per.set_information('报名方式', '自主报名')
+                    elif '组织' in p:
+                        per.set_information('报名方式', '组织推荐')
                     elif '重庆大学团校' in p:
-                        per.set_information('报名方式','自主报名')
+                        per.set_information('报名方式', '自主报名')
+                    else:
+                        # 不以最坏情况思考
+                        per.set_information('报名方式', '组织推荐')
                     pers.append(per)
                 else:
                     unknown_paths.append(p)
+            for p in pers:
+                print(p)
+            input('ssssssssssssssssssssss')
+            return pers
 
+        def __parse_pdfs(paths: list[str]) -> list[DefPerson]:
+            """解析pdf文件"""
+            nonlocal unknown_paths
+            from SSPY.parseperson import trans_sheet_to_person
+            pers: list[DefPerson] = []
+            for p in paths:
+                pdf = PdfLoad(p)
+                sh1 = pdf.get_sheet('应聘岗位', True)
+                sh2 = pdf.get_sheet('所任职务', True)
+                if sh1 is not None:
+                    per = trans_sheet_to_person(sh1, inkey_as_sub = True)
+                    per.ifsign = True  # 报名班委
+                    per.set_information('地址', value = p)
+                    if '自' in p:
+                        per.set_information('报名方式', '自主报名')
+                    else:
+                        per.set_information('报名方式', '组织推荐')
+                    pers.append(per)
+                    continue
+                elif sh2 is not None:
+                    per = trans_sheet_to_person(sh2, inkey_as_sub = True)
+                    per.set_information('地址', value = p)
+                    if '自' in p:
+                        per.set_information('报名方式', '自主报名')
+                    elif '组织' in p:
+                        per.set_information('报名方式', '组织推荐')
+                    elif '重庆大学团校' in p:
+                        per.set_information('报名方式', '自主报名')
+                    else:
+                        # 不以最坏情况思考
+                        per.set_information('报名方式', '组织推荐')
+                    pers.append(per)
+                    continue
+                else:
+                    unknown_paths.append(p)
+            return pers
 
+        def __merge(pers_pdf: list[DefPerson]):
+            """合并解析出的人员信息"""
+            temps: list[DefPerson] = []
+            for p in pers_pdf:
+                p_all = self.search(p)  # 不启用push
+                if p_all is not None:
+                    p_all.merge(p)
+                else:
+                    temps.append(p)
+            self.__persons_all.extend(temps)
 
 
         pdf_paths, docx_paths = __organize_files()
+        self.__persons_all.extend(__parse_docxs(docx_paths))
+        __merge(__parse_pdfs(pdf_paths))
+        for per in self.__persons_all:
+            print(per)
 
 
     def __load_storage(self):
@@ -237,8 +296,8 @@ class DoQingziClass:
                     per.ifsign = True
 
     def __unknownSheet(self):
-        sheet: list[list[str]] = [['类型', gc.chstrClassname, gc.chstrName, gc.chstrStudentID], ]
-        header = [gc.chstrClassname, gc.chstrName, gc.chstrStudentID]
+        sheet: list[list[str]] = [['类型', gc.chstrQClassname, gc.chstrName, gc.chstrStudentID], ]
+        header = [gc.chstrQClassname, gc.chstrName, gc.chstrStudentID]
         if len(self.__unknownPersons) > 0:
             for per in self.__unknownPersons:
                 # print(per[0])

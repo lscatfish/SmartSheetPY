@@ -8,9 +8,9 @@ import types
 class DefPerson:
     """表示一个人的结构体类，包含基本个人报名信息"""
     __raw_key_word = {
-        gc.chstrClassname         : (gc.chstrClassname, '班级名', '班级名字',
+        gc.chstrQClassname        : (gc.chstrQClassname, '班级名', '班级名字',
                                      '青字班', '青字班级', '青字班级名', '青字班级名字',
-                                     '报名青字班', '报名班级'),
+                                     '报名青字班', '报名班级', '班级'),
         gc.chstrName              : (gc.chstrName, '名字'),
         gc.chstrGrade             : (gc.chstrGrade, '所在年级'),
         gc.chstrStudentID         : (gc.chstrStudentID,),
@@ -162,7 +162,7 @@ class DefPerson:
         key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
         if key is None:
             self.__information[inkey] = value
-        elif key == gc.chstrClassname:
+        elif key == gc.chstrQClassname:
             self.__classname = value
         else:
             self.__information[key] = value
@@ -176,7 +176,7 @@ class DefPerson:
             key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
             if key is None:
                 return self.__information.get(inkey, '')
-            elif key == gc.chstrClassname:
+            elif key == gc.chstrQClassname:
                 return self.__classname
             else:
                 return self.__information.get(key, '')
@@ -213,7 +213,6 @@ class DefPerson:
                 for item in DefPerson.__keyWordTuple[k]:
                     if item in inkey:
                         return k
-
         return None
 
     @property
