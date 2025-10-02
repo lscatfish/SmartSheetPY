@@ -5,7 +5,7 @@ from SSPY.mypdf import PdfLoad
 from SSPY.mydocx import DocxLoad
 from SSPY.PersonneInformation import DefPerson
 from SSPY.globalconstants import GlobalConstants as gc
-from SSPY.myfolder import DefFolder
+from SSPY.myfolder import DefFolder, copy_file
 from SSPY.myxlsx import XlsxLoad, XlsxWrite
 
 
@@ -20,6 +20,7 @@ class DoQingziClass:
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
         self.__classname_all: list[str] = []  # 所有的班级名
         self.__unknownPersons: list[tuple[DefPerson, list[DefPerson]]] = []  # 未知的人员列表
+        gc.create_folders_must()
         # self.__load_person_all()
 
     def __self_check(self):
@@ -192,6 +193,8 @@ class DoQingziClass:
         """青字班报名统计,per.ifsign表示是否报名班委"""
         unknown_paths: list[str] = []
         """未知（无法解析）的文件的路径"""
+        cmtts_paths: list[str] = []
+        """班委报名表的路径"""
 
         def __organize_files():
             """收集报名的各种文件"""
@@ -223,14 +226,12 @@ class DoQingziClass:
                     pers.append(per)
                 else:
                     unknown_paths.append(p)
-            for p in pers:
-                print(p)
-            input('ssssssssssssssssssssss')
             return pers
 
         def __parse_pdfs(paths: list[str]) -> list[DefPerson]:
             """解析pdf文件"""
             nonlocal unknown_paths
+            nonlocal cmtts_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
             for p in paths:
@@ -238,6 +239,7 @@ class DoQingziClass:
                 sh1 = pdf.get_sheet('应聘岗位', True)
                 sh2 = pdf.get_sheet('所任职务', True)
                 if sh1 is not None:
+                    cmtts_paths.append(p)
                     per = trans_sheet_to_person(sh1, inkey_as_sub = True)
                     per.ifsign = True  # 报名班委
                     per.set_information('地址', value = p)
@@ -252,7 +254,7 @@ class DoQingziClass:
                     per.set_information('地址', value = p)
                     if '自' in p:
                         per.set_information('报名方式', '自主报名')
-                    elif '组织' in p:
+                    elif '组织' in p or '社团' in p or '学院' in p:
                         per.set_information('报名方式', '组织推荐')
                     elif '重庆大学团校' in p:
                         per.set_information('报名方式', '自主报名')
@@ -276,10 +278,65 @@ class DoQingziClass:
                     temps.append(p)
             self.__persons_all.extend(temps)
 
+        def __make_sheet():
+            """制表"""
+            """预制表过程"""
+            header: list[str] = [
+                gc.chstrName,
+                gc.chstrGender,
+                gc.chstrEthnicity,
+                gc.chstrGrade,
+                gc.chstrStudentID,
+                gc.chstrPoliticalOutlook,
+                gc.chstrAcademy,
+                gc.chstrMajors,
+                gc.chstrPosition,
+                gc.chstrClub,
+                gc.chstrPhone,
+                gc.chstrQQ,
+                gc.chstrEmail,
+                gc.chstrQClassname,
+                gc.chstrSignPosition,
+                gc.chstrRegistrationMethod,
+                gc.chstrNote,
+                gc.chstrPersonalProfile,
+                gc.chstrPersonalStrengths,
+                gc.chstrWorkExperience,
+                gc.chstrAwardsAndHonors,
+                '文件地址']
+            sheet: list[list[str]] = [copy.deepcopy(header)]
+            sheet[0].append('是否报名班委')
+            for per in self.__persons_all:
+                row = per.to_list(header)
+                row.append('是' if per.ifsign else '否')
+                sheet.append(row)
+            # 生成序号
+            sheet[0].insert(0, '序号')
+            for i in range(1, len(sheet)):
+                sheet[i].insert(0, str(i))
+            return sheet
+
+
+        def __save(sheet: list[list[str]]):
+            XlsxWrite(
+                sheet = sheet,
+                path = gc.dir_OUTPUT_SIGNFORQC_ + '报名.xlsx',
+                font_regular = gc.fontRegularSongSmall
+            ).write()
+
 
         pdf_paths, docx_paths = __organize_files()
         self.__persons_all.extend(__parse_docxs(docx_paths))
         __merge(__parse_pdfs(pdf_paths))
+        __save(__make_sheet())
+
+        """处理错误"""
+        for p in unknown_paths:
+            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown)
+
+        for p in cmtts_paths:
+            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee)
+
         for per in self.__persons_all:
             print(per)
 

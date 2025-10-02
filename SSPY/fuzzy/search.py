@@ -99,7 +99,7 @@ def searched_recursive(
     Returns:
         是否满足搜索条件
     """
-    if target is None: return False
+    if target is None or target == '': return False
     if not isinstance(target, str): return False
     if isinstance(lib, list | tuple):
         for r in lib:
@@ -112,11 +112,14 @@ def searched_recursive(
             if searched_recursive(target, lib[k], level, target_as_sub, lib_as_sub):
                 return True
     elif isinstance(lib, str):
+        if lib == '': return False
         if match_by(target, lib, level): return True
         if target_as_sub:
-            if target in lib: return True
+            if target in lib:
+                return True
         if lib_as_sub:
-            if lib in target: return True
+            if lib in target:
+                return True
     return False
 
 

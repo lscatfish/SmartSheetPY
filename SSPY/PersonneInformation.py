@@ -37,7 +37,8 @@ class DefPerson:
         gc.chstrPersonalStrengths : (gc.chstrPersonalStrengths,),
         gc.chstrWorkExperience    : (gc.chstrWorkExperience,),
         gc.chstrAwardsAndHonors   : (gc.chstrAwardsAndHonors,),
-        gc.chstrMainAchievements  : (gc.chstrMainAchievements,)
+        gc.chstrMainAchievements  : (gc.chstrMainAchievements,),
+        '文件地址'                : ('文件地址', '地址', '文件路径', '路径', 'path')
     }
     __keyWordTuple = types.MappingProxyType(__raw_key_word)
 
@@ -79,7 +80,7 @@ class DefPerson:
 
     def __str__(self) -> str:
         """适配print函数"""
-        d = {'班级': self.__classname, }
+        d = {gc.chstrQClassname: self.__classname, }
         d.update(self.__information)
         d['ifsign'] = str(self.__ifsign)
         d['ifcheck'] = str(self.__ifcheck)
@@ -152,11 +153,12 @@ class DefPerson:
                     if cn[0] in self.__classname:
                         self.__classname = cn[1]
 
-    def set_information(self,
-                        inkey: str,
-                        value: str,
-                        inkey_as_sub: bool = False,
-                        stdkey_as_sub: bool = False):
+    def set_information(
+        self,
+        inkey: str,
+        value: str,
+        inkey_as_sub: bool = False,
+        stdkey_as_sub: bool = False):
         """添加信息"""
         if value == 'None': return
         key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
@@ -199,6 +201,7 @@ class DefPerson:
         Returns:
             标准键参数
         """
+        if inkey is None or inkey == '': return None
         for k in DefPerson.__keyWordTuple.keys():
             for item in DefPerson.__keyWordTuple[k]:
                 if inkey == item:  # 采用字串检测

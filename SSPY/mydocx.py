@@ -102,6 +102,14 @@ class DocxLoad:
 
     @staticmethod
     def parse_docx_tables(file_path: str):
+        """
+
+        Args:
+            file_path:
+
+        Returns:
+
+        """
         from docx import Document
         file_path = Path(file_path)
         tmp_path = None
@@ -133,14 +141,14 @@ class DocxLoad:
                         except ValueError as e:
                             # ① 单行坏掉，只丢这一行
                             logger.warning(f"表格 {tbl_idx} 第 {row_idx} 行结构损坏，已跳过：{e}")
-                            continue
+                            return None
 
                     all_tables.append(table_data)
 
                 except ValueError as e:
                     # ② 整个表格坏掉，直接丢
                     logger.warning(f"表格 {tbl_idx} 完全损坏，已跳过：{e}")
-                    continue
+                    return None
 
             return all_tables
 
@@ -152,8 +160,8 @@ class DocxLoad:
                     ct = z.read('[Content_Types].xml').decode('utf-8', 'ignore').lower()
                     if 'spreadsheetml.main' in ct:
                         logging.info(f'{file_path.name} 实为 Excel，已跳过')
-                        return []  # 静默跳过
-                return []
+                        return None  # 静默跳过
+                return None
 
         finally:
             if doc is not None:
@@ -162,12 +170,13 @@ class DocxLoad:
                 tmp_path.unlink(missing_ok = True)
 
     @property
-    def sheets(self) -> list[list[list]]:
+    def sheets(self) -> list[list[list]] | None:
         return copy.deepcopy(self.__sheets)
 
     @property
-    def sheets_without_enter(self) -> list[list[list]]:
+    def sheets_without_enter(self) -> list[list[list]] | None:
         from .helperfunction import clean_enter
+        if self.__sheets is None: return None
         outs = clean_enter(self.__sheets)
         return outs
 
@@ -175,19 +184,21 @@ class DocxLoad:
     def path(self):
         return self.__path
 
-    def get_sheet(self, index:int|str = None) -> list[list[str]]|None:
+    def get_sheet(self, index: int | str = None) -> list[list[str]] | None:
         """从文件中按照index内容读取一个表格"""
+        if self.__sheets is None: return None
         from .fuzzy.search import searched_recursive as if_in
         if isinstance(index, int):
             if len(self.__sheets) > index:
                 return copy.deepcopy(self.__sheets[index])
         if isinstance(index, str):  # 按照关键值查找sheet
             for sheet in self.__sheets:
-                if if_in(index, sheet):return copy.deepcopy(sheet)
+                if if_in(index, sheet): return copy.deepcopy(sheet)
         return None
 
-    def get_sheet_without_enter(self, index:int|str = None) -> list[list] | None:
+    def get_sheet_without_enter(self, index: int | str = None) -> list[list] | None:
         """从文件中按照index内容读取一个表格"""
+        if self.__sheets is None: return None
         from .helperfunction import clean_enter
         sh = self.get_sheet(index = index)
         if sh is None:
