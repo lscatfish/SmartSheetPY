@@ -1,6 +1,7 @@
 import copy
 
 import SSPY.fuzzy.search as fuzzy_search
+from SSPY.helperfunction import clear_console
 from SSPY.mypdf import PdfLoad
 from SSPY.mydocx import DocxLoad
 from SSPY.PersonneInformation import DefPerson
@@ -17,14 +18,52 @@ class DoQingziClass:
     #     pass
 
     def __init__(self):
+        from time import sleep
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
         self.__classname_all: list[str] = []  # 所有的班级名
         self.__unknownPersons: list[tuple[DefPerson, list[DefPerson]]] = []  # 未知的人员列表
         gc.create_folders_must()
-        # self.__load_person_all()
+        sleep(1)
+        clear_console()
 
     def __self_check(self):
         """自检方法"""
+        pass
+
+    def start(self):
+        match self.choose():
+            case 1:
+                self.__load_person_all()
+                self.appSheet()
+            case 2:
+                self.__load_person_all()
+                self.attSheet()
+            case 3:
+                self.signforqcSheet()
+
+
+    def choose(self) -> int:
+        """选择器"""
+        from time import sleep
+        clear_console()
+        while True:
+            print('请选择功能：')
+            print('1.生成签到表')
+            print('2.生成汇总表')
+            print('3.统计青字班报名情况')
+            c = int(input('请选择：'))
+            if c == 1:
+                break
+            elif c == 2:
+                break
+            elif c == 3:
+                break
+            else:
+                print(end = '\n')
+                print('你的选择错误')
+                sleep(1)
+                clear_console()
+        return c
 
     def __load_person_all(self):
         """加载所有的学员信息"""

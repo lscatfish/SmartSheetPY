@@ -12,4 +12,12 @@ def clean_enter(in_list: list | tuple) -> list:
     return out_list
 
 
+import os
+import platform
 
+def clear_console():
+    # 判断操作系统
+    if platform.system() == "Windows":
+        os.system("cls")  # Windows 系统使用 cls 命令
+    else:
+        os.system("clear")  # Linux/macOS 系统使用 clear 命令
