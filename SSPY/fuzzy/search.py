@@ -49,6 +49,16 @@ class LEVEL(Enum):
     High = 1
     Medium = 2
     Low = 3
+    L4 = 4
+    L5 = 5
+    L6 = 6
+    L7 = 7
+    L8 = 8
+    L9 = 9
+    L10 = 10
+    L11 = 11
+    L12 = 12
+    L13 = 13
     Unknow = 1000
 
 
@@ -60,7 +70,7 @@ def match_by(a: str, b: str, level = LEVEL.Perfect):
     return distance <= mp
 
 
-def search_in(target: str, lib: list, level = LEVEL.Perfect):
+def search_in(target: str, lib: list[str], level = LEVEL.Perfect):
     """返回搜索到的表"""
     out_list = []
     for a in lib:
@@ -69,9 +79,42 @@ def search_in(target: str, lib: list, level = LEVEL.Perfect):
     return out_list
 
 
-def searched(target: str, lib: list, level = LEVEL.Perfect) -> bool:
+def searched(target: str, lib: list[str], level = LEVEL.Perfect) -> bool:
     """返回是否搜索到"""
     for a in lib:
         if match_by(target, a, level):
             return True
+    return False
+
+
+def searched_auto(
+    target: str,
+    lib: tuple | list | str,
+    level = LEVEL.Perfect,
+    target_as_sub: bool = False,
+    lib_as_sub: bool = False):
+    """
+    对任意列表进行递归搜索，支持模糊
+    Args:
+        target:搜索目标
+        lib:搜索的源
+        level:搜索匹配度等级
+        target_as_sub:将目标视作字串搜索
+        lib_as_sub:将库字符视作字串搜索
+    Returns:
+        是否满足搜索条件
+    """
+    if target is None: return False
+    if not isinstance(target, str): return False
+    if isinstance(lib, list | tuple):
+        for r in lib:
+            if searched_auto(target, r, level, target_as_sub, lib_as_sub):
+                return True
+    elif isinstance(lib, str):
+        if match_by(target, lib, level):
+            return True
+        if target_as_sub:
+            if target in lib: return True
+        if lib_as_sub:
+            if lib in target: return True
     return False
