@@ -9,20 +9,55 @@ import time
 import threading
 import wx
 import wx.stc as stc  # 关键控件
-
-from wxGUI.hijack_sysstd import WxTextCtrlStdout
+from .hijack_sysstd import WxTextCtrlStdout
 
 
 class MainFrame(wx.Frame):
-    def __init__(self, parent, title):
+    def __init__(self, parent, title, QC):
+        """
+        Args:
+            parent:父框架
+            title:标题
+            QC:青字班控制类
+        """
+        self.__font_size = 12  # 全局字体大小
         super().__init__(parent, title = title, size = (800, 600))
         self.InitUI()
+        self.DisableButtons()
+        self.Show()
+
+        # 1. 先注册消息站
+        from .msg_hub import init_msg_hub, post
+        init_msg_hub(lambda msg, color = None: wx.CallAfter(self.AddMessage, msg, color))
+        post('加载配置文件中...')
+
+        import wxGUI.crt_redirect  # 只要 import 就自动完成重定向
+        a = wxGUI.crt_redirect.a
 
         # ===== 重定向 stdout / stderr =====
         # 让第三方库的 print 也进窗口
         sys.stdout = WxTextCtrlStdout(self.msg_text)  # 普通信息
         sys.stderr = WxTextCtrlStdout(self.msg_text, 'red')  # 错误染红
-        # 现在所有 print(...) 都会线程安全地写进 self.msg_text
+
+        self.__qc = QC
+
+        # 大文件加载
+        wx.CallAfter(self.__background_load)
+
+
+    # -------------------- 后台加载 -------------------- #
+    def __background_load(self):
+        """后台慢慢 import + 初始化，界面不卡"""
+        wx.Yield()
+
+        def __worker():
+            from .msg_hub import post
+            import wxGUI.hijack_paddlex
+            a = wxGUI.hijack_paddlex
+            post('配置文件加载成功！！！')
+            self.EnableButtons()
+
+        threading.Thread(target = __worker, daemon = True).start()
 
     # -------------------- UI 构建 -------------------- #
     def InitUI(self):
@@ -33,14 +68,20 @@ class MainFrame(wx.Frame):
         btn_panel = wx.Panel(main_panel)
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.btn1 = wx.Button(btn_panel, label = "功能1（10条消息）")
-        self.btn2 = wx.Button(btn_panel, label = "功能2（5条消息）")
-        self.btn3 = wx.Button(btn_panel, label = "功能3（3条消息）")
+        self.btn1 = wx.Button(btn_panel, label = "功能1：生成签到表")
+        self.btn2 = wx.Button(btn_panel, label = "功能2：生成汇总表")
+        self.btn3 = wx.Button(btn_panel, label = "功能3：青字班报名")
+        font = wx.Font(
+            self.__font_size,  # 字号（点/磅）
+            wx.FONTFAMILY_DEFAULT,
+            wx.FONTSTYLE_NORMAL,
+            wx.FONTWEIGHT_NORMAL)
 
         for btn in (self.btn1, self.btn2, self.btn3):
+            btn.SetFont(font)
             btn_sizer.Add(btn, 0, wx.ALL | wx.CENTER, 15)
         btn_panel.SetSizer(btn_sizer)
-        main_sizer.Add(btn_panel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
+        main_sizer.Add(btn_panel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 15)
 
         # 2. 下方滚动消息区（StyledTextCtrl）
         self.msg_panel = wx.Panel(main_panel)
@@ -66,6 +107,10 @@ class MainFrame(wx.Frame):
         self.msg_text.StyleSetSpec(1, "fore:#DC143C,bold")
         # 2 号样式=绿色成功
         self.msg_text.StyleSetSpec(2, "fore:#2E8B57")
+
+        self.msg_text.StyleSetSize(stc.STC_STYLE_DEFAULT, self.__font_size)  # 像素
+        # 让所有行继承默认大小
+        self.msg_text.StyleClearAll()
 
         # 绑定滚轮
         self.msg_text.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
@@ -122,7 +167,10 @@ class MainFrame(wx.Frame):
 
         # 根据颜色参数染色
         color2style = {'red': 1, 'green': 2, 'default': 0}
-        self.SetMsgColor(new_line, color2style.get(color, 0))
+        if color is None:
+            self.SetMsgColor(new_line, 0)
+        else:
+            self.SetMsgColor(new_line, color2style.get(color, 0))
 
         if should_scroll:
             self.msg_text.ScrollToLine(self.msg_text.GetLineCount())
@@ -138,24 +186,12 @@ class MainFrame(wx.Frame):
     # -------------------- 后台任务 -------------------- #
     def BackgroundTask(self, task_type):
         try:
-            if task_type == 1:
-                for i in range(10):
-                    wx.CallAfter(self.AddMessage, f"功能1处理中... 进度{i + 1}/10")
-                    time.sleep(0.5)
-                wx.CallAfter(self.AddMessage, "功能1处理完成！")
-            elif task_type == 2:
-                for i in range(5):
-                    wx.CallAfter(self.AddMessage, f"功能2处理中... 进度{i + 1}/5")
-                    time.sleep(0.8)
-                wx.CallAfter(self.AddMessage, "功能2处理完成！")
-            elif task_type == 3:
-                for i in range(3):
-                    wx.CallAfter(self.AddMessage, f"功能3处理中... 进度{i + 1}/3")
-                    time.sleep(1)
-                wx.CallAfter(self.AddMessage, "[INFO]功能3处理完成！")
+            self.__qc.start(task_type)
+            self.__qc.reset()
+            wx.CallAfter(self.AddMessage, '功能结束')
         finally:
             wx.CallAfter(self.EnableButtons)
-            wx.CallAfter(self.AddMessage, "[ERR]所有按钮已重新激活\n")
+            wx.CallAfter(self.AddMessage, "所有按钮已重新激活\n")
 
     # -------------------- 启动任务 -------------------- #
     def StartTask(self, task_type):
@@ -167,9 +203,3 @@ class MainFrame(wx.Frame):
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
         self.Destroy()
-
-# -------------------- 入口 -------------------- #
-if __name__ == "__main__":
-    app = wx.App()
-    MainFrame(None, title = "Shift+滚轮控制横向滚动（StyledTextCtrl版）").Show()
-    app.MainLoop()

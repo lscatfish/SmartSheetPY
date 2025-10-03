@@ -1,7 +1,7 @@
 import copy
 
 import SSPY.fuzzy.search as fuzzy_search
-from SSPY.helperfunction import clear_console
+
 from SSPY.mypdf import PdfLoad
 from SSPY.mydocx import DocxLoad
 from SSPY.PersonneInformation import DefPerson
@@ -18,20 +18,27 @@ class DoQingziClass:
     #     pass
 
     def __init__(self):
-        from time import sleep
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
         self.__classname_all: list[str] = []  # 所有的班级名
         self.__unknownPersons: list[tuple[DefPerson, list[DefPerson]]] = []  # 未知的人员列表
-        gc.create_folders_must()
-        sleep(1)
-        clear_console()
+
 
     def __self_check(self):
         """自检方法"""
         pass
 
-    def start(self):
-        match self.choose():
+    def reset(self):
+        """重置状态"""
+        self.__persons_all.clear()
+        self.__classname_all.clear()
+        self.__unknownPersons.clear()
+
+    def start(self, callback_cfunction):
+        """
+        Args:
+            callback_cfunction:选择回调，或者是int类型
+        """
+        match callback_cfunction:
             case 1:
                 self.__load_person_all()
                 self.appSheet()
@@ -44,8 +51,6 @@ class DoQingziClass:
 
     def choose(self) -> int:
         """选择器"""
-        from time import sleep
-        clear_console()
         while True:
             print('请选择功能：')
             print('1.生成签到表')
@@ -55,8 +60,7 @@ class DoQingziClass:
             if len(c) == 0:
                 print(end = '\n')
                 print('你的选择错误')
-                sleep(1)
-                clear_console()
+
             elif int(c) == 1:
                 break
             elif int(c) == 2:
@@ -66,8 +70,7 @@ class DoQingziClass:
             else:
                 print(end = '\n')
                 print('你的选择错误')
-                sleep(1)
-                clear_console()
+
         return int(c)
 
     def __load_person_all(self):
@@ -83,7 +86,6 @@ class DoQingziClass:
 
     def appSheet(self):
         """签到表"""
-        clear_console()
 
         def __load_person_app():
             """解析报集会名表中的人员"""
@@ -163,7 +165,6 @@ class DoQingziClass:
 
     def attSheet(self):
         """签到汇总"""
-        clear_console()
 
         def __organize_imgs() -> dict[str, list[str]]:
             """整理照片以及其地址"""
@@ -481,3 +482,6 @@ class DoQingziClass:
             return fuzzy_search.match_by(a_number_part, b_number_part, fuzzy_search.LEVEL.High)
         else:
             return fuzzy_search.match_by(a, b, fuzzy_search.LEVEL.High)
+
+def qcFunctionStart():
+    """启动青字班功能"""

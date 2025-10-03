@@ -9,7 +9,7 @@ import os
 import pathlib
 
 # ========== 1. 你想把模型放在哪里 ==========
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.getcwd()
 MY_MIRROR_ROOT = pathlib.Path(BASE_DIR) / "official_models"
 MY_MIRROR_ROOT.mkdir(parents = True, exist_ok = True)
 
