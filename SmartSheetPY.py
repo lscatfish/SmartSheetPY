@@ -1,4 +1,5 @@
-﻿import paddlex_hijack
+﻿print('加载资源中...')
+import paddlex_hijack
 from SSPY.helperfunction import press_any_key_to_continue
 
 """调用一个a，避免idea把第一行优化删除"""
@@ -16,4 +17,5 @@ from QingziClass.doqingziclass import DoQingziClass
 
 qc = DoQingziClass()
 qc.start()
-press_any_key_to_continue()
+print()
+press_any_key_to_continue('程序结束，请按任意键退出...')

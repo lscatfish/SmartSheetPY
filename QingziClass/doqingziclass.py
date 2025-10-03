@@ -72,7 +72,8 @@ class DoQingziClass:
 
     def __load_person_all(self):
         """加载所有的学员信息"""
-        folder = DefFolder(gc.dir_INPUT_ALL_, extensions = gc.extensions_XLSX)
+        print('加载所有的学员信息')
+        folder = DefFolder(gc.dir_INPUT_ALL_, extensions = gc.extensions_XLSX, if_print = True)
         self.__classname_all = folder.pure_filenames
         paths = folder.paths
         for p in paths:
@@ -82,10 +83,12 @@ class DoQingziClass:
 
     def appSheet(self):
         """签到表"""
+        clear_console()
 
         def __load_person_app():
             """解析报集会名表中的人员"""
-            folder = DefFolder(gc.dir_INPUT_APP_, extensions = ['.xlsx', '.XLSX'])
+            print('加载报名学员名单中...')
+            folder = DefFolder(gc.dir_INPUT_APP_, extensions = ['.xlsx', '.XLSX'], if_print = True)
             paths = folder.paths
             classnames = folder.pure_filenames
             persons_app: list[DefPerson] = []
@@ -116,8 +119,9 @@ class DoQingziClass:
             return outSheet
 
         def __save(sheet: list[list[str]], classname: str):
+            path = gc.dir_OUTPUT_APP_ + classname + '.xlsx'
             writer = XlsxWrite(
-                path = copy.copy(gc.dir_OUTPUT_APP_) + classname + '.xlsx',
+                path = path,
                 sheet = sheet,
                 title = classname + '签到表',
                 widths = [7, 24],
@@ -129,6 +133,8 @@ class DoQingziClass:
             writer.border = gc.borderThinBlack
             if writer.can_write:
                 writer.write()
+            print('签到表已储存：\"' + path + '\"')
+
 
         def __storage():
             """储存报名信息"""
@@ -138,11 +144,14 @@ class DoQingziClass:
             for per in self.__persons_all:
                 if per.ifsign:
                     sheet.append(per.to_list(header))
+            path = gc.dir_STORAGE_ + 'storage.xlsx'
             XlsxWrite(
-                path = copy.copy(gc.dir_STORAGE_) + 'storage.xlsx',
+                path = path,
                 sheet = sheet,
                 font_regular = gc.fontRegularSongSmall
             ).write()
+            print('报名信息已储存：\"' + path + '\"')
+
 
         pers_app, cns = __load_person_app()
         __person_sign(pers_app)
@@ -154,11 +163,12 @@ class DoQingziClass:
 
     def attSheet(self):
         """签到汇总"""
+        clear_console()
 
         def __organize_imgs() -> dict[str, list[str]]:
             """整理照片以及其地址"""
             classname_imgpath: dict[str, list[str]] = {}
-            folder = DefFolder(gc.dir_INPUT_ATTIMGS_, extensions = gc.extensions_IMG)
+            folder = DefFolder(gc.dir_INPUT_ATTIMGS_, extensions = gc.extensions_IMG, if_print = True)
             for p in folder.paths:
                 for cn in gc.cns:
                     if cn[0] in p:
@@ -213,8 +223,9 @@ class DoQingziClass:
         def __save(sheet: list[list[str]], classname: str):
             """保存签到表"""
             from openpyxl.styles import Font, Border, Alignment
+            path = gc.dir_OUTPUT_ATT_ + classname + '线下签到汇总表.xlsx'
             writer = XlsxWrite(
-                path = copy.copy(gc.dir_OUTPUT_ATT_) + classname + '线下签到汇总表.xlsx',
+                path = path,
                 sheet = sheet,
                 widths = [40, 40],
                 height = 25,
@@ -225,6 +236,7 @@ class DoQingziClass:
             writer.fontTitle = Font(name = '方正小标宋简体', size = 26)
             writer.border = gc.borderThinBlack
             writer.write()
+            print('线下签到汇总表已储存：\"' + path + '\"')
 
         self.__load_storage()
         pers_att = __parse_imgs(__organize_imgs())
@@ -376,13 +388,13 @@ class DoQingziClass:
 
         """处理错误"""
         for p in unknown_paths:
-            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown)
+            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown, if_print = True)
 
         for p in cmtts_paths:
-            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee)
-
-        for per in self.__persons_all:
-            print(per)
+            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee, if_print = True)
+        # 禁用打印
+        # for per in self.__persons_all:
+        #     print(per)
 
 
     def __load_storage(self):
@@ -390,6 +402,7 @@ class DoQingziClass:
         pers_app = XlsxLoad(
             _path = gc.dir_STORAGE_ + 'storage.xlsx',
             const_classname = False,
+            ifp = True
         ).get_personList()
         for p_app in pers_app:
             for per in self.__persons_all:
@@ -415,12 +428,14 @@ class DoQingziClass:
                 print(end = '\n')
         else:
             print('没有未知人员')
+        path = gc.dir_OUTPUT_ + 'unknown.xlsx'
         XlsxWrite(
-            path = copy.copy(gc.dir_OUTPUT_) + 'unknown.xlsx',
+            path = path,
             sheet = sheet,
             font_regular = gc.fontRegularSongSmall,
             widths = [24, ]
         ).write()
+        print('未知人员表已储存：\"' + path + '\"')
 
     def search(self, target: DefPerson, push_unknown = False) -> DefPerson | None:
         """从全部的库中搜索目标人员，返回总表人员的指针"""

@@ -49,11 +49,12 @@ def create_nested_folders(folder_path: str, exist_ok: bool = True) -> None:
         print(f"创建文件夹失败：{e}")
 
 
-def copy_file(source_path: str, target_path: str) -> bool:
+def copy_file(source_path: str, target_path: str, if_print: bool = False) -> bool:
     """
     将源文件复制到目标地址
 
     Parameters:
+        if_print:    是否启用打印
         source_path: 源文件的完整路径（如 "data/file.txt"）
         target_path: 目标地址，可以是目录或完整文件路径
                      (若为目录：文件会复制到该目录下，文件名与源文件相同)
@@ -77,7 +78,8 @@ def copy_file(source_path: str, target_path: str) -> bool:
             target_full_path = os.path.join(target_path, os.path.basename(source_path))
         else:
             target_full_path = target_path
-        print(f"文件复制成功：{source_path} → {target_full_path}")
+        if if_print:
+            print(f"文件复制成功：{source_path} ----> {target_full_path}")
         return True
 
     except Exception as e:
