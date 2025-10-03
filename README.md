@@ -16,7 +16,8 @@
 
 ### 可以修改打包文件[package.py](./package.py)来移除非必要的包，以追求运行效率
 
-## 关于劫持paddle子线程的方法
+<details>
+<summary style="font-size: 20px; font-weight: bold;">关于劫持paddle子线程的方法</summary>
 
 这是因为在打包生成的程序运行时，加载模型ppocr的时候会出现闪窗
 这里我已经修复了，直接执行打包命令 `python ./package.py --file ./SmartSheetPY.py`即可。
@@ -54,7 +55,7 @@ if sys.platform == 'win32' and getattr(sys, 'frozen', False):  # 只在打包后
 
 不兼容的bug如下在打包之后运行`.exe`会输出一下错误：
 
-```
+```textmate
 [22:58:29] Exception in thread Thread-1 (__worker):
 [22:58:29] Traceback (most recent call last):
 [22:58:29]   File "threading.py", line 1043, in _bootstrap_inner
@@ -223,4 +224,4 @@ def compile_windows_utils():
         print(f"发生异常：{str(e)}")
     return False
 ```
-
+</details> 
