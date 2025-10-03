@@ -25,7 +25,7 @@ def clear_console():
         os.system("clear")  # Linux/macOS 系统使用 clear 命令
 
 
-def press_any_key_to_continue(prompt = "按任意键继续..."):
+def press_any_key_to_continue(prompt = "按回车键继续..."):
     """
     按任意键继续功能，支持 Windows/macOS/Linux
     :param prompt: 提示文本，默认“按任意键继续...”

@@ -92,7 +92,7 @@ def html_to_list(html_str: str) -> list[list[str]]:
 
 def rotation_checklist_content(table: list[list[str]], header: list[str]) -> list[list[str]]:
     """
-    检查表格中的内容
+    检查表格中的内容，然后对齐表格的格式
     Parameters:
         header: 表头
         table:输入的表格
@@ -104,7 +104,7 @@ def rotation_checklist_content(table: list[list[str]], header: list[str]) -> lis
 
     for row in table:
         is_problem = False
-        """是否有问题"""
+        """此行是否有问题"""
         idx_stID_header = -1
         """表头的索引"""
         idx_stID_row = -1
@@ -175,7 +175,7 @@ class PPOCRImgByModel:
         self.__output = None
         self.__sheet: list[list[str]] = []
         self.__isOK = False
-        print('ppocr模型加载完毕!!!')
+        print('ppocr模型加载完毕!!!\n')
 
     def __preload_model(self):
         """预加载模型，避免首次predict时加载"""
@@ -246,7 +246,7 @@ class PPOCRImgByModel:
         header, sheet = get_header_from_xlsx(self.sheet_all)
         ok_sheet = rotation_checklist_content(sheet, header)
         if ifp:
-            print(classname)
+            print(classname+'ocr结果')
             print(header)
             for row in ok_sheet:
                 print(row)

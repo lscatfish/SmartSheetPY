@@ -18,4 +18,4 @@ from QingziClass.doqingziclass import DoQingziClass
 qc = DoQingziClass()
 qc.start()
 print()
-press_any_key_to_continue('程序结束，请按任意键退出...')
+press_any_key_to_continue('程序结束，请按回车键退出...')

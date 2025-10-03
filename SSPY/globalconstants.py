@@ -97,7 +97,7 @@ class GlobalConstants:
         dir_OUTPUT_SIGNFORQC_,
         dir_OUTPUT_SIGNFORQC_unknown,
         dir_OUTPUT_SIGNFORQC_committee,
-        dir_MODEL_NATURE_,
+        # dir_MODEL_NATURE_,
     )
 
     extensions_XLSX = ['.xlsx', '.XLSX']

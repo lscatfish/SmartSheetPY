@@ -392,9 +392,6 @@ class DoQingziClass:
 
         for p in cmtts_paths:
             copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee, if_print = True)
-        # 禁用打印
-        # for per in self.__persons_all:
-        #     print(per)
 
 
     def __load_storage(self):
@@ -440,6 +437,7 @@ class DoQingziClass:
     def search(self, target: DefPerson, push_unknown = False) -> DefPerson | None:
         """从全部的库中搜索目标人员，返回总表人员的指针"""
         same_name = 0
+        maybe_per = None
         for per_a in self.__persons_all:
             if per_a.classname == target.classname:
                 if self.is_same_studentID(target.studentID, per_a.studentID):
