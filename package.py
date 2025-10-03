@@ -21,7 +21,7 @@ cmd = [
     "--collect-data", "paddlex",
     "--collect-binaries", "paddle",
     # 补充 Cython 依赖（根据之前的报错）
-    "--add-data", "D:\\Python\\Lib\\site-packages\\Cython\\Utility;Cython/Utility",
+    # "--add-data", "D:\\Python\\Lib\\site-packages\\Cython\\Utility;Cython/Utility",
 ]
 
 if args.nvidia:
