@@ -1,4 +1,36 @@
 ﻿"""入口文件"""
+
+# main.py  最顶部（任何 import asyncio 之前）
+import sys, os, importlib.util
+
+# 仅 PyInstaller 打包后才执行外置加载
+if getattr(sys, 'frozen', False) and sys.platform == 'win32':
+    pyc_path = os.path.join(sys._MEIPASS, 'runtime', 'asyncio', 'windows_utils.pyc')
+    spec = importlib.util.spec_from_file_location("asyncio.windows_utils", pyc_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    sys.modules['asyncio.windows_utils'] = mod   # 阻断 PyInstaller 再解析
+
+import subprocess
+import sys
+import os
+
+if sys.platform == 'win32' and getattr(sys, 'frozen', False):  # 只在打包后生效
+    _old_popen = subprocess.Popen
+
+    def _no_console_popen(*args, **kwargs):
+        # 强制隐藏控制台窗口
+        si = subprocess.STARTUPINFO()
+        si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = subprocess.SW_HIDE
+        kwargs['startupinfo'] = si
+        kwargs.setdefault('creationflags', 0)
+        kwargs['creationflags'] |= subprocess.CREATE_NO_WINDOW
+        return _old_popen(*args, **kwargs)
+
+    subprocess.Popen = _no_console_popen
+
+
 from wxGUI.myframe import MainFrame
 from wx import App
 
