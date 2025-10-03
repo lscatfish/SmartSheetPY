@@ -13,6 +13,7 @@ from .hijack_sysstd import WxTextCtrlStdout
 
 
 class MainFrame(wx.Frame):
+    """主框架"""
     def __init__(self, parent, title, QC):
         """
         Args:
