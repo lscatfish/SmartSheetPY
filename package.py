@@ -17,11 +17,11 @@ deps_all = list(paddlex.utils.deps.DEP_SPECS.keys())
 deps_need = [dep for dep in user_deps if dep in deps_all]
 
 cmd = [
-    "pyinstaller", main_file,
+    "pyinstaller", main_file,"--windowed",
     "--collect-data", "paddlex",
     "--collect-binaries", "paddle",
     # 补充 Cython 依赖（根据之前的报错）
-    # "--add-data", "D:\\Python\\Lib\\site-packages\\Cython\\Utility;Cython/Utility",
+    "--add-data", "D:\\Python\\Lib\\site-packages\\Cython\\Utility;Cython/Utility",
 ]
 
 if args.nvidia:

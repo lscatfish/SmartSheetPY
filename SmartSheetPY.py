@@ -1,9 +1,11 @@
-﻿from wxGUI.myframe import MainFrame
+﻿"""入口文件"""
+from wxGUI.myframe import MainFrame
 from wx import App
 
 
 app = App()
 from QingziClass.doqingziclass import DoQingziClass
+
 MainFrame(None, title = "SmartSheetPY", QC = DoQingziClass())
 app.MainLoop()
 

@@ -13,9 +13,6 @@ from SSPY.myxlsx import XlsxLoad, XlsxWrite
 class DoQingziClass:
     """青字班程序控制库"""
 
-    # def start(self):
-    #     """仅向外提供此方法，以启动"""
-    #     pass
 
     def __init__(self):
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
@@ -38,6 +35,7 @@ class DoQingziClass:
         Args:
             callback_cfunction:选择回调，或者是int类型
         """
+        self.reset()  # 确保不会出错
         match callback_cfunction:
             case 1:
                 self.__load_person_all()
@@ -421,9 +419,7 @@ class DoQingziClass:
                     l2.extend(lp.to_list(header))
                     sheet.append(l2)
             for r in sheet:
-                for cell in r:
-                    print(cell, end = '\t')
-                print(end = '\n')
+                print(r)
         else:
             print('没有未知人员')
         path = gc.dir_OUTPUT_ + 'unknown.xlsx'
@@ -483,5 +479,6 @@ class DoQingziClass:
         else:
             return fuzzy_search.match_by(a, b, fuzzy_search.LEVEL.High)
 
-def qcFunctionStart():
-    """启动青字班功能"""
+#
+# def qcFunctionStart():
+#     """启动青字班功能"""

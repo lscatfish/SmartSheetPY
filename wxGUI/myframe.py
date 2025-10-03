@@ -26,23 +26,12 @@ class MainFrame(wx.Frame):
         self.DisableButtons()
         self.Show()
 
-        # 1. 先注册消息站
-        from .msg_hub import init_msg_hub, post
-        init_msg_hub(lambda msg, color = None: wx.CallAfter(self.AddMessage, msg, color))
-        post('加载配置文件中...')
-
-        import wxGUI.crt_redirect  # 只要 import 就自动完成重定向
-        a = wxGUI.crt_redirect.a
-
-        # ===== 重定向 stdout / stderr =====
-        # 让第三方库的 print 也进窗口
-        sys.stdout = WxTextCtrlStdout(self.msg_text)  # 普通信息
-        sys.stderr = WxTextCtrlStdout(self.msg_text, 'red')  # 错误染红
-
+        wx.CallAfter(self.AddMessage, '加载配置文件中...')
         self.__qc = QC
 
         # 大文件加载
         wx.CallAfter(self.__background_load)
+
 
 
     # -------------------- 后台加载 -------------------- #
@@ -51,10 +40,27 @@ class MainFrame(wx.Frame):
         wx.Yield()
 
         def __worker():
+            # 1. 先注册消息站
+            from .msg_hub import init_msg_hub
+            init_msg_hub(lambda msg, color = None: wx.CallAfter(self.AddMessage, msg, color))
+
+            # ===== 重定向 stdout / stderr =====
+            # 让第三方库的 print 也进窗口
+            sys.stdout = WxTextCtrlStdout(self.msg_text)  # 普通信息
+            sys.stderr = WxTextCtrlStdout(self.msg_text, 'red')  # 错误染红
+
+            # 劫持 Windows C 运行时 stderr，使其输出重定向到 wx 消息窗口
+            import wxGUI.crt_redirect  # 只要 import 就自动完成重定向
+            a = wxGUI.crt_redirect.a
+
             from .msg_hub import post
             import wxGUI.hijack_paddlex
             a = wxGUI.hijack_paddlex
             post('配置文件加载成功！！！')
+
+            from SSPY.globalconstants import GlobalConstants as gc
+            gc.create_folders_must()
+
             self.EnableButtons()
 
         threading.Thread(target = __worker, daemon = True).start()
@@ -202,4 +208,5 @@ class MainFrame(wx.Frame):
     def on_exit(self):
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
+        del self.__qc
         self.Destroy()
