@@ -44,7 +44,7 @@ for hoster_cls in (
     hoster_cls.__init__ = _new_init
 
 
-# ========== 4. 劫持 _ModelManager._get_model_local_path，仍复用官方 _download_from_hoster ==========
+# ========== 4. 劫持 _ModelManager._get_model_local_path，仍复用官方 _get_model_local_path ==========
 def _hijacked_get_model_local_path(self, model_name: str) -> pathlib.Path:
     target_dir = MY_MIRROR_ROOT / model_name
     # 本地命中

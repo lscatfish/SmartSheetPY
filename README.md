@@ -23,7 +23,7 @@
 这里我已经修复了，直接执行打包命令 `python ./package.py --file ./SmartSheetPY.py`即可。
 
 以下是我的解决代码：  
-在程序的头部插入如下代码，接管ppocr的子模块
+在程序的头部插入如下代码，在打包的时候接管ppocr的子模块
 
 `````python
 import subprocess
@@ -160,21 +160,18 @@ if getattr(sys, 'frozen', False) and sys.platform == 'win32':
 当然，我已经完成了打包文件：
 [SmartSheetPY.py](./SmartSheetPY.py)头部添加
 ```python
-import sys, os, importlib.util
+import sys, os, importlib.util, subprocess
+
 # 仅 PyInstaller 打包后才执行外置加载
 if getattr(sys, 'frozen', False) and sys.platform == 'win32':
     pyc_path = os.path.join(sys._MEIPASS, 'runtime', 'asyncio', 'windows_utils.pyc')
     spec = importlib.util.spec_from_file_location("asyncio.windows_utils", pyc_path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    sys.modules['asyncio.windows_utils'] = mod   # 阻断 PyInstaller 再解析
+    sys.modules['asyncio.windows_utils'] = mod  # 阻断 PyInstaller 再解析
 
-import subprocess
-import sys
-import os
-
-if sys.platform == 'win32' and getattr(sys, 'frozen', False):  # 只在打包后生效
     _old_popen = subprocess.Popen
+
 
     def _no_console_popen(*args, **kwargs):
         # 强制隐藏控制台窗口

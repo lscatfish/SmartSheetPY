@@ -5,6 +5,8 @@ import os
 from bs4 import BeautifulSoup
 from paddleocr import TableRecognitionPipelineV2
 import PIL.Image
+from sqlalchemy import false
+
 from .PersonneInformation import DefPerson
 from .globalconstants import GlobalConstants as gc
 
@@ -134,41 +136,37 @@ def rotation_checklist_content(table: list[list[str]], header: list[str]) -> lis
 
 class PPOCRImgByModel:
     """进行ppocr img，所有解析方式全部采用模型"""
+    config = 'table_recognition_v2'
 
-    def __init__(self):
-        """加载模型"""
+    def __init__(self, paddlex_config: str = None):
+        """加载模型
+        Parameters:
+            paddlex_config:自主配置的yaml文件路径
+        """
         print('加载ppocr的模型')
         # 这个模型就是一坨
         # 这里使用本地时会有bug：https://github.com/PaddlePaddle/PaddleOCR/issues/16606
         # doc_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori'，这个模型会被加载两遍
+        # 这里使用的是PPstructureV3的子产线TableRecognitionPipelineV2
+        # 我们不推荐在class构造的时候导入地址，如需导入模型，请使用table_recognition_v2的yaml文件
+        """
+            # 你可以通过以下代码来输出默认的yaml配置文件
+            from paddleocr import TableRecognitionPipelineV2
+            pipeline = TableRecognitionPipelineV2()
+            pipeline.export_paddlex_config_to_yaml("TableRecognitionPipelineV2.yaml")
+        """
+        if paddlex_config is not None:
+            PPOCRImgByModel.config = paddlex_config
+
+        if not PPOCRImgByModel.is_models_exist():
+            print('有模型不存在')
+        else:
+            print('所有模型都存在')
+
         self.__pipeline = TableRecognitionPipelineV2(
-            # layout_detection_model_dir = gc.dir_MODEL_NATURE_ + 'PP-DocLayout-L',
-            # layout_detection_model_name = 'PP-DocLayout-L',
-            # table_classification_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_table_cls',
-            # table_classification_model_name = 'PP-LCNet_x1_0_table_cls',
-            #
-            # doc_orientation_classify_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori',
-            # doc_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori',
-            #
-            # wired_table_structure_recognition_model_dir = gc.dir_MODEL_NATURE_ + 'SLANeXt_wired',
-            # wired_table_structure_recognition_model_name = 'SLANeXt_wired',
-            # wireless_table_structure_recognition_model_dir = gc.dir_MODEL_NATURE_ + 'SLANeXt_wireless',
-            # wireless_table_structure_recognition_model_name = 'SLANeXt_wireless',
-            # wired_table_cells_detection_model_dir = gc.dir_MODEL_NATURE_ + 'RT-DETR-L_wired_table_cell_det',
-            # wired_table_cells_detection_model_name = 'RT-DETR-L_wired_table_cell_det',
-            # wireless_table_cells_detection_model_dir = gc.dir_MODEL_NATURE_ + 'RT-DETR-L_wireless_table_cell_det',
-            # wireless_table_cells_detection_model_name = 'RT-DETR-L_wireless_table_cell_det',
-            # text_recognition_model_dir = gc.dir_MODEL_NATURE_ + 'PP-OCRv4_server_rec_doc',
-            # text_recognition_model_name = 'PP-OCRv4_server_rec_doc',
-            # text_detection_model_dir = gc.dir_MODEL_NATURE_ + 'PP-OCRv4_server_det',
-            # text_detection_model_name = 'PP-OCRv4_server_det',
-            # doc_unwarping_model_dir = gc.dir_MODEL_NATURE_ + 'UVDoc',
-            # doc_unwarping_model_name = 'UVDoc',
-            # use_doc_orientation_classify = True,
-            use_doc_unwarping = True,
-            # table_orientation_classify_model_dir = gc.dir_MODEL_NATURE_ + 'PP-LCNet_x1_0_doc_ori',
-            # table_orientation_classify_model_name = 'PP-LCNet_x1_0_doc_ori',
+            paddlex_config = None if paddlex_config is None else paddlex_config,
         )
+
         # 预加载模型：用一张空图触发首次predict，强制加载所有模型
         self.__preload_model()
 
@@ -246,7 +244,7 @@ class PPOCRImgByModel:
         header, sheet = get_header_from_xlsx(self.sheet_all)
         ok_sheet = rotation_checklist_content(sheet, header)
         if ifp:
-            print(classname+'ocr结果')
+            print(classname + 'ocr结果')
             print(header)
             for row in ok_sheet:
                 print(row)
@@ -262,6 +260,54 @@ class PPOCRImgByModel:
                     classname = classname))
         self.__sheet.clear()
         return pers
+
+    @staticmethod
+    def is_models_exist():
+        """检测模型是否存在"""
+        from paddlex.inference import load_pipeline_config
+        official_yamls = load_pipeline_config(PPOCRImgByModel.config)
+
+        # print(official_yamls)
+        # 这里默认导入的yaml文件是正确的(不正确的画官方函数load_pipeline_config会报错)
+        def __parse_dict(_y: dict[str, dict] | dict[str, str] | dict[str, None]):
+            """解析嵌套的dict"""
+            name2dir: dict[str, str | None] = {}
+            """一套字典只有能解析一套模型"""
+            model_name = None
+            model_dir = None
+            for key in _y:
+                if isinstance(_y[key], dict):
+                    name2dir.update(__parse_dict(_y[key]))
+                elif model_name is None and key == 'model_name':
+                    model_name = _y[key]
+                elif model_dir is None and key == 'model_dir':
+                    model_dir = _y[key]
+            if model_name is not None:
+                name2dir[model_name] = model_dir
+            return name2dir
+
+
+        model_name2dir: dict[str, str | None] = __parse_dict(official_yamls)
+        """模型名称与路径的字典序列"""
+
+        def __set_dir():
+            """设置模型路径"""
+            nonlocal model_name2dir
+            from paddlex.inference.utils.official_models import _ModelManager
+            for key in model_name2dir:
+                if model_name2dir[key] is None:
+                    model_name2dir[key] = str(_ModelManager._save_dir) + '/' + key
+
+        def __check_dir():
+            """检查地址是否存在"""
+            from pathlib import Path
+            nonlocal model_name2dir
+            for key in model_name2dir:
+                if not Path(model_name2dir[key]).exists():
+                    return False
+            return True
+        __set_dir()
+        return __check_dir()
 
 
 class PPOCRImgByAlgorithm:

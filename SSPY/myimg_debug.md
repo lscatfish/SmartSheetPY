@@ -1,6 +1,10 @@
 # 致命性BUG
 
 ## [网络上的一种bug描述与解决方案，我这里没用](https://github.com/PaddlePaddle/PaddleOCR/issues/16606)
+## 简单描述
+部署离线 server 端的时候总需要在线验证`PP-LCNet_x1_0_doc_ori`，如果离线则提示`Creating model: ('PP-LCNet_x1_0_doc_ori', None) No available model hosting platforms detected. Please check your network connection.`   
+### 原因
+ppocr在加载本地模型的时候可以指定路径，但是内部子模块会再次加载，无法正常传递模型路径，会加载官方下载器，将模型下载到默认文件夹
 
 ## 本地运行记录
 
@@ -57,11 +61,11 @@ ppocr模型加载完毕!!!
 
 # 我的解决方案
 
-直接劫持官方下载器，更改联网下载地址
+直接劫持官方下载器，更改模型默认保存的路径，这样保留了自动下载功能，又能正常从默认路径下加载模型 
 ````python
 """
 PaddleX 官方模型下载目录劫持器
-author : you
+author : lscatfish
 usage:
     import paddlex_hijack      # 必须先导入
     import paddlex
@@ -70,7 +74,7 @@ import os
 import pathlib
 
 # ========== 1. 你想把模型放在哪里 ==========
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.getcwd()
 MY_MIRROR_ROOT = pathlib.Path(BASE_DIR) / "official_models"
 MY_MIRROR_ROOT.mkdir(parents = True, exist_ok = True)
 
@@ -117,6 +121,7 @@ def _hijacked_get_model_local_path(self, model_name: str) -> pathlib.Path:
 
 _ModelManager._get_model_local_path = _hijacked_get_model_local_path
 
+a: int = 0
 ````
 
 ### 运行效果

@@ -1,6 +1,6 @@
 ﻿"""入口文件"""
 
-# main.py  最顶部（任何 import asyncio 之前）
+
 import sys, os, importlib.util, subprocess
 
 # 仅 PyInstaller 打包后才执行外置加载

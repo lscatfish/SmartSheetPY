@@ -16,7 +16,6 @@ def clean_enter(in_list: list | tuple) -> list:
             out_list.append(nc)
     return out_list
 
-
 # def clear_console():
 #     # 判断操作系统
 #     if platform.system() == "Windows":

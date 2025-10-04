@@ -14,6 +14,7 @@ from wxGUI.hijack.hijack_sysstd import WxTextCtrlStdout
 
 class MainFrame(wx.Frame):
     """主框架"""
+
     def __init__(self, parent, title, QC):
         """
         Args:
@@ -32,7 +33,6 @@ class MainFrame(wx.Frame):
 
         # 大文件加载
         wx.CallAfter(self.__background_load)
-
 
 
     # -------------------- 后台加载 -------------------- #
@@ -204,6 +204,7 @@ class MainFrame(wx.Frame):
     def StartTask(self, task_type):
         self.DisableButtons()
         self.AddMessage(f"开始执行功能{task_type}，按钮已锁定...")
+        # 启动后台
         threading.Thread(target = self.BackgroundTask, args = (task_type,), daemon = True).start()
 
     def on_exit(self):
