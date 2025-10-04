@@ -1,5 +1,7 @@
 """
 这是用于解析xlsx文件的py文件
+如果你单独使用此脚本，我们推荐你劫持ppocr的下载器以及相关子线程
+If you use this script alone, we recommend that you hijack the ppocr downloader and the related subthreads.
 """
 import copy
 from openpyxl import load_workbook, Workbook

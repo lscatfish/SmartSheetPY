@@ -9,7 +9,7 @@ import time
 import threading
 import wx
 import wx.stc as stc  # 关键控件
-from .hijack_sysstd import WxTextCtrlStdout
+from wxGUI.hijack.hijack_sysstd import WxTextCtrlStdout
 
 
 class MainFrame(wx.Frame):
@@ -51,12 +51,12 @@ class MainFrame(wx.Frame):
             sys.stderr = WxTextCtrlStdout(self.msg_text, 'red')  # 错误染红
 
             # 劫持 Windows C 运行时 stderr，使其输出重定向到 wx 消息窗口
-            import wxGUI.crt_redirect  # 只要 import 就自动完成重定向
-            a = wxGUI.crt_redirect.a
+            import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
+            a = wxGUI.hijack.crt_redirect.a
 
             from .msg_hub import post
-            import wxGUI.hijack_paddlex
-            a = wxGUI.hijack_paddlex
+            import SSPY.hijack.hijack_paddlex
+            a = SSPY.hijack.hijack_paddlex
             post('配置文件加载成功！！！')
 
             from SSPY.globalconstants import GlobalConstants as gc

@@ -8,7 +8,7 @@ class WxTextCtrlStdout:
 
     def write(self, string):
         if string and string != '\n':
-            from .msg_hub import post  # 延迟导入避免循环
+            from wxGUI.msg_hub import post  # 延迟导入避免循环
             post(string.rstrip('\n'), self.color)  # 走你现成的消息站
 
     def flush(self): pass

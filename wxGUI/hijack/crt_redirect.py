@@ -9,7 +9,7 @@ import threading
 import msvcrt
 import ctypes
 from ctypes import wintypes
-from .msg_hub import post  # 统一发消息入口
+from wxGUI.msg_hub import post  # 统一发消息入口
 
 import re
 
@@ -71,7 +71,7 @@ def _redirect_crt_stderr():
     # 4. 后台线程读管道
     def _reader():
         read_fd = msvcrt.open_osfhandle(read_h.value, 0)
-        with os.fdopen(read_fd, 'r', encoding = 'utf-8', errors = 'backslashreplace') as f:
+        with os.fdopen(read_fd, 'r', encoding = 'utf-8', errors = 'replace') as f:
             while True:
                 line = f.readline()
                 if not line:
