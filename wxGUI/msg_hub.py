@@ -13,10 +13,10 @@ def init_msg_hub(appender_fn):
     _appender = appender_fn
 
 
-def post(msg, color = 'default'):
+def post(msg, color = 'default', ptime = True):
     """任意线程/模块直接调用"""
     if _appender is None:
         import warnings
         warnings.warn('msg_hub 未初始化', RuntimeWarning)
         return
-    _appender(msg, color)
+    _appender(msg, color, ptime)

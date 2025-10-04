@@ -1,6 +1,3 @@
-import wx
-
-
 class WxTextCtrlStdout:
     def __init__(self, text_ctrl, color = None):
         self.text_ctrl = text_ctrl  # 其实就是 MainFrame.msg_text

@@ -1,6 +1,5 @@
 """
 打包脚本
-编译windows_utils.py为windows_utils.pyc，exe直接使用pyc文件，防止了
 """
 import asyncio
 from pathlib import Path
