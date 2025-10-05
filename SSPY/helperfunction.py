@@ -1,6 +1,7 @@
 import sys
 import os
 import platform
+import threading
 
 
 def clean_enter(in_list: list | tuple) -> list:
@@ -15,6 +16,13 @@ def clean_enter(in_list: list | tuple) -> list:
             nc = c.replace('\n', '').replace('\r', '')
             out_list.append(nc)
     return out_list
+
+def _exit(in_flag: threading.Event | None) -> bool:
+    """退出方法，检测进程flag是否标志为set"""
+    if isinstance(in_flag, threading.Event):
+        if in_flag.is_set():
+            return True
+    return False
 
 # def clear_console():
 #     # 判断操作系统

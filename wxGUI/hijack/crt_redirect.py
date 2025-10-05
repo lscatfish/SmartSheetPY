@@ -9,7 +9,7 @@ import threading
 import msvcrt
 import ctypes
 from ctypes import wintypes
-from wxGUI.msg_hub import post  # 统一发消息入口
+from wxGUI.text_hub import postText  # 统一发消息入口
 
 import re
 
@@ -78,7 +78,7 @@ def _redirect_crt_stderr():
                     break
                 clean = strip_ansi(line).rstrip('\n')
                 if clean:
-                    post(clean, color = 'default')
+                    postText(clean, color = 'default')
 
     threading.Thread(target = _reader, daemon = True).start()
 

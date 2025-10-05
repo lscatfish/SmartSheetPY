@@ -1,5 +1,5 @@
-
 import copy
+import threading
 
 import SSPY.fuzzy.search as fuzzy_search
 
@@ -9,6 +9,7 @@ from SSPY.PersonneInformation import DefPerson
 from SSPY.globalconstants import GlobalConstants as gc
 from SSPY.myfolder import DefFolder, copy_file
 from SSPY.myxlsx import XlsxLoad, XlsxWrite
+from SSPY.helperfunction import _exit
 
 
 class DoQingziClass:
@@ -19,6 +20,7 @@ class DoQingziClass:
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
         self.__classname_all: list[str] = []  # 所有的班级名
         self.__unknownPersons: list[tuple[DefPerson, list[DefPerson]]] = []  # 未知的人员列表
+        self.__stopFlag: threading.Event | None = None  # 停止标志
 
 
     def __self_check(self):
@@ -30,22 +32,33 @@ class DoQingziClass:
         self.__persons_all.clear()
         self.__classname_all.clear()
         self.__unknownPersons.clear()
+        if self.__stopFlag and isinstance(self.__stopFlag, threading.Event):
+            self.__stopFlag.clear()
+        self.__stopFlag = None
 
-    def start(self, callback_cfunction):
+    def start(self, callback_cfunction, stop_flag: threading.Event = None):
         """
         Args:
             callback_cfunction:选择回调，或者是int类型
+            stop_flag:线程退出标志
         """
         self.reset()  # 确保不会出错
+        self.__stopFlag = stop_flag
         match callback_cfunction:
             case 1:
-                self.__load_person_all()
-                self.appSheet()
+                if not _exit(self.__stopFlag):
+                    self.__load_person_all()
+                if not _exit(self.__stopFlag):
+                    self.appSheet()
             case 2:
-                self.__load_person_all()
-                self.attSheet()
+                if not _exit(self.__stopFlag):
+                    self.__load_person_all()
+                if not _exit(self.__stopFlag):
+                    self.attSheet()
             case 3:
-                self.signforqcSheet()
+                if not _exit(self.__stopFlag):
+                    self.signforqcSheet()
+        self.reset()
 
 
     def choose(self) -> int:
@@ -183,7 +196,9 @@ class DoQingziClass:
             persons_att: list[DefPerson] = []
             # 启用ocr
             from SSPY.myimg import PPOCRImgByModel
-            ocr = PPOCRImgByModel()
+            ocr = PPOCRImgByModel(stop_flag = self.__stopFlag)
+            if _exit(self.__stopFlag):
+                return []
             for cn in cn_ip.keys():
                 for ip in cn_ip[cn]:
                     ocr.predict(ip)
@@ -240,6 +255,8 @@ class DoQingziClass:
 
         self.__load_storage()
         pers_att = __parse_imgs(__organize_imgs())
+        if _exit(self.__stopFlag):
+            return
         __person_checkin(pers_att)
         for cn in self.__classname_all:
             __save(__make_sheet(cn), cn)

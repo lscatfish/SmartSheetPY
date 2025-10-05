@@ -1,11 +1,12 @@
 """此文件用于解析签到照片"""
 import copy
 import os
+import threading
+
 
 from bs4 import BeautifulSoup
 from paddleocr import TableRecognitionPipelineV2
 import PIL.Image
-from sqlalchemy import false
 
 from .PersonneInformation import DefPerson
 from .globalconstants import GlobalConstants as gc
@@ -138,11 +139,14 @@ class PPOCRImgByModel:
     """进行ppocr img，所有解析方式全部采用模型"""
     config = 'table_recognition_v2'
 
-    def __init__(self, paddlex_config: str = None):
+    def __init__(self, paddlex_config: str = None, stop_flag: threading.Event = None):
         """加载模型
         Parameters:
             paddlex_config:自主配置的yaml文件路径
+            stop_flag:终止标志
         """
+        from .communitor.core import get_response
+        from .helperfunction import _exit
         print('加载ppocr的模型')
         # 这个模型就是一坨
         # 这里使用本地时会有bug：https://github.com/PaddlePaddle/PaddleOCR/issues/16606
@@ -158,10 +162,12 @@ class PPOCRImgByModel:
         if paddlex_config is not None:
             PPOCRImgByModel.config = paddlex_config
 
-        if not PPOCRImgByModel.is_models_exist():
-            print('有模型不存在')
-        else:
-            print('所有模型都存在')
+        unps = PPOCRImgByModel._models_unexist()
+        if len(unps) > 0:
+            reps = get_response(('ppocr_model_dir_unexist', unps))
+            if reps == 'exit' or reps == 'exit-error' or ('exit' in reps):
+                return
+        if _exit(stop_flag): return
 
         self.__pipeline = TableRecognitionPipelineV2(
             paddlex_config = None if paddlex_config is None else paddlex_config,
@@ -262,8 +268,8 @@ class PPOCRImgByModel:
         return pers
 
     @staticmethod
-    def is_models_exist():
-        """检测模型是否存在"""
+    def _models_unexist():
+        """返回不存在的模型地址"""
         from paddlex.inference import load_pipeline_config
         official_yamls = load_pipeline_config(PPOCRImgByModel.config)
 
@@ -299,13 +305,15 @@ class PPOCRImgByModel:
                     model_name2dir[key] = str(_ModelManager._save_dir) + '/' + key
 
         def __check_dir():
-            """检查地址是否存在"""
+            """检查地址是否存在，返回不存在的地址"""
             from pathlib import Path
             nonlocal model_name2dir
+            unknown_paths: list[str] = []
             for key in model_name2dir:
                 if not Path(model_name2dir[key]).exists():
-                    return False
-            return True
+                    unknown_paths.append(key)
+            return unknown_paths
+
         __set_dir()
         return __check_dir()
 
