@@ -105,7 +105,7 @@ class MainFrame(wx.Frame):
         self.btn1.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(1))
         self.btn2.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(2))
         self.btn3.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(3))
-        self.btn_stop.Bind(wx.EVT_BUTTON, lambda e: self.StopTask())
+        self.btn_stop.Bind(wx.EVT_BUTTON, lambda e: self.StopQCTask())
         self.btn_clear.Bind(wx.EVT_BUTTON, lambda e: self.ClearText())
         # self.Bind(wx.EVT_CLOSE,self.on_exit)
         # 最好采用默认关闭方式
@@ -216,8 +216,10 @@ class MainFrame(wx.Frame):
         self.DisableButtons()
         # 启动后台
         threading.Thread(target = self.BackgroundTask, args = (task_type,), daemon = True).start()
-    def StopTask(self):
-        """终止某一功能"""
+
+    def StopQCTask(self):
+        """终止青字班的功能"""
+        self.__thread_stop_flag_qc.set()
 
     def ClearText(self):
         wx.CallAfter(self.msg_text.ClearAll)
@@ -244,7 +246,7 @@ class MainFrame(wx.Frame):
                         case wx.OK:
                             return 'continue'
                         case wx.CANCEL:
-                            self.__thread_stop_flag_qc.set()
+                            self.StopQCTask()
                             postText('# -------------------------- 退出功能2 -------------------------- #', 'red', False)
                             return 'exit'
                     # self.__thread_wait_response_children.wait()

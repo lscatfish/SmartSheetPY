@@ -58,7 +58,6 @@ class DoQingziClass:
             case 3:
                 if not _exit(self.__stopFlag):
                     self.signforqcSheet()
-        self.reset()
 
 
     def choose(self) -> int:
@@ -92,6 +91,7 @@ class DoQingziClass:
         self.__classname_all = folder.pure_filenames
         paths = folder.paths
         for p in paths:
+            if _exit(self.__stopFlag): return
             xlsx_sheet = XlsxLoad(_path = p, classname = gc.get_classname_from_path(path = p))  # 自动识别班级
             self.__persons_all.extend(xlsx_sheet.get_personList())
 
@@ -107,6 +107,7 @@ class DoQingziClass:
             classnames = folder.pure_filenames
             persons_app: list[DefPerson] = []
             for i in range(len(paths)):
+                if _exit(self.__stopFlag): return None
                 xlsx_sheet = XlsxLoad(paths[i], classname = gc.get_classname_from_path(path = paths[i]))  # 自动识别班级
                 persons_app.extend(xlsx_sheet.get_personList(stdkey_as_sub = True))
             return persons_app, classnames
@@ -114,16 +115,18 @@ class DoQingziClass:
         def __person_sign(persons_app: list[DefPerson]):
             """标记人员"""
             for per_app in persons_app:
+                if _exit(self.__stopFlag): return
                 per_all = self.search(per_app, push_unknown = True)
                 if per_all is not None:
                     per_all.ifsign = True
 
-        def __make_sheet(classname: str) -> list[list[str]]:
+        def __make_sheet(classname: str) -> list[list[str]] | None:
             """制表"""
             header = ['姓名', '学号']
             outSheet: list[list[str]] = [['序号', '姓名', '学号', '签到'], ]
             i = 1
             for per in self.__persons_all:
+                if _exit(self.__stopFlag): return None
                 if per.ifsign and per.classname == classname:
                     l: list[str] = [str(i)]
                     l.extend(per.to_list(header))
@@ -156,6 +159,7 @@ class DoQingziClass:
             header = [gc.chstrQClassname, gc.chstrName, gc.chstrStudentID]
             sheet.append(header)
             for per in self.__persons_all:
+                if _exit(self.__stopFlag): return
                 if per.ifsign:
                     sheet.append(per.to_list(header))
             path = gc.dir_STORAGE_ + 'storage.xlsx'
@@ -168,11 +172,17 @@ class DoQingziClass:
 
 
         pers_app, cns = __load_person_app()
+        if _exit(self.__stopFlag): return
         __person_sign(pers_app)
+        if _exit(self.__stopFlag): return
         for cn in cns:
+            if _exit(self.__stopFlag): return
             sh = __make_sheet(cn)
+            if _exit(self.__stopFlag): return
             __save(sh, cn)
+        if _exit(self.__stopFlag): return
         __storage()
+        if _exit(self.__stopFlag): return
         self.__unknownSheet()
 
     def attSheet(self):
@@ -278,10 +288,12 @@ class DoQingziClass:
 
         def __parse_docxs(paths: list[str]) -> list[DefPerson]:
             """解析docx文件"""
+            if _exit(self.__stopFlag): return []
             nonlocal unknown_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
             for p in paths:
+                if _exit(self.__stopFlag): return []
                 word = DocxLoad(p)
                 sh_per = word.get_sheet_without_enter('姓名')
                 if sh_per is not None:
@@ -303,11 +315,13 @@ class DoQingziClass:
 
         def __parse_pdfs(paths: list[str]) -> list[DefPerson]:
             """解析pdf文件"""
+            if _exit(self.__stopFlag): return []
             nonlocal unknown_paths
             nonlocal cmtts_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
             for p in paths:
+                if _exit(self.__stopFlag): return []
                 pdf = PdfLoad(p)
                 sh1 = pdf.get_sheet('应聘岗位', True)
                 sh2 = pdf.get_sheet('所任职务', True)
@@ -342,8 +356,10 @@ class DoQingziClass:
 
         def __merge(pers_pdf: list[DefPerson]):
             """合并解析出的人员信息"""
+            if _exit(self.__stopFlag): return
             temps: list[DefPerson] = []
             for p in pers_pdf:
+                if _exit(self.__stopFlag): return
                 p_all = self.search(p)  # 不启用push
                 if p_all is not None:
                     p_all.merge(p)
@@ -354,6 +370,7 @@ class DoQingziClass:
         def __make_sheet():
             """制表"""
             """预制表过程"""
+            if _exit(self.__stopFlag): return[[]]
             header: list[str] = [
                 gc.chstrName,
                 gc.chstrGender,
@@ -380,6 +397,7 @@ class DoQingziClass:
             sheet: list[list[str]] = [copy.deepcopy(header)]
             sheet[0].append('是否报名班委')
             for per in self.__persons_all:
+                if _exit(self.__stopFlag): return [[]]
                 row = per.to_list(header)
                 row.append('是' if per.ifsign else '否')
                 sheet.append(row)
@@ -391,6 +409,7 @@ class DoQingziClass:
 
 
         def __save(sheet: list[list[str]]):
+            if _exit(self.__stopFlag): return
             XlsxWrite(
                 sheet = sheet,
                 path = gc.dir_OUTPUT_SIGNFORQC_ + '报名.xlsx',
@@ -402,12 +421,14 @@ class DoQingziClass:
         self.__persons_all.extend(__parse_docxs(docx_paths))
         __merge(__parse_pdfs(pdf_paths))
         __save(__make_sheet())
-
+        if _exit(self.__stopFlag): return
         """处理错误"""
         for p in unknown_paths:
+            if _exit(self.__stopFlag): return
             copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown, if_print = True)
 
         for p in cmtts_paths:
+            if _exit(self.__stopFlag): return
             copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee, if_print = True)
 
 
@@ -424,10 +445,12 @@ class DoQingziClass:
                     per.ifsign = True
 
     def __unknownSheet(self):
+        if _exit(self.__stopFlag): return
         sheet: list[list[str]] = [['类型', gc.chstrQClassname, gc.chstrName, gc.chstrStudentID], ]
         header = [gc.chstrQClassname, gc.chstrName, gc.chstrStudentID]
         if len(self.__unknownPersons) > 0:
             for per in self.__unknownPersons:
+                if _exit(self.__stopFlag): return
                 # print(per[0])
                 l: list[str] = ['*UNKNOWN', ]
                 l.extend(per[0].to_list(header))
@@ -437,6 +460,7 @@ class DoQingziClass:
                     l2.extend(lp.to_list(header))
                     sheet.append(l2)
             for r in sheet:
+                if _exit(self.__stopFlag): return
                 print(r)
         else:
             print('没有未知人员')
