@@ -10,7 +10,7 @@ import threading
 import wx
 import wx.stc as stc  # 关键控件
 from wxGUI.hijack.hijack_sysstd import WxTextCtrlStdout
-from wxGUI.text_hub import postText
+from wxGUI.communitor.text_hub import postText
 
 
 class MainFrame(wx.Frame):
@@ -120,7 +120,7 @@ class MainFrame(wx.Frame):
 
         def __worker():
             # 1. 先注册消息站
-            from .text_hub import register_text_hub
+            from wxGUI.communitor.text_hub import register_text_hub
             register_text_hub(
                 lambda msg, color = None, ptime = True:
                 wx.CallAfter(self.AddMessage, msg, color, ptime))
@@ -134,7 +134,7 @@ class MainFrame(wx.Frame):
             import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
             a = wxGUI.hijack.crt_redirect.a
 
-            from .text_hub import postText
+            from wxGUI.communitor.text_hub import postText
             import SSPY.hijack.hijack_paddlex
             a = SSPY.hijack.hijack_paddlex
 
@@ -251,6 +251,10 @@ class MainFrame(wx.Frame):
                             return 'exit'
                     # self.__thread_wait_response_children.wait()
                     return 'exit-error'
+            if request[0] == 'msg':
+                if len(request) == 4:
+                    postText(request[1], color = request[2], ptime = request[3])
+                    return None
         return 'exit-error'
 
 

@@ -9,7 +9,7 @@ import threading
 import msvcrt
 import ctypes
 from ctypes import wintypes
-from wxGUI.text_hub import postText  # 统一发消息入口
+from wxGUI.communitor.text_hub import postText  # 统一发消息入口
 
 import re
 
