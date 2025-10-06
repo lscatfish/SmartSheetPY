@@ -1,150 +1,181 @@
-import dis, types, sys, functools
+import sys
+import inspect
+import functools
+from types import FrameType
+from typing import Callable, Any, Dict, Optional
+
+STOP = object()  # 内部哨兵，用于递归链传递
 
 
-class ExitWhenTriggered(Exception):
-    """探针触发后用于跳出函数的执行"""
-    pass
-
-
-# ------------------ 探针钩子 ------------------
-def _probe_hook(frame, target_type, target_key, expect, ns):
+class _FuncTracer:
     """
-    在每条语句前运行：
-      frame : 当前帧（探针插入时把当前帧作为常量塞进来）
-      ns    : 装饰器传来的命名空间（用于全局变量）
+    单函数粒度的变量监控器
+    只在「被装饰函数」的「line」事件触发检查，调用外部函数时自动暂停
     """
-    # 1. 按类型抓值
-    val = None
-    if target_type == 'local':
-        val = frame.f_locals.get(target_key, None)
-    elif target_type == 'param':
-        val = frame.f_locals.get(target_key, None)
-    elif target_type == 'global':
-        val = frame.f_globals.get(target_key, None)
-    elif target_type == 'self_attr':
-        self = frame.f_locals.get('self', None)
-        if self is not None:
-            val = getattr(self, target_key, None)
-    # 2. 判条件
-    if val is None:
-        return
-    hit = expect(val) if callable(expect) else val == expect
-    if hit:
-        raise ExitWhenTriggered
 
+    __slots__ = ("cond", "varnames", "active", "owner_func_name", "retval")
 
-# ------------------  3.11+ 字节码注入 ------------------
-def _instrument(func, target_type, target_key, expect):
-    co = func.__code__
-    # 1. 预生成偏函数，字节码里只需传 frame
-    probe_fn = functools.partial(_probe_hook,
-        target_type = target_type,
-        target_key = target_key,
-        expect = expect,
-        ns = None)
-    new_consts = co.co_consts + (probe_fn,)  # 常量下表 probe_id
-    probe_id = len(co.co_consts)
+    def __init__(self, cond: Callable, varnames: list[str], retval):
+        self.cond = cond
+        self.varnames = varnames
+        self.active = False
+        self.owner_func_name: Optional[str] = None
+        self.retval = retval
 
-    bytecode = bytearray(co.co_code)
-    stmt_offs = [0]
-    for instr in dis.get_instructions(co):
-        if instr.is_jump_target and instr.offset != 0:
-            stmt_offs.append(instr.offset)
-
-    CALL_CACHE = bytes([
-        dis.opmap['CALL'], 1, 0,  # argc=1
-        dis.opmap['CACHE'], 0, 0
-    ])
-
-    for off in reversed(stmt_offs):
-        patch = bytes([
-            dis.opmap['LOAD_CONST'], probe_id,  # 偏函数
-            dis.opmap['LOAD_CONST'], 0,  # 占位，运行时用 frame
-        ]) + CALL_CACHE + bytes([dis.opmap['POP_TOP'], 0])
-        bytecode[off:off] = patch
-
-    new_code = co.replace(co_code = bytes(bytecode), co_consts = new_consts)
-    return types.FunctionType(new_code,
-        func.__globals__,
-        func.__name__,
-        func.__defaults__,
-        func.__closure__)
-
-
-# ------------------ 装饰器 ------------------
-def watch(target_type, target_key, expect):
-    """
-    target_type : 'local' | 'param' | 'global' | 'self_attr'
-    target_key  : 变量名（self_attr 可写 a.b.c）
-    expect      : 值 或 lambda
-    """
-    if target_type not in {'local', 'param', 'global', 'self_attr'}:
-        raise ValueError('bad target_type')
-
-    def deco(func):
-        # 1. 注入探针
-        func = _instrument(func, target_type, target_key, expect)
-
-        # 2. 包一层 try/except 让触发时静默返回
-        @functools.wraps(func)
-        def wrapper(*a, **k):
+    # ---------- 真正的检查 ----------
+    def _check(self, frame: FrameType) -> bool:
+        values = []
+        for name in self.varnames:
+            val = None
             try:
-                return func(*a, **k)
-            except ExitWhenTriggered:
-                return None
+                # 1. 局部变量
+                if name in frame.f_locals:
+                    val = frame.f_locals[name]
+                # 2. 全局变量
+                elif name in frame.f_globals:
+                    val = frame.f_globals[name]
+                # 3. 类属性 / 私有属性  (含 name-mangling)
+                elif "." in name:
+                    part0, *parts = name.split(".")
+                    obj = frame.f_locals[part0]
+                    for attr in parts:
+                        # 对双下划线属性做 mangle
+                        if attr.startswith("__") and not attr.endswith("__"):
+                            attr = f"_{obj.__class__.__name__}{attr}"
+                        obj = getattr(obj, attr)
+                    val = obj
+                else:
+                    raise NameError(name)
+            except Exception:
+                val = None
+            values.append(val)
 
-        # 把元数据搬回来，避免“不是方法”
-        functools.update_wrapper(wrapper, func)
+        # 条件函数内部再做一次容错，避免 None 参与比较
+        try:
+            return bool(self.cond(*values))
+        except Exception:
+            return False
+
+    # ---------- trace 回调 ----------
+    def _trace(self, frame: FrameType, event: str, arg: Any) -> Optional[Callable]:
+        # 只在「所属函数」内工作
+        if frame.f_code.co_name != self.owner_func_name:
+            return None
+
+        if event == "call":
+            # 进入函数：激活检查
+            self.active = True
+            return self._trace
+
+        if event == "return":
+            # 离开函数：去激活
+            self.active = False
+            return self._trace
+
+        if event == "line" and self.active:
+            # 每条字节码之前检查
+            if self._check(frame):
+                # 满足条件：抛 StopIteration 给调用者
+                raise StopIteration("Variable condition met")
+
+        return self._trace
+
+    # 根据 retval 类型计算真正要返回的值
+    def _make_return(self, frame: FrameType):
+        if self.retval is None:
+            return None
+        # 1. 直接字面量（int, list, dict, set, tuple...）
+        if not isinstance(self.retval, str):
+            return self.retval
+        # 2. 字符串当成表达式，在 frame 上下文中求值
+        try:
+            # 构造局部命名空间：局部变量 + 全局变量
+            namespace = frame.f_globals.copy()
+            namespace.update(frame.f_locals)
+            return eval(self.retval, namespace)
+        except Exception:
+            # 求值失败就返回 None
+            return None
+
+
+def monitor_variables(varnames: list[str], condition: Callable[[...], bool], retval = None):
+    """
+    装饰器：监控指定变量，条件为真时立即终止被装饰函数
+    支持全局、局部、类属性、私有属性写法  ['x', 'self.__data', 'MyCls.counter']
+    """
+
+    def decorator(func: Callable) -> Callable:
+        tracer = _FuncTracer(condition, varnames, retval)
+        tracer.owner_func_name = func.__name__
+
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            # 保存旧 trace 函数
+            old_trace = sys.gettrace()
+            try:
+                sys.settrace(tracer._trace)
+                return func(*args, **kw)
+            except StopIteration as e:
+                if str(e) == "Variable condition met":
+                    return tracer._make_return(sys._getframe(0).f_back)  # 拿到被终止函数帧
+                raise
+            finally:
+                sys.settrace(old_trace)
+
         return wrapper
 
-    return deco
+    return decorator
 
 
-# 1. 全局变量
-G = 0
+# -------------------------------------------------
+# 使用示例（全局、类、局部、私有、递归、互调）
+# -------------------------------------------------
+if __name__ == "__main__":
+    g = 100
 
 
-# 2. 类成员
-class Counter:
-    def __init__(self):
-        self.n = 0
+    class Foo:
+        cls_var = 0
 
-    @watch('self_attr', 'n', 3)
-    def inc(self):
-        while self.n < 5:
-            self.n += 1
-            print('inc', self.n)
-            self.helper()  # 子函数里 self.n=3 不会触发
-        return self.n
+        def __init__(self):
+            self.__priv = 10
 
-    def helper(self):
-        self.n = 3
-        print('helper set n=3, but NOT exit')
+        # 监控类变量、私有属性、全局变量、局部变量
+        @monitor_variables(
+            ["g", "self.__priv", "Foo.cls_var", "tmp"],
+            lambda g, priv, cls, tmp: g < 95 or priv <= 5 or cls >= 3 or tmp == 7
+        )
+        def work(self, x):
+            global g
+            print("---- enter work ----")
+            for i in range(10):
+                tmp = i + x  # 局部变量
+                g -= 1
+                self.__priv -= 1
+                Foo.cls_var += 1
+                print(f"i={i}  g={g}  __priv={self.__priv}  cls_var={Foo.cls_var}  tmp={tmp}")
+                self.helper()  # 调用其他函数，内部不检查
+            print("---- exit work ----")
+            return "done"
 
-
-# 3. 局部 / 参数 / 递归
-@watch('local', 'x', lambda v: v <= 0)
-def dfs(x):
-    print('dfs', x)
-    if x == 0:
-        return
-    dfs(x - 1)  # 递归调用，探针仍在原函数字节码里，继续检测
-    print('dfs return', x)
-
-
-# 4. 三方库调用
-@watch('local', 'buf', 'quit')
-def main():
-    import subprocess
-    buf = 'go'
-    while buf != 'quit':
-        subprocess.run(['echo', 'inside三方库，不会触发探针'])
-        buf = 'quit'
-    print('never reach here')
+        def helper(self):
+            # 这里所有变量再怎么变化都不会触发检查
+            Foo.cls_var += 100
+            print("  (helper) cls_var += 100  ->", Foo.cls_var)
+            Foo.cls_var -= 100
 
 
-if __name__ == '__main__':
-    c = Counter()
-    c.inc()
-    dfs(3)
-    main()
+    # 递归场景
+    @monitor_variables(["n"], lambda n: n == 9,retval = "n")
+    def rec(n):
+        print("rec", n)
+        if n == 0:
+            return 0
+        return 1 + rec(n - 1)
+
+
+    # 测试
+    f = Foo()
+    print("work return:", f.work(0))
+    print()
+    print("rec return:", rec(10))
