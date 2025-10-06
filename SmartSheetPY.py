@@ -1,11 +1,10 @@
 ﻿"""入口文件"""
 
-
 import sys, os, importlib.util, subprocess
 
 # 仅 PyInstaller 打包后才执行外置加载
 if getattr(sys, 'frozen', False) and sys.platform == 'win32':
-    pyc_path = os.path.join(sys._MEIPASS, 'runtime', 'asyncio', 'windows_utils.pyc')
+    pyc_path = os.path.join(sys._MEIPASS, 'runtime', 'asyncio', f'windows_utils.cpython-{sys.version_info.major}{sys.version_info.minor}.pyc')
     spec = importlib.util.spec_from_file_location("asyncio.windows_utils", pyc_path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

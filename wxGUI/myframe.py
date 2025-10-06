@@ -229,7 +229,7 @@ class MainFrame(wx.Frame):
         pass
 
     def response_children(self, request: str | tuple | list):
-        """回复子程序，注册为_main_process_func，此函数在主线程中运行"""
+        """回复子线程，注册为_main_process_func，此函数在主线程中运行"""
         if isinstance(request, str):
             pass
         elif isinstance(request, tuple):

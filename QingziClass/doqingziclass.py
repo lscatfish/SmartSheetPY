@@ -211,6 +211,7 @@ class DoQingziClass:
                 return []
             for cn in cn_ip.keys():
                 for ip in cn_ip[cn]:
+                    if _exit(self.__stopFlag): return[]
                     ocr.predict(ip)
                 persons_att.extend(ocr.get_personList(cn, ifp = True))
             return persons_att
@@ -218,6 +219,7 @@ class DoQingziClass:
         def __person_checkin(persons_att: list[DefPerson]):
             """检查是否签到"""
             for per_att in persons_att:
+                if _exit(self.__stopFlag): return
                 per_all = self.search(per_att, push_unknown = True)
                 if per_all is not None:
                     qd = per_att.get_information('签到')
@@ -226,10 +228,12 @@ class DoQingziClass:
 
         def __make_sheet(classname: str) -> list[list[str]]:
             """制表"""
+            if _exit(self.__stopFlag): return[[]]
             in_header = [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式']
             out: list[list[str]] = [
                 [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式', gc.chstrCheckIn, '备注'], ]
             for per in self.__persons_all:
+                if _exit(self.__stopFlag): return [[]]
                 if per.classname == classname:
                     l = per.to_list(in_header)
                     if per.ifcheck:
@@ -247,6 +251,7 @@ class DoQingziClass:
 
         def __save(sheet: list[list[str]], classname: str):
             """保存签到表"""
+            if _exit(self.__stopFlag): return
             from openpyxl.styles import Font, Border, Alignment
             path = gc.dir_OUTPUT_ATT_ + classname + '线下签到汇总表.xlsx'
             writer = XlsxWrite(
@@ -269,7 +274,9 @@ class DoQingziClass:
             return
         __person_checkin(pers_att)
         for cn in self.__classname_all:
+            if _exit(self.__stopFlag): return
             __save(__make_sheet(cn), cn)
+        if _exit(self.__stopFlag): return
         self.__unknownSheet()
 
     def signforqcSheet(self):
