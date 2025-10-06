@@ -3,7 +3,6 @@ import copy
 import os
 import threading
 
-
 from bs4 import BeautifulSoup
 from paddleocr import TableRecognitionPipelineV2
 import PIL.Image
@@ -139,12 +138,14 @@ class PPOCRImgByModel:
     """进行ppocr img，所有解析方式全部采用模型"""
     config = 'table_recognition_v2'
 
+
     def __init__(self, paddlex_config: str = None, stop_flag: threading.Event = None):
         """加载模型
         Parameters:
             paddlex_config:自主配置的yaml文件路径
             stop_flag:终止标志
         """
+        self.__stopFlag = stop_flag  # 一定要提前加载
         from .communitor.core import get_response
         from .helperfunction import _exit
         print('加载ppocr的模型')
@@ -181,6 +182,7 @@ class PPOCRImgByModel:
         self.__isOK = False
         print('ppocr模型加载完毕!!!\n')
 
+
     def __preload_model(self):
         """预加载模型，避免首次predict时加载"""
         try:
@@ -192,6 +194,7 @@ class PPOCRImgByModel:
             print("模型预加载完成")
         except Exception as e:
             print(f"预加载模型失败：{e}")
+
 
     def predict(self, path, clear: bool = False):
         self.__isOK = False

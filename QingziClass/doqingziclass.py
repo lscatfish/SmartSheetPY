@@ -15,7 +15,6 @@ from SSPY.helperfunction import _exit
 class DoQingziClass:
     """青字班程序控制库"""
 
-
     def __init__(self):
         self.__persons_all: list[DefPerson] = []  # """所有人员的名单"""
         self.__classname_all: list[str] = []  # 所有的班级名
@@ -84,6 +83,7 @@ class DoQingziClass:
 
         return int(c)
 
+
     def __load_person_all(self):
         """加载所有的学员信息"""
         print('加载所有的学员信息')
@@ -99,6 +99,7 @@ class DoQingziClass:
     def appSheet(self):
         """签到表"""
 
+
         def __load_person_app():
             """解析报集会名表中的人员"""
             print('加载报名学员名单中...')
@@ -112,6 +113,7 @@ class DoQingziClass:
                 persons_app.extend(xlsx_sheet.get_personList(stdkey_as_sub = True))
             return persons_app, classnames
 
+
         def __person_sign(persons_app: list[DefPerson]):
             """标记人员"""
             for per_app in persons_app:
@@ -119,6 +121,7 @@ class DoQingziClass:
                 per_all = self.search(per_app, push_unknown = True)
                 if per_all is not None:
                     per_all.ifsign = True
+
 
         def __make_sheet(classname: str) -> list[list[str]] | None:
             """制表"""
@@ -134,6 +137,7 @@ class DoQingziClass:
                     outSheet.append(l)
                     i += 1
             return outSheet
+
 
         def __save(sheet: list[list[str]], classname: str):
             path = gc.dir_OUTPUT_APP_ + classname + '.xlsx'
@@ -185,8 +189,10 @@ class DoQingziClass:
         if _exit(self.__stopFlag): return
         self.__unknownSheet()
 
+
     def attSheet(self):
         """签到汇总"""
+
 
         def __organize_imgs() -> dict[str, list[str]]:
             """整理照片以及其地址"""
@@ -202,6 +208,7 @@ class DoQingziClass:
             # print(classname_imgpath)
             return classname_imgpath
 
+
         def __parse_imgs(cn_ip: dict[str, list[str]]) -> list[DefPerson]:
             persons_att: list[DefPerson] = []
             # 启用ocr
@@ -211,10 +218,11 @@ class DoQingziClass:
                 return []
             for cn in cn_ip.keys():
                 for ip in cn_ip[cn]:
-                    if _exit(self.__stopFlag): return[]
+                    if _exit(self.__stopFlag): return []
                     ocr.predict(ip)
                 persons_att.extend(ocr.get_personList(cn, ifp = True))
             return persons_att
+
 
         def __person_checkin(persons_att: list[DefPerson]):
             """检查是否签到"""
@@ -228,7 +236,7 @@ class DoQingziClass:
 
         def __make_sheet(classname: str) -> list[list[str]]:
             """制表"""
-            if _exit(self.__stopFlag): return[[]]
+            if _exit(self.__stopFlag): return [[]]
             in_header = [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式']
             out: list[list[str]] = [
                 [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式', gc.chstrCheckIn, '备注'], ]
@@ -248,6 +256,7 @@ class DoQingziClass:
                         l.append('未报名')
                     out.append(l)
             return out
+
 
         def __save(sheet: list[list[str]], classname: str):
             """保存签到表"""
@@ -279,6 +288,7 @@ class DoQingziClass:
         if _exit(self.__stopFlag): return
         self.__unknownSheet()
 
+
     def signforqcSheet(self):
         """青字班报名统计,per.ifsign表示是否报名班委"""
         unknown_paths: list[str] = []
@@ -286,12 +296,14 @@ class DoQingziClass:
         cmtts_paths: list[str] = []
         """班委报名表的路径"""
 
+
         def __organize_files():
             """收集报名的各种文件"""
             folder = DefFolder(gc.dir_INPUT_SIGNFORQC_)
             pdf_paths = folder.get_paths_by(gc.extensions_PDF)
             docx_paths = folder.get_paths_by(gc.extensions_DOCX)
             return pdf_paths, docx_paths
+
 
         def __parse_docxs(paths: list[str]) -> list[DefPerson]:
             """解析docx文件"""
@@ -319,6 +331,7 @@ class DoQingziClass:
                 else:
                     unknown_paths.append(p)
             return pers
+
 
         def __parse_pdfs(paths: list[str]) -> list[DefPerson]:
             """解析pdf文件"""
@@ -361,6 +374,7 @@ class DoQingziClass:
                     unknown_paths.append(p)
             return pers
 
+
         def __merge(pers_pdf: list[DefPerson]):
             """合并解析出的人员信息"""
             if _exit(self.__stopFlag): return
@@ -374,10 +388,11 @@ class DoQingziClass:
                     temps.append(p)
             self.__persons_all.extend(temps)
 
+
         def __make_sheet():
             """制表"""
             """预制表过程"""
-            if _exit(self.__stopFlag): return[[]]
+            if _exit(self.__stopFlag): return [[]]
             header: list[str] = [
                 gc.chstrName,
                 gc.chstrGender,
@@ -450,6 +465,7 @@ class DoQingziClass:
             for per in self.__persons_all:
                 if per.classname == p_app.classname and self.is_same_studentID(per.studentID, p_app.studentID):
                     per.ifsign = True
+
 
     def __unknownSheet(self):
         if _exit(self.__stopFlag): return
