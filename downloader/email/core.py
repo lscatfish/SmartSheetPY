@@ -5,18 +5,9 @@ import re
 from datetime import datetime, timedelta
 import logging
 import traceback
+from sys import stderr
 
 from downloader.config.core import load_config_for_email
-
-# 配置日志
-logging.basicConfig(
-    level = logging.INFO,
-    format = '%(asctime)s - %(levelname)s - %(message)s',
-    handlers = [
-        logging.FileHandler("email_download.log", encoding = 'utf-8'),
-        logging.StreamHandler()
-    ]
-)
 
 
 def decode_mime_header(header):
@@ -182,12 +173,23 @@ def download_attachments(config_path = './input/email_yaml.yaml'):
             start_dt_cfg = start_dt_cfg.replace(tzinfo = local_tz)
             end_dt_cfg = end_dt_cfg.replace(tzinfo = local_tz)
         except ValueError as e:
-            logging.error(f"配置文件中的时间格式错误，应为 'YYYY-MM-DD HH:MM:SS': {str(e)}")
+            stderr(f"配置文件中的时间格式错误，应为 'YYYY-MM-DD HH:MM:SS': {str(e)}")
             raise
 
         # 创建基础保存目录
         base_dir = config['download'].get('save_dir', './attachments')
         os.makedirs(base_dir, exist_ok = True)
+
+        # 配置日志
+        logging.basicConfig(
+            level = logging.INFO,
+            format = '%(asctime)s - %(levelname)s - %(message)s',
+            handlers = [
+                logging.FileHandler("./attachments/email_download.txt", encoding = 'utf-8'),
+                logging.StreamHandler()
+            ]
+        )
+
         logging.info(f"附件将保存至目录: {os.path.abspath(base_dir)}")
 
         mailbox_name = config['download'].get('mailbox', 'INBOX')
