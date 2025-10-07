@@ -52,7 +52,7 @@ class MainFrame(wx.Frame):
         self.btn1 = wx.Button(btn_panel, label = "功能1：生成签到表")
         self.btn2 = wx.Button(btn_panel, label = "功能2：生成汇总表")
         self.btn3 = wx.Button(btn_panel, label = "功能3：青字班报名")
-        self.btn_stop = wx.Button(btn_panel, label = "终止")
+        self.btn_stop = wx.Button(btn_panel, label = "中止")
         self.btn_clear = wx.Button(btn_panel, label = "清屏")
         font = wx.Font(
             self.__font_size,  # 字号（点/磅）
@@ -219,6 +219,7 @@ class MainFrame(wx.Frame):
 
     def StopQCTask(self):
         """终止青字班的功能"""
+        postText("正在中止功能执行......", color = 'red')
         self.__thread_stop_flag_qc.set()
 
     def ClearText(self):

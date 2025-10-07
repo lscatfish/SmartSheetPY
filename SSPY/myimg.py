@@ -9,6 +9,8 @@ import PIL.Image
 
 from .PersonneInformation import DefPerson
 from .globalconstants import GlobalConstants as gc
+from SSPY.helperfunction import _exit
+from SSPY.tracker.core import VariableType, monitor_variables, get_current_monitor
 
 
 def html_to_list(html_str: str) -> list[list[str]]:
@@ -138,7 +140,12 @@ class PPOCRImgByModel:
     """进行ppocr img，所有解析方式全部采用模型"""
     config = 'table_recognition_v2'
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None
+    )
     def __init__(self, paddlex_config: str = None, stop_flag: threading.Event = None):
         """加载模型
         Parameters:
@@ -147,7 +154,6 @@ class PPOCRImgByModel:
         """
         self.__stopFlag = stop_flag  # 一定要提前加载
         from .communitor.core import get_response
-        from .helperfunction import _exit
         print('加载ppocr的模型')
         # 这个模型就是一坨
         # 这里使用本地时会有bug：https://github.com/PaddlePaddle/PaddleOCR/issues/16606
