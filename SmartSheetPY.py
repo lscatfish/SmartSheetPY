@@ -28,14 +28,14 @@ if getattr(sys, 'frozen', False) and sys.platform == 'win32':
 
 #-----------------------------------正常入口-------------------------------------------#
 
-from wxGUI.myframe import MainFrame
+from wxGUI.SSPYframe import SSPYMainFrame
 from wx import App
 
 
 app = App()
 from QingziClass.doqingziclass import DoQingziClass
 
-MainFrame(None, title = "SmartSheetPY", QC = DoQingziClass())
+SSPYMainFrame(None, title = "SmartSheetPY", QC = DoQingziClass())
 app.MainLoop()
 
 

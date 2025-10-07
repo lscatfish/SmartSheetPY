@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-wxPython 演示：Shift+滚轮横向滚动文本内容（同步移动）
-使用 wx.stc.StyledTextCtrl 替代 TextCtrl，以支持 SetXOffset
+wxPython 用于控制SSPY模块的的窗口
 """
 import sys
 import time
@@ -13,7 +12,7 @@ from wxGUI.hijack.hijack_sysstd import WxTextCtrlStdout
 from wxGUI.communitor.text_hub import postText
 
 
-class MainFrame(wx.Frame):
+class SSPYMainFrame(wx.Frame):
     """主框架"""
 
     def __init__(self, parent, title, QC):
