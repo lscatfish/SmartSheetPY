@@ -146,7 +146,9 @@ def parse_email_date(date_str):
     return parsed_dt
 
 
-def download_attachments(config_path = './input/email_yaml.yaml'):
+def download_attachments(
+    config_path = './input/email_yaml.yaml',
+    key_path = 'my_secret.key'):
     """
     主函数：下载指定时间范围内的邮件附件，并按发件人邮箱地址分类保存。
     读取config.yaml配置文件。
@@ -158,7 +160,7 @@ def download_attachments(config_path = './input/email_yaml.yaml'):
 
     try:
         # 1. 加载配置
-        config = load_config_for_email(config_path)  # 默认读取 config.yaml
+        config = load_config_for_email(config_path, key_path)  # 默认读取 config.yaml
 
         email_user = config['email']['address']
         email_pass = config['email']['authorization_code']

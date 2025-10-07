@@ -1,4 +1,5 @@
 import yaml
+from encryption.decrypted import decrypt_email_authorization_code
 
 
 def load_config(config_file = 'config.yaml'):
@@ -13,7 +14,9 @@ def load_config(config_file = 'config.yaml'):
         raise
 
 
-def load_config_for_email(config_file = 'config.yaml'):
+def load_config_for_email(
+    config_file = 'config.yaml',
+    key_path: str = 'my_secret.key'):
     """从YAML文件加载配置"""
     import logging
     try:
@@ -29,6 +32,10 @@ def load_config_for_email(config_file = 'config.yaml'):
             raise ValueError("'email' 部分必须包含 'address', 'authorization_code' 和 'imap_server'")
         if 'start_date' not in config['download'] or 'end_date' not in config['download']:
             raise ValueError("'download' 部分必须包含 'start_date' 和 'end_date'")
+        config['email']['authorization_code'] = (
+            decrypt_email_authorization_code(
+                yaml_path = config_file,
+                key_path = key_path))
         return config
     except FileNotFoundError:
         logging.error(f"配置文件 '{config_file}' 未找到")
