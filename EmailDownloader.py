@@ -4,4 +4,5 @@
 """
 from downloader.email.core import download_attachments
 
-download_attachments('./input/email_yaml.yaml', 'my_secret.key')
+download_attachments('./email_yaml.yaml', 'my_secret.key')
+input("\n\n按回车键退出...")
