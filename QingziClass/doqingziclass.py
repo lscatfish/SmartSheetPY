@@ -10,6 +10,7 @@ from SSPY.globalconstants import GlobalConstants as gc
 from SSPY.myfolder import DefFolder, copy_file
 from SSPY.myxlsx import XlsxLoad, XlsxWrite
 from SSPY.helperfunction import _exit
+from SSPY.tracker.core import VariableType, monitor_variables, get_current_monitor
 
 
 class DoQingziClass:
@@ -83,7 +84,11 @@ class DoQingziClass:
 
         return int(c)
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def __load_person_all(self):
         """加载所有的学员信息"""
         print('加载所有的学员信息')
@@ -95,11 +100,16 @@ class DoQingziClass:
             xlsx_sheet = XlsxLoad(_path = p, classname = gc.get_classname_from_path(path = p))  # 自动识别班级
             self.__persons_all.extend(xlsx_sheet.get_personList())
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def appSheet(self):
         """签到表"""
+        current_monitor = get_current_monitor()
 
-
+        @current_monitor.add_nested_function(return_value = ([], []))
         def __load_person_app():
             """解析报集会名表中的人员"""
             print('加载报名学员名单中...')
@@ -113,23 +123,23 @@ class DoQingziClass:
                 persons_app.extend(xlsx_sheet.get_personList(stdkey_as_sub = True))
             return persons_app, classnames
 
-
+        @current_monitor.add_nested_function()
         def __person_sign(persons_app: list[DefPerson]):
             """标记人员"""
+            if persons_app is None or len(persons_app) == 0: return
             for per_app in persons_app:
-                if _exit(self.__stopFlag): return
                 per_all = self.search(per_app, push_unknown = True)
                 if per_all is not None:
                     per_all.ifsign = True
 
-
+        @current_monitor.add_nested_function()
         def __make_sheet(classname: str) -> list[list[str]] | None:
             """制表"""
+            if classname is None: return None
             header = ['姓名', '学号']
             outSheet: list[list[str]] = [['序号', '姓名', '学号', '签到'], ]
             i = 1
             for per in self.__persons_all:
-                if _exit(self.__stopFlag): return None
                 if per.ifsign and per.classname == classname:
                     l: list[str] = [str(i)]
                     l.extend(per.to_list(header))
@@ -138,8 +148,10 @@ class DoQingziClass:
                     i += 1
             return outSheet
 
-
+        @current_monitor.add_nested_function()
         def __save(sheet: list[list[str]], classname: str):
+            if sheet is None or classname is None: return
+            if _exit(self.__stopFlag): return
             path = gc.dir_OUTPUT_APP_ + classname + '.xlsx'
             writer = XlsxWrite(
                 path = path,
@@ -156,7 +168,7 @@ class DoQingziClass:
                 writer.write()
             print('签到表已储存：\"' + path + '\"')
 
-
+        @current_monitor.add_nested_function()
         def __storage():
             """储存报名信息"""
             sheet: list[list[str]] = []
@@ -176,29 +188,29 @@ class DoQingziClass:
 
 
         pers_app, cns = __load_person_app()
-        if _exit(self.__stopFlag): return
         __person_sign(pers_app)
-        if _exit(self.__stopFlag): return
         for cn in cns:
-            if _exit(self.__stopFlag): return
             sh = __make_sheet(cn)
-            if _exit(self.__stopFlag): return
             __save(sh, cn)
-        if _exit(self.__stopFlag): return
         __storage()
-        if _exit(self.__stopFlag): return
         self.__unknownSheet()
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def attSheet(self):
         """签到汇总"""
+        current_monitor = get_current_monitor()
 
-
-        def __organize_imgs() -> dict[str, list[str]]:
+        @current_monitor.add_nested_function()
+        def __organize_imgs() -> dict[str, list[str]] | None:
             """整理照片以及其地址"""
             classname_imgpath: dict[str, list[str]] = {}
             folder = DefFolder(gc.dir_INPUT_ATTIMGS_, extensions = gc.extensions_IMG, if_print = True)
             for p in folder.paths:
+                if _exit(self.__stopFlag): return None
                 for cn in gc.cns:
                     if cn[0] in p:
                         if classname_imgpath.get(cn[1], '') == '':
@@ -209,7 +221,9 @@ class DoQingziClass:
             return classname_imgpath
 
 
-        def __parse_imgs(cn_ip: dict[str, list[str]]) -> list[DefPerson]:
+        @current_monitor.add_nested_function(return_value = [])
+        def __parse_imgs(cn_ip: dict[str, list[str]]) -> list[DefPerson] | None:
+            if cn_ip is None: return None
             persons_att: list[DefPerson] = []
             # 启用ocr
             from SSPY.myimg import PPOCRImgByModel
@@ -224,24 +238,25 @@ class DoQingziClass:
             return persons_att
 
 
+        @current_monitor.add_nested_function()
         def __person_checkin(persons_att: list[DefPerson]):
             """检查是否签到"""
+            if persons_att is None: return
             for per_att in persons_att:
-                if _exit(self.__stopFlag): return
                 per_all = self.search(per_att, push_unknown = True)
                 if per_all is not None:
                     qd = per_att.get_information('签到')
                     if qd != '' and qd != 'None':
                         per_all.ifcheck = True
 
-        def __make_sheet(classname: str) -> list[list[str]]:
+        @current_monitor.add_nested_function()
+        def __make_sheet(classname: str) -> list[list[str]] | None:
             """制表"""
-            if _exit(self.__stopFlag): return [[]]
+            if classname is None: return None
             in_header = [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式']
             out: list[list[str]] = [
                 [gc.chstrName, gc.chstrStudentID, gc.chstrAcademy, '联系方式', gc.chstrCheckIn, '备注'], ]
             for per in self.__persons_all:
-                if _exit(self.__stopFlag): return [[]]
                 if per.classname == classname:
                     l = per.to_list(in_header)
                     if per.ifcheck:
@@ -258,9 +273,11 @@ class DoQingziClass:
             return out
 
 
+        @current_monitor.add_nested_function()
         def __save(sheet: list[list[str]], classname: str):
             """保存签到表"""
             if _exit(self.__stopFlag): return
+            if sheet is None or classname is None: return
             from openpyxl.styles import Font, Border, Alignment
             path = gc.dir_OUTPUT_ATT_ + classname + '线下签到汇总表.xlsx'
             writer = XlsxWrite(
@@ -279,40 +296,43 @@ class DoQingziClass:
 
         self.__load_storage()
         pers_att = __parse_imgs(__organize_imgs())
-        if _exit(self.__stopFlag):
-            return
         __person_checkin(pers_att)
         for cn in self.__classname_all:
-            if _exit(self.__stopFlag): return
             __save(__make_sheet(cn), cn)
-        if _exit(self.__stopFlag): return
         self.__unknownSheet()
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def signforqcSheet(self):
         """青字班报名统计,per.ifsign表示是否报名班委"""
         unknown_paths: list[str] = []
         """未知（无法解析）的文件的路径"""
         cmtts_paths: list[str] = []
         """班委报名表的路径"""
+        current_monitor = get_current_monitor()
 
-
+        @current_monitor.add_nested_function(return_value = ([], []))
         def __organize_files():
             """收集报名的各种文件"""
+            if _exit(self.__stopFlag):  return [], []
             folder = DefFolder(gc.dir_INPUT_SIGNFORQC_)
             pdf_paths = folder.get_paths_by(gc.extensions_PDF)
             docx_paths = folder.get_paths_by(gc.extensions_DOCX)
             return pdf_paths, docx_paths
 
-
+        @current_monitor.add_nested_function(return_value = [])
         def __parse_docxs(paths: list[str]) -> list[DefPerson]:
             """解析docx文件"""
-            if _exit(self.__stopFlag): return []
+
+            if paths is None or len(paths) == 0: return []
             nonlocal unknown_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
             for p in paths:
-                if _exit(self.__stopFlag): return []
+                if _exit(self.__stopFlag):  return []
                 word = DocxLoad(p)
                 sh_per = word.get_sheet_without_enter('姓名')
                 if sh_per is not None:
@@ -332,16 +352,16 @@ class DoQingziClass:
                     unknown_paths.append(p)
             return pers
 
-
+        @current_monitor.add_nested_function(return_value = [])
         def __parse_pdfs(paths: list[str]) -> list[DefPerson]:
             """解析pdf文件"""
-            if _exit(self.__stopFlag): return []
+            if paths is None or len(paths) == 0: return []
             nonlocal unknown_paths
             nonlocal cmtts_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
             for p in paths:
-                if _exit(self.__stopFlag): return []
+                if _exit(self.__stopFlag):  return []
                 pdf = PdfLoad(p)
                 sh1 = pdf.get_sheet('应聘岗位', True)
                 sh2 = pdf.get_sheet('所任职务', True)
@@ -374,13 +394,12 @@ class DoQingziClass:
                     unknown_paths.append(p)
             return pers
 
-
+        @current_monitor.add_nested_function()
         def __merge(pers_pdf: list[DefPerson]):
             """合并解析出的人员信息"""
-            if _exit(self.__stopFlag): return
+            if pers_pdf is None or len(pers_pdf) == 0: return
             temps: list[DefPerson] = []
             for p in pers_pdf:
-                if _exit(self.__stopFlag): return
                 p_all = self.search(p)  # 不启用push
                 if p_all is not None:
                     p_all.merge(p)
@@ -388,11 +407,10 @@ class DoQingziClass:
                     temps.append(p)
             self.__persons_all.extend(temps)
 
-
+        @current_monitor.add_nested_function()
         def __make_sheet():
             """制表"""
             """预制表过程"""
-            if _exit(self.__stopFlag): return [[]]
             header: list[str] = [
                 gc.chstrName,
                 gc.chstrGender,
@@ -419,7 +437,6 @@ class DoQingziClass:
             sheet: list[list[str]] = [copy.deepcopy(header)]
             sheet[0].append('是否报名班委')
             for per in self.__persons_all:
-                if _exit(self.__stopFlag): return [[]]
                 row = per.to_list(header)
                 row.append('是' if per.ifsign else '否')
                 sheet.append(row)
@@ -430,30 +447,37 @@ class DoQingziClass:
             return sheet
 
 
+        @current_monitor.add_nested_function()
         def __save(sheet: list[list[str]]):
-            if _exit(self.__stopFlag): return
-            XlsxWrite(
+            if sheet is None or len(sheet) == 0: return
+            writer = XlsxWrite(
                 sheet = sheet,
                 path = gc.dir_OUTPUT_SIGNFORQC_ + '报名.xlsx',
                 font_regular = gc.fontRegularSongSmall
-            ).write()
-
+            )
+            writer.write()
 
         pdf_paths, docx_paths = __organize_files()
-        self.__persons_all.extend(__parse_docxs(docx_paths))
+        pers_doc = __parse_docxs(docx_paths)
+        if pers_doc is None or len(pers_doc) == 0:
+            return
+        else:
+            self.__persons_all.extend(pers_doc)
         __merge(__parse_pdfs(pdf_paths))
         __save(__make_sheet())
-        if _exit(self.__stopFlag): return
+
         """处理错误"""
         for p in unknown_paths:
-            if _exit(self.__stopFlag): return
             copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown, if_print = True)
 
         for p in cmtts_paths:
-            if _exit(self.__stopFlag): return
             copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee, if_print = True)
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def __load_storage(self):
         """加载临时文件，自动报名"""
         pers_app = XlsxLoad(
@@ -466,9 +490,12 @@ class DoQingziClass:
                 if per.classname == p_app.classname and self.is_same_studentID(per.studentID, p_app.studentID):
                     per.ifsign = True
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def __unknownSheet(self):
-        if _exit(self.__stopFlag): return
         sheet: list[list[str]] = [['类型', gc.chstrQClassname, gc.chstrName, gc.chstrStudentID], ]
         header = [gc.chstrQClassname, gc.chstrName, gc.chstrStudentID]
         if len(self.__unknownPersons) > 0:
@@ -496,6 +523,11 @@ class DoQingziClass:
         ).write()
         print('未知人员表已储存：\"' + path + '\"')
 
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
     def search(self, target: DefPerson, push_unknown = False) -> DefPerson | None:
         """从全部的库中搜索目标人员，返回总表人员的指针"""
         same_name = 0

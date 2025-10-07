@@ -1,168 +1,184 @@
 import sys
+import inspect
+from enum import Enum
+from types import FunctionType
 import threading
-import logging
-from types import FrameType
-from typing import Callable, Any, Optional, List
-import functools
 
-logging.basicConfig(level = logging.WARNING)
-_local = threading.local()
+# 线程局部存储用于保存当前监控器
+_thread_local = threading.local()
 
 
-def _get_trace_stack() -> List[Callable]:
-    if not hasattr(_local, 'trace_stack'):
-        _local.trace_stack = []
-    return _local.trace_stack
+def get_current_monitor():
+    """获取当前线程的监控器实例"""
+    return getattr(_thread_local, 'current_monitor', None)
 
 
-def _push_trace(trace_func: Callable):
-    stack = _get_trace_stack()
-    stack.append(trace_func)
-    sys.settrace(trace_func)
+class VariableType(Enum):
+    LOCAL = 1
+    GLOBAL = 2
+    INSTANCE_PUBLIC = 3
+    INSTANCE_PRIVATE = 4
+    CLASS_PUBLIC = 5
+    CLASS_PRIVATE = 6
+    ARGUMENT = 7
 
 
-def _pop_trace():
-    stack = _get_trace_stack()
-    stack.pop()
-    sys.settrace(stack[-1] if stack else None)
+class MonitorExit(Exception):
+    """自定义异常用于终止被监控函数，携带特定返回值"""
+
+    def __init__(self, return_value):
+        self.return_value = return_value
+        super().__init__("Condition met")
 
 
-class _STOP:
-    __slots__ = ()
+class VariableMonitor:
+    def __init__(self, target_var, var_type, condition, return_value):
+        """
+        :param target_var: 要监控的变量名
+        :param var_type: 变量类型 (VariableType)
+        :param condition: 条件检测函数，接受变量值，返回bool
+        :param return_value: 条件满足时返回的值
+        """
+        self.target_var = target_var
+        self.var_type = var_type
+        self.condition = condition
+        self.return_value = return_value
+        self.original_trace = None
+        self.target_frames = set()
+        self.nested_functions = {}  # 存储嵌套函数的代码对象和返回值映射
 
+    def __enter__(self):
+        """启用监控"""
+        self.original_trace = sys.gettrace()
+        sys.settrace(self.global_trace)
+        # 设置当前线程的监控器
+        _thread_local.current_monitor = self
+        return self
 
-STOP = _STOP()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """禁用监控并处理异常"""
+        sys.settrace(self.original_trace)
+        # 清除当前线程的监控器
+        if hasattr(_thread_local, 'current_monitor'):
+            del _thread_local.current_monitor
+        if exc_type is MonitorExit:
+            return True  # 抑制MonitorExit异常
 
+    def global_trace(self, frame, event, arg):
+        """全局跟踪函数"""
+        if event != 'call':
+            return None
 
-class _FuncTracer:
-    __slots__ = ("cond", "varnames", "active", "owner_func_name", "retval", "trigger_frame", "owner_class")
+        # 检查是否进入目标函数或嵌套函数
+        if frame.f_code in self.target_frames or frame.f_code in self.nested_functions:
+            return self.local_trace
+        return None
 
-    def __init__(self, cond: Callable, varnames: List[str], retval: Any):
-        self.cond = cond
-        self.varnames = varnames
-        self.active = False
-        self.owner_func_name: Optional[str] = None
-        self.owner_class: Optional[type] = None  # 记录方法所属的类
-        self.retval = retval
-        self.trigger_frame: Optional[FrameType] = None  # 保存触发条件时的帧
+    def local_trace(self, frame, event, arg):
+        """局部跟踪函数"""
+        if event == 'line':
+            # 在每行代码执行前检查条件
+            if self.check_condition(frame):
+                # 获取当前函数的返回值
+                return_value = self.nested_functions.get(frame.f_code, self.return_value)
+                raise MonitorExit(return_value)
+        elif event == 'return':
+            # 函数结束时移除栈帧
+            self.target_frames.discard(frame.f_code)
+            if frame.f_code in self.nested_functions:
+                del self.nested_functions[frame.f_code]
 
-    def _eval_one(self, frame: FrameType, name: str) -> Any:
-        if not isinstance(name, str):
-            return name
+        return self.local_trace
+
+    def get_variable_value(self, frame):
+        """根据变量类型获取变量值"""
         try:
-            # 1. 优先检查局部变量（f_locals）
-            if name in frame.f_locals:
-                return frame.f_locals[name]
+            if self.var_type == VariableType.LOCAL:
+                return frame.f_locals.get(self.target_var)
 
-            # 2. 检查闭包变量（针对嵌套函数中的自由变量，如self）
-            # 闭包变量名列表（co_freevars）
-            free_vars = frame.f_code.co_freevars
-            if name in free_vars:
-                # 闭包单元格对象（__closure__是单元格列表）
-                closure = frame.f_locals.get('__closure__') or ()
-                # 找到变量对应的单元格索引
-                idx = free_vars.index(name)
-                if idx < len(closure):
-                    # 从单元格中获取变量值
-                    return closure[idx].cell_contents
+            elif self.var_type == VariableType.GLOBAL:
+                return frame.f_globals.get(self.target_var)
 
-            # 3. 检查全局变量（f_globals）
-            if name in frame.f_globals:
-                return frame.f_globals[name]
+            elif self.var_type == VariableType.ARGUMENT:
+                # 检查参数变量
+                code = frame.f_code
+                arg_names = code.co_varnames[:code.co_argcount]
+                if self.target_var in arg_names:
+                    return frame.f_locals.get(self.target_var)
+                return None
 
-            # 4. 处理属性链（如self.__stopFlag）
-            if "." in name:
-                parts = name.split(".")
-                obj = self._eval_one(frame, parts[0])  # 递归解析基础对象（如self）
+            elif self.var_type in (VariableType.INSTANCE_PUBLIC, VariableType.INSTANCE_PRIVATE):
+                # 获取实例变量
+                if 'self' in frame.f_locals:
+                    instance = frame.f_locals['self']
+                    if self.var_type == VariableType.INSTANCE_PUBLIC:
+                        return getattr(instance, self.target_var, None)
+                    else:  # 私有变量
+                        # 尝试访问私有变量（名称修饰）
+                        private_name = f"_{instance.__class__.__name__}{self.target_var}"
+                        return getattr(instance, private_name, None)
+                return None
 
-                # 验证基础对象不是字符串（避免之前的错误）
-                if isinstance(obj, str) and parts[0] == "self":
-                    raise TypeError(f"self 被错误解析为字符串，无法访问属性 {parts[1]}")
+            elif self.var_type in (VariableType.CLASS_PUBLIC, VariableType.CLASS_PRIVATE):
+                # 获取类变量
+                if 'self' in frame.f_locals:
+                    cls = frame.f_locals['self'].__class__
+                elif 'cls' in frame.f_locals:
+                    cls = frame.f_locals['cls']
+                else:
+                    return None
 
-                for attr in parts[1:]:
-                    # 处理私有变量修饰（__xxx -> _类名__xxx）
-                    if attr.startswith("__") and not attr.endswith("__"):
-                        cls = obj.__class__
-                        mangled_attr = f"_{cls.__name__}{attr}"
-                        attr = mangled_attr
+                if self.var_type == VariableType.CLASS_PUBLIC:
+                    return getattr(cls, self.target_var, None)
+                else:  # 私有类变量
+                    private_name = f"_{cls.__name__}{self.target_var}"
+                    return getattr(cls, private_name, None)
 
-                    obj = getattr(obj, attr)
-                return obj
+            return None
+        except Exception:
+            return None
 
-            return name
-        except Exception as e:
-            logging.warning(f"解析变量 {name} 失败: {e}")
-            # 此处不回退为字符串，避免后续错误扩散（可根据需要调整）
-            return name  # 或者返回一个特殊标记，如None
-
-    def _check(self, frame: FrameType) -> bool:
-        values = [self._eval_one(frame, v) for v in self.varnames]
+    def check_condition(self, frame):
+        """执行条件检测"""
         try:
-            return bool(self.cond(*values))
+            value = self.get_variable_value(frame)
+            return value is not None and self.condition(value)
         except Exception:
             return False
 
-    def _make_return(self) -> Any:
-        """使用触发条件时的帧解析返回值"""
-        if self.retval is None:
-            return None
-        if not isinstance(self.retval, str):
-            return self.retval
-        # 若未触发条件（正常返回），直接返回retval字面量
-        if self.trigger_frame is None:
-            return self.retval
-        # 解析返回值（使用触发时的帧）
-        val = self._eval_one(self.trigger_frame, self.retval)
-        # 特殊处理STOP哨兵
-        return STOP if val == "STOP" else val
+    def add_nested_function(self, return_value = None):
+        """添加嵌套函数到监控列表，并指定返回值"""
 
-    def _trace(self, frame: FrameType, event: str, arg: Any) -> Optional[Callable]:
-        if frame.f_code.co_name != self.owner_func_name:
-            return None  # 仅监控目标函数
+        def decorator(func):
+            if isinstance(func, FunctionType):
+                self.nested_functions[func.__code__] = return_value
+            return func
 
-        # 记录方法所属的类（从frame的局部变量self中获取）
-        if event == "call" and self.owner_class is None:
-            try:
-                self.owner_class = frame.f_locals["self"].__class__
-            except (KeyError, AttributeError):
-                pass  # 非实例方法可能没有self，不强制
-
-        if event == "call":
-            self.active = True
-            self.trigger_frame = None  # 重置触发帧
-            # 函数调用时立即检测（第一行执行前）
-            if self._check(frame):
-                self.trigger_frame = frame  # 保存触发帧
-                raise StopIteration("Variable condition met")
-            return self._trace
-        if event == "return":
-            self.active = False
-            return self._trace
-        if event == "line" and self.active and self._check(frame):
-            self.trigger_frame = frame  # 保存触发帧
-            raise StopIteration("Variable condition met")
-        return self._trace
+        return decorator
 
 
-def monitor_variables(varnames: list[str],
-                      condition: Callable[..., bool],
-                      retval: Any = None):
-    def decorator(func: Callable) -> Callable:
-        tracer = _FuncTracer(condition, varnames, retval)
-        tracer.owner_func_name = func.__name__
+def monitor_variables(target_var, var_type, condition, return_value = None):
+    """
+    装饰器：监控函数中的变量条件
 
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            _push_trace(tracer._trace)
-            try:
-                res = func(*args, **kw)
-                return tracer._make_return() if res is STOP else res
-            except StopIteration as e:
-                if str(e) == "Variable condition met":
-                    return tracer._make_return()
-                raise
-            finally:
-                _pop_trace()
+    :param target_var: 要监控的变量名
+    :param var_type: 变量类型 (VariableType)
+    :param condition: 条件检测函数，接受变量值，返回bool
+    :param return_value: 条件满足时返回的值
+    """
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            # 获取函数的代码对象用于标识
+            code_obj = func.__code__
+
+            with VariableMonitor(target_var, var_type, condition, return_value) as vm:
+                # 添加目标函数的标识
+                vm.target_frames.add(code_obj)
+                try:
+                    return func(*args, **kwargs)
+                except MonitorExit as e:
+                    return e.return_value
 
         return wrapper
 
