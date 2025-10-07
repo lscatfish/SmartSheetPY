@@ -3,7 +3,7 @@ import email
 import os
 import re
 from datetime import datetime, timedelta
-import logging
+
 import traceback
 from sys import stderr
 
@@ -12,6 +12,7 @@ from downloader.config.core import load_config_for_email
 
 def decode_mime_header(header):
     """解码邮件头信息（如主题、文件名）"""
+    import logging
     if header is None:
         return None
     try:
@@ -42,6 +43,7 @@ def decode_mime_header(header):
 
 def extract_sender_email(from_header):
     """从发件人信息中提取纯邮箱地址"""
+    import logging
     if not from_header:
         return "unknown_sender"
 
@@ -73,6 +75,7 @@ def setup_imap_id(conn, email_user):
     设置IMAP ID信息，特别是对于网易邮箱需要此步骤
     参考: https://blog.csdn.net/jony_online/article/details/108638571
     """
+    import logging
     try:
         # 检查Commands字典中是否已有ID命令，若无则添加
         if 'ID' not in imaplib.Commands:
@@ -103,6 +106,7 @@ def setup_imap_id(conn, email_user):
 
 def parse_email_date(date_str):
     """尝试解析邮件头中的Date字段，返回datetime对象。"""
+    import logging
     if not date_str:
         return None
 
@@ -147,6 +151,7 @@ def download_attachments(config_path = './input/email_yaml.yaml'):
     主函数：下载指定时间范围内的邮件附件，并按发件人邮箱地址分类保存。
     读取config.yaml配置文件。
     """
+    import logging
     mail = None
     failed_downloads = []  # 记录下载失败的附件信息
     downloaded_count = 0  # 成功下载的附件计数

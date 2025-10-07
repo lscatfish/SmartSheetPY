@@ -1,10 +1,9 @@
-import logging
-
 import yaml
 
 
 def load_config(config_file = 'config.yaml'):
     """从YAML文件加载配置"""
+    import logging
     try:
         with open(config_file, 'r', encoding = 'utf-8') as file:
             config = yaml.safe_load(file)
@@ -16,6 +15,7 @@ def load_config(config_file = 'config.yaml'):
 
 def load_config_for_email(config_file = 'config.yaml'):
     """从YAML文件加载配置"""
+    import logging
     try:
         with open(config_file, 'r', encoding = 'utf-8') as file:
             config = yaml.safe_load(file)
