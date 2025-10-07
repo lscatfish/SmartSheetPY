@@ -1,0 +1,9 @@
+email:
+  address: txyxspare@163.com
+  authorization_code: ENC(gAAAAABo5TjHVA_Iq7c9_MG2mwEKhvgwzo_8rin8FPsxxAnl8ZO7d3-BhQhLUWNszkjPvZYSB_A_w0WyBFpXMXJn4oMNfQkjzwpFy6ZjAN4jP0HkHZti6Ys=)
+  imap_server: imap.163.com
+download:
+  start_date: '2025-10-07'
+  end_date: '2025-10-08'
+  save_dir: ./attachments
+  mailbox: INBOX
