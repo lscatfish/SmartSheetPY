@@ -449,11 +449,13 @@ class DoQingziClass:
 
         @current_monitor.add_nested_function()
         def __save(sheet: list[list[str]]):
+            from openpyxl.styles import Alignment
             if sheet is None or len(sheet) == 0: return
             writer = XlsxWrite(
                 sheet = sheet,
                 path = gc.dir_OUTPUT_SIGNFORQC_ + '报名.xlsx',
-                font_regular = gc.fontRegularSongSmall
+                font_regular = gc.fontRegularSongSmall,
+                alignment = Alignment(vertical = 'center')
             )
             writer.write()
 
@@ -576,6 +578,5 @@ class DoQingziClass:
         else:
             return fuzzy_search.match_by(a, b, fuzzy_search.LEVEL.High)
 
-#
 # def qcFunctionStart():
 #     """启动青字班功能"""
