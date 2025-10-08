@@ -22,13 +22,23 @@ class SSPYMainFrame(wx.Frame):
             title:标题
             QC:青字班控制类
         """
+
         self.__thread_stop_flag_qc = threading.Event()
         """监控qc的终止工具"""
         self.__thread_wait_response_children = threading.Event()
         """阻塞回复函数等待用户输入的工具"""
 
         self.__font_size = 12  # 全局字体大小
-        super().__init__(parent, title = title, size = (800, 600))
+        super().__init__(parent, title = title, size = (1000, 650))
+
+        # 1. 先注册消息站
+        from wxGUI.communitor.text_hub import register_text_hub
+        register_text_hub(
+            lambda msg, color = None, ptime = True:
+            wx.CallAfter(self.AddMessage, msg, color, ptime))
+        from wxGUI.DPIset import set_DPI
+        set_DPI()
+
         self.InitUI()
         self.DisableButtons()
         self.Show()
@@ -61,7 +71,7 @@ class SSPYMainFrame(wx.Frame):
 
         for btn in (self.btn1, self.btn2, self.btn3, self.btn_stop, self.btn_clear):
             btn.SetFont(font)
-            btn_sizer.Add(btn, 0, wx.ALL | wx.CENTER, 15)
+            btn_sizer.Add(btn, 1, wx.ALL | wx.CENTER, 15)
         btn_panel.SetSizer(btn_sizer)
         main_sizer.Add(btn_panel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 15)
 
@@ -118,12 +128,6 @@ class SSPYMainFrame(wx.Frame):
         wx.Yield()
 
         def __worker():
-            # 1. 先注册消息站
-            from wxGUI.communitor.text_hub import register_text_hub
-            register_text_hub(
-                lambda msg, color = None, ptime = True:
-                wx.CallAfter(self.AddMessage, msg, color, ptime))
-
             # ===== 重定向 stdout / stderr =====
             # 让第三方库的 print 也进窗口
             sys.stdout = WxTextCtrlStdout(self.msg_text)  # 普通信息
