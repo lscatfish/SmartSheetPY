@@ -86,11 +86,8 @@ class SSPYMainFrame(wx.Frame):
         # 让横向滚动条足够宽（字符像素单位）
         self.msg_text.SetScrollWidth(5000)
         self.msg_text.SetScrollWidthTracking(True)
-        # 默认字体
-        self.msg_text.StyleSetFont(
-            stc.STC_STYLE_DEFAULT,
-            wx.Font(self.__font_size, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
-        )
+        # 字体
+        self.msg_text.StyleSetFont(stc.STC_STYLE_DEFAULT, font = font)
 
         self.msg_text.SetMarginWidth(1, 0)  # 隐藏行号区
         # 0 号样式=默认黑字
