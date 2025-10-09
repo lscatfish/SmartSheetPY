@@ -89,11 +89,8 @@ class SSPYMainFrame(wx.Frame):
         # 默认字体
         self.msg_text.StyleSetFont(
             stc.STC_STYLE_DEFAULT,
-            wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+            wx.Font(self.__font_size, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
         )
-        self.msg_text.StyleSetSize(stc.STC_STYLE_DEFAULT, self.__font_size)  # 像素
-        # 让所有行继承默认大小
-        self.msg_text.StyleClearAll()
 
         self.msg_text.SetMarginWidth(1, 0)  # 隐藏行号区
         # 0 号样式=默认黑字
@@ -222,8 +219,11 @@ class SSPYMainFrame(wx.Frame):
 
     def StopQCTask(self):
         """终止青字班的功能"""
-        postText("正在中止功能执行......", color = 'red')
-        self.__thread_stop_flag_qc.set()
+        if not self.__thread_stop_flag_qc.is_set():
+            postText("正在中止功能执行......", color = 'red', ptime = False)
+            self.__thread_stop_flag_qc.set()
+        else:
+            postText("没有正在执行的功能！！！", color = 'red', ptime = False)
 
     def ClearText(self):
         wx.CallAfter(self.msg_text.ClearAll)
