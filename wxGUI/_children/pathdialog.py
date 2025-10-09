@@ -1,3 +1,6 @@
+"""
+弹出选项框，返回选择的地址
+"""
 import wx
 
 
@@ -40,7 +43,18 @@ if __name__ == "__main__":
     """
 
     def __init__(self, parent, title = "选择路径"):
-        super(PathDialog, self).__init__(parent, title = title, size = (500, 150))
+        """
+        Args:
+            parent:父类
+            title:子类框架标题
+        """
+        super(PathDialog, self).__init__(parent, title = title, size = (700, 200))
+
+        font = wx.Font(
+            12,  # 字号（点/磅）
+            wx.FONTFAMILY_DEFAULT,
+            wx.FONTSTYLE_NORMAL,
+            wx.FONTWEIGHT_NORMAL)
 
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -60,8 +74,10 @@ if __name__ == "__main__":
         # 第二行：确定和取消按钮
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
 
-        ok_btn = wx.Button(panel, label = "确定", size = (80, 30))
-        cancel_btn = wx.Button(panel, label = "取消", size = (80, 30))
+        ok_btn = wx.Button(panel, label = "确定", size = (60, 30))
+        ok_btn.SetFont(font)
+        cancel_btn = wx.Button(panel, label = "取消", size = (60, 30))
+        cancel_btn.SetFont(font)
 
         hbox2.Add(ok_btn, flag = wx.RIGHT, border = 10)
         hbox2.Add(cancel_btn, flag = wx.LEFT, border = 10)
@@ -76,6 +92,7 @@ if __name__ == "__main__":
         ok_btn.Bind(wx.EVT_BUTTON, self.on_ok)
         cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
 
+        self.Center()
         self.selected_path = ""
 
     def on_select_path(self, event):
