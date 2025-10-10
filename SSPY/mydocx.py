@@ -1,5 +1,4 @@
 import copy
-import os
 import tempfile
 import zipfile
 from pathlib import Path
@@ -21,6 +20,9 @@ class DocxLoad:
         """
         Args:
             _path: 文件路径
+            parse_sheet:是否解析表格
+            parse_paragraphs:是否解析文字段落
+            if_print:是否打印提示
         """
         self.__path = _path
         self.__if_print = if_print if isinstance(if_print, bool) else False
