@@ -3,9 +3,9 @@ import wx
 
 # 全局队列和状态（同之前的msg_comm.py）
 _request_queue: queue.Queue[tuple[int, list[str] | str | tuple | dict]] = queue.Queue()
-"""请求队列  (id,请求数据)"""
+"""请求队列  构成：(id,请求数据)"""
 _response_queues: dict[int, queue.Queue] = {}
-"""回复队列字典，按照[id:回复队列]构成"""
+"""回复队列字典，按照：{id:回复队列}"""
 _request_id = 0
 """请求id"""
 _main_process_func = None
