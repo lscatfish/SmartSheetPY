@@ -26,6 +26,7 @@ class TSMainFrame(BaseFrame):
         btn_panel = wx.Panel(self.main_panel)  # 按钮画布
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)  # 按钮区域
         self.btn_find = wx.Button(btn_panel, label = '查找')
+        self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
         self.btn_save = wx.Button(btn_panel, label = '保存结果')
         for btn in (self.btn_find, self.btn_save):
             btn.SetFont(self.font_default)
@@ -43,30 +44,30 @@ class TSMainFrame(BaseFrame):
         st2 = wx.StaticText(target_panel_2, label = "搜索路径:", pos = (10, 10))
         st1.SetFont(self.font_default)
         st2.SetFont(self.font_default)
-        self.target_text_text = wx.TextCtrl(target_panel_1, pos = (10, 10), size = (450, 30))
-        self.target_path_text = wx.TextCtrl(target_panel_2, pos = (10, 10), size = (450, 30))
-        self.btn_select = wx.Button(target_panel_2, label = "浏览...", pos = (10, 10), size = (60, 30))
+        self.target_text_text = wx.TextCtrl(target_panel_1, pos = (10, 10), size = (600, 30))
+        self.target_path_text = wx.TextCtrl(target_panel_2, pos = (10, 10), size = (600, 30))
+        self.btn_select = wx.Button(target_panel_2, label = "浏览...", pos = (10, 10), size = (100, 30))
         self.btn_select.Bind(wx.EVT_BUTTON, self.on_select)
         self.btn_select.SetFont(self.font_default)
         for f in (st1, self.target_text_text):
-            target_sizer_1.Add(f, 0, wx.ALL | wx.CENTER, 5)
+            target_sizer_1.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         for f in (st2, self.target_path_text, self.btn_select):
-            target_sizer_2.Add(f, 0, wx.ALL | wx.CENTER, 5)
+            target_sizer_2.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         target_panel_1.SetSizer(target_sizer_1)
         target_panel_2.SetSizer(target_sizer_2)
         for f in (target_panel_1, target_panel_2):
-            target_sizer.Add(f, 0, wx.ALL | wx.CENTER, 5)
+            target_sizer.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         target_panel.SetSizer(target_sizer)
 
         for f in (btn_panel, target_panel):
-            main_sizer.Add(f, 0, wx.ALL | wx.CENTER, 5)
+            main_sizer.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         main_sizer.Add(self.msg_panel_default, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
         self.main_panel.SetSizer(main_sizer)
-
+        self.Center()
         self.Show()
 
 
-    def on_select(self):
+    def on_select(self, event):
         # 创建文件夹选择对话框
         dlg = wx.DirDialog(
             self,
@@ -80,8 +81,16 @@ class TSMainFrame(BaseFrame):
             self.target_path_text.SetValue(selected_path)  # 将选择的路径设置到输入框
         dlg.Destroy()
 
-    def on_find(self):
+    def on_find(self, event):
+        self.target_path_text.SetEditable(False)
+        self.target_text_text.SetEditable(False)
+
         self.target_path = self.target_path_text.GetValue()
         self.target_text = self.target_text_text.GetValue()
-        if not os.path.exists(self.target_path):
+        if self.target_path == '':
+            postText('请输入路径！！！', 'red')
+        elif not os.path.exists(self.target_path):
             postText('选择的路径不存在！！！', 'red')
+
+        self.target_path_text.SetEditable(True)
+        self.target_text_text.SetEditable(True)
