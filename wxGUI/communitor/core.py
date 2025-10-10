@@ -2,20 +2,25 @@ import queue
 import wx
 
 # 全局队列和状态（同之前的msg_comm.py）
-_request_queue: queue.Queue[tuple[int, list[str]|str|tuple|dict]] = queue.Queue()
+_request_queue: queue.Queue[tuple[int, list[str] | str | tuple | dict]] = queue.Queue()
+"""请求队列  (id,请求数据)"""
 _response_queues: dict[int, queue.Queue] = {}
+"""回复队列字典，按照[id:回复队列]构成"""
 _request_id = 0
+"""请求id"""
 _main_process_func = None
-"""需要注册"""
+"""应答函数指针，在主函数注册并使用，必须要返回值"""
 
 
 def _get_next_request_id():
+    """获取下一个请求的id"""
     global _request_id
     _request_id += 1
     return _request_id
 
 
 def _main_listener():
+    """主监听器，用于监听子线程请求"""
     while True:
         req_id, request = _request_queue.get()
         try:
@@ -36,11 +41,13 @@ def _main_listener():
 
 # 暴露给外部的API
 def register_main_process(func):
+    """注册回复器，回复子线程"""
     global _main_process_func
     _main_process_func = func
 
 
 def msg(request):
+    """子线程工作函数，用于子线程向主线程发送请求，返回主线程的回复消息"""
     req_id = _get_next_request_id()
     reply_queue = queue.Queue()
     _response_queues[req_id] = reply_queue

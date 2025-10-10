@@ -8,6 +8,7 @@ from .core import _main_listener  # 导入监听函数
 _listener_started = False
 
 def _start_listener():
+    """导入自动启动监听函数"""
     global _listener_started
     if not _listener_started:
         # 启动监听线程（守护线程，主程序退出时自动结束）
