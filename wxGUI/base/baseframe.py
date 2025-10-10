@@ -1,7 +1,7 @@
 import wx
 from wx import Panel, stc
 from wx.stc import StyledTextCtrl
-from ..tools.funcs import _setSpec, _AddMessage
+from ..tools.funcs import _setSpec, _AddMessage, _ClearText
 
 
 class BaseFrame(wx.Frame):
@@ -35,6 +35,14 @@ class BaseFrame(wx.Frame):
         if isinstance(self.msg_text_default, StyledTextCtrl):
             wx.CallAfter(_AddMessage(self.msg_text_default, msg, color, ptime))
         pass
+
+    def ClearText(self):
+        """
+        可以重写
+        """
+        wx.CallAfter(_ClearText, self.msg_text_default)
+        pass
+
 
     def CreateStyledTextCtrl(
         self,
