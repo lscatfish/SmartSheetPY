@@ -1,4 +1,5 @@
 """共享变量访问器"""
+import inspect
 import threading
 from copy import deepcopy
 
@@ -28,9 +29,9 @@ class BaseSharedValue:
             if isinstance(value_name, str):
                 return self.__default_value.get(value_name, None)
             else:
-                return None
+                raise TypeError('BaseSharedValue: value_name must be str')
 
-    def set_value(self, value_name: str, value):
+    def set_value(self, value_name: str, value, _ = None):
         """变量名称必须是str"""
         with self.rlock:
             if isinstance(value_name, str):
@@ -67,7 +68,7 @@ class SharedInt(BaseSharedValue):
         with self.rlock:
             return super().get_value(value_name)
 
-    def set_value(self, value_name: str, value: int):
+    def set_value(self, value_name: str, value: int, type_ = int):
         with self.rlock:
             if not isinstance(value, int):
                 raise TypeError('SharedInt: value must be int')
@@ -171,7 +172,7 @@ class SharedFloat(BaseSharedValue):
         with self.rlock:
             return super().get_value(value_name)
 
-    def set_value(self, value_name: str, value: float):
+    def set_value(self, value_name: str, value: float, type_ = float):
         with self.rlock:
             if not isinstance(value, float):
                 raise TypeError('SharedFloat: value must be float')
@@ -259,3 +260,47 @@ class SharedFloat(BaseSharedValue):
                 self.__float5 = value
             else:
                 raise TypeError('SharedFloat: value must be float')
+
+
+class SharedAnyTypes(BaseSharedValue):
+    """任意类型的共享变量"""
+
+    def __init__(self):
+        super().__init__()
+        self.__value_type: dict[str, type] = {}  # 变量名+type
+
+    def get_value(self, value_name: str):
+        with self.rlock:
+            return super().get_value(value_name)
+
+    def set_value(self, value_name: str, value, type_ = None):
+        with self.rlock:
+            if not isinstance(value_name, str):
+                raise TypeError('SharedAnyTypes: value_name must be str')
+            if type_ is None and value_name in self.__value_type:
+                if not isinstance(value, self.__value_type[value_name]):
+                    raise TypeError(f'SharedAnyTypes: value must be {self.__value_type[value_name]}')
+                super().set_value(value_name, value)
+                return
+
+            if not isinstance(value, type_):
+                raise TypeError(f'SharedAnyTypes: value must be {type_}')
+            if not inspect.isclass(type_):
+                raise TypeError('SharedAnyTypes: type_ must be type')
+            self.__value_type[value_name] = type_
+            super().set_value(value_name, value)
+
+
+    def del_value(self, value_name: str):
+        with self.rlock:
+            if not isinstance(value_name, str):
+                raise TypeError('SharedAnyTypes: value_name must be str')
+            if value_name in self.__value_type:
+                del self.__value_type[value_name]
+                super().del_value(value_name)
+
+    def get_type(self, value_name: str):
+        with self.rlock:
+            if not isinstance(value_name, str):
+                raise TypeError('SharedAnyTypes: value_name must be str')
+            return self.__value_type.get(value_name, None)
