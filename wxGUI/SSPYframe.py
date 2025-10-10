@@ -83,6 +83,7 @@ class SSPYMainFrame(wx.Frame):
             self.msg_panel,
             style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.VSCROLL
         )
+        self.msg_text.SetEditable(False)  # 设置为不可编辑
         # 让横向滚动条足够宽（字符像素单位）
         self.msg_text.SetScrollWidth(5000)
         self.msg_text.SetScrollWidthTracking(True)
@@ -175,6 +176,7 @@ class SSPYMainFrame(wx.Frame):
         """
         color 可选：'default' | 'red' | 'green'  （想加颜色再扩字典即可）
         """
+        self.msg_text.SetEditable(True)
         current_time = time.strftime("[%H:%M:%S]", time.localtime())
         full_msg = f"{current_time} {msg}\n" if ptime else f"{msg}\n"
 
@@ -191,6 +193,7 @@ class SSPYMainFrame(wx.Frame):
 
         # === 3. 追底 ===
         self.msg_text.ScrollToLine(self.msg_text.GetLineCount())
+        self.msg_text.SetEditable(False)
 
     def BackgroundTask(self, task_type):
         pompt = f"开始执行功能{task_type}，按钮已锁定..." \
@@ -223,7 +226,9 @@ class SSPYMainFrame(wx.Frame):
             postText("没有正在执行的功能！！！", color = 'red', ptime = False)
 
     def ClearText(self):
+        wx.CallAfter(self.msg_text.SetEditable, True)
         wx.CallAfter(self.msg_text.ClearAll)
+        wx.CallAfter(self.msg_text.SetEditable, False)
 
     def ShowMessage(self):
         """显示消息"""
