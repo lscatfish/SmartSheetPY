@@ -24,6 +24,7 @@ class BaseFrame(wx.Frame):
         msg_sizer = wx.BoxSizer(wx.VERTICAL)
         msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
         self.msg_panel_default.SetSizer(msg_sizer)
+        self.msg_text_default.SetEditable(False)
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """

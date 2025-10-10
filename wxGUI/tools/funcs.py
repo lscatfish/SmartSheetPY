@@ -16,7 +16,9 @@ def _AddMessage(text_obj: StyledTextCtrl, msg, color = 'default', ptime = True):
         color 可选：'default' | 'red' | 'green'  （想加颜色再扩字典即可）
     """
     import time
-
+    editable = text_obj.IsEditable()
+    if not editable:
+        text_obj.SetEditable(True)
     current_time = time.strftime("[%H:%M:%S]", time.localtime())
     full_msg = f"{current_time} {msg}\n" if ptime else f"{msg}\n"
 
@@ -32,3 +34,6 @@ def _AddMessage(text_obj: StyledTextCtrl, msg, color = 'default', ptime = True):
 
     # === 3. 追底 ===
     text_obj.ScrollToLine(text_obj.GetLineCount())
+
+    if not editable:
+        text_obj.SetEditable(False)
