@@ -36,7 +36,7 @@ class BaseFrame(wx.Frame):
             wx.CallAfter(_AddMessage(self.msg_text_default, msg, color, ptime))
         pass
 
-    def ClearText(self):
+    def ClearText(self, event):
         """
         可以重写
         """

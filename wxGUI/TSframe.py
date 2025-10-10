@@ -1,7 +1,8 @@
 """搜索器的界面"""
 import os
-
+import threading
 import wx
+
 from .base.baseframe import BaseFrame
 from wxGUI.communitor.text_hub import postText
 
@@ -20,15 +21,20 @@ class TSMainFrame(BaseFrame):
 
         self.target_path = ''  # 目标路径
         self.target_text = ''  # 目标文字
+        self.main_stop_event = threading.Event()  # 主暂停器
+
         main_sizer = wx.BoxSizer(wx.VERTICAL)  # 主结构
 
         # 上方按钮区域
         btn_panel = wx.Panel(self.main_panel)  # 按钮画布
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)  # 按钮区域
         self.btn_find = wx.Button(btn_panel, label = '查找')
-        self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
         self.btn_save = wx.Button(btn_panel, label = '保存结果')
-        for btn in (self.btn_find, self.btn_save):
+        self.btn_stop = wx.Button(btn_panel, label = '中止')
+        self.btn_clear = wx.Button(btn_panel, label = '清屏')
+        self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
+        self.btn_clear.Bind(wx.EVT_BUTTON, self.ClearText)
+        for btn in (self.btn_find, self.btn_save, self.btn_stop, self.btn_clear):
             btn.SetFont(self.font_default)
             btn_sizer.Add(btn, 1, wx.ALL | wx.CENTER, 10)
         btn_panel.SetSizer(btn_sizer)
@@ -82,6 +88,7 @@ class TSMainFrame(BaseFrame):
         dlg.Destroy()
 
     def on_find(self, event):
+        self.DisableButtons()
         self.target_path_text.SetEditable(False)
         self.target_text_text.SetEditable(False)
 
@@ -94,3 +101,16 @@ class TSMainFrame(BaseFrame):
 
         self.target_path_text.SetEditable(True)
         self.target_text_text.SetEditable(True)
+        self.EnableButtons()
+
+    def DisableButtons(self):
+        """禁用部分按钮"""
+        for b in (self.btn_save, self.btn_find, self.btn_clear, self.btn_select):
+            wx.CallAfter(b.Disable)
+        pass
+
+    def EnableButtons(self):
+        """启用部分按钮"""
+        for b in (self.btn_save, self.btn_find, self.btn_clear, self.btn_select):
+            wx.CallAfter(b.Enable)
+        pass
