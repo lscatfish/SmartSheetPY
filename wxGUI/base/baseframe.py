@@ -8,7 +8,7 @@ class BaseFrame(wx.Frame):
     """为了多态"""
 
     def __init__(self, parent, title, size):
-        super().__init__(parent, title, size = size)
+        super().__init__(parent, title = title, size = size)
         self.__font_size = 12
         self.font_default = wx.Font(
             self.__font_size,  # 字号（点/磅）
@@ -17,7 +17,13 @@ class BaseFrame(wx.Frame):
             wx.FONTWEIGHT_NORMAL)
         self.main_panel = wx.Panel(self)  # 创建主画布
         self.msg_panel_default = wx.Panel(self.main_panel)  # 创建默认消息画布
-        self.msg_text_default = self.CreateStyledTextCtrl(self.msg_panel_default)  # 定义一个msg_text用于容纳消息，标准消息器
+        self.msg_text_default = self.CreateStyledTextCtrl(
+            self.msg_panel_default,
+            self.font_default
+        )  # 定义一个msg_text用于容纳消息，标准消息器
+        msg_sizer = wx.BoxSizer(wx.VERTICAL)
+        msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
+        self.msg_panel_default.SetSizer(msg_sizer)
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """
@@ -29,18 +35,14 @@ class BaseFrame(wx.Frame):
             wx.CallAfter(_AddMessage(self.msg_text_default, msg, color, ptime))
         pass
 
-    @staticmethod
     def CreateStyledTextCtrl(
+        self,
         parent_msg_panel: Panel,
+        font,
         style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.VSCROLL,
         ScrollWidth: int = 5000,
         ScrollWidthTracking: bool = True,
         font_styleNum = stc.STC_STYLE_DEFAULT,
-        font = wx.Font(
-            12,  # 字号（点/磅）
-            wx.FONTFAMILY_DEFAULT,
-            wx.FONTSTYLE_NORMAL,
-            wx.FONTWEIGHT_NORMAL),
         style_spec_default = True
     ):
         """

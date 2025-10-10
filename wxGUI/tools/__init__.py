@@ -5,4 +5,4 @@ import:
     PathDialog:选择路径对话框
 """
 
-from .pathdialog import PathDialog
+from .pathchoose import PathDialog
