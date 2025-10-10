@@ -28,8 +28,20 @@ class BaseFrame(wx.Frame):
         self.msg_text_default.SetEditable(False)
 
         self.progress_panel_default = wx.Panel(self.main_panel)
-        self.progress_gauge_default = wx.Gauge(
-            self.progress_panel_default, range = 100, size = (-1, 20))
+        self.progress_gauge_default = (
+            wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 20)))
+        self.progress_text_default = wx.StaticText(self.progress_panel_default, label = "0%")
+        self.progress_text_default.SetFont(self.font_default)
+        progress_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        progress_sizer.Add(
+            self.progress_gauge_default, 1,
+            flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
+            border = 5)
+        progress_sizer.Add(
+            self.progress_text_default, 0,
+            flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.BOTTOM,
+            border = 5)
+        self.progress_panel_default.SetSizer(progress_sizer)
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """
