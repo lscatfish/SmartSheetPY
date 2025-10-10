@@ -36,11 +36,11 @@ class BaseFrame(wx.Frame):
         self.progress_gauge_default_using = False
         """默认进度条是否被占用"""
         self.progress_gauge_default = (
-            wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 20)))
+            wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 25)))
         """默认进度条"""
         self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0%")
         """进度条进度值"""
-        self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "就绪！")
+        self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "已就绪！！")
         """进度条提示"""
         self.progress_percent_default.SetFont(self.font_default)
         self.progress_prompt_default.SetFont(self.font_default)
@@ -133,9 +133,23 @@ class BaseFrame(wx.Frame):
             self.progress_gauge_default_using = False
 
         def __reset_progress_prompt_default():
-            self.progress_prompt_default = '就绪！'
+            self.progress_prompt_default = '已就绪！！'
 
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0%')
         wx.CallAfter(__reset_progress_gauge_default_using)
         wx.CallAfter(__reset_progress_prompt_default)
+
+    def start_progress_default(self):
+        """开始进度条"""
+
+        def __set_progress_gauge_default_using():
+            self.progress_gauge_default_using = True
+
+        def __set_progress_prompt_default():
+            self.progress_prompt_default = '工作中...'
+
+        wx.CallAfter(__set_progress_gauge_default_using)
+        wx.CallAfter(__set_progress_prompt_default)
+        wx.CallAfter(self.progress_gauge_default.SetValue, 0)
+        wx.CallAfter(self.progress_percent_default.SetLabelText, '0%')
