@@ -68,6 +68,7 @@ class TSMainFrame(BaseFrame):
         for f in (btn_panel, target_panel):
             main_sizer.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         main_sizer.Add(self.msg_panel_default, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        main_sizer.Add(self.progress_panel_default, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, 5)
         self.main_panel.SetSizer(main_sizer)
         self.Center()
         self.Show()
@@ -103,6 +104,10 @@ class TSMainFrame(BaseFrame):
         self.target_text_text.SetEditable(True)
         self.EnableButtons()
 
+    def TaskFind(self):
+        """运行搜索任务"""
+        pass
+
     def DisableButtons(self):
         """禁用部分按钮"""
         for b in (self.btn_save, self.btn_find, self.btn_clear, self.btn_select):
@@ -114,3 +119,24 @@ class TSMainFrame(BaseFrame):
         for b in (self.btn_save, self.btn_find, self.btn_clear, self.btn_select):
             wx.CallAfter(b.Enable)
         pass
+
+    def response_children(self, request: str | tuple | list):
+        """回复子线程"""
+        if isinstance(request, str):
+            pass
+        elif isinstance(request, tuple):
+            if len(request) == 2:
+                if request[0]=='request_progress_gauge':
+                    """请求一个进度条过程"""
+
+        return "exit-error"
+
+    def register(self):
+        """注册必要函数"""
+        from .communitor.text_hub import register_text_hub
+        register_text_hub(
+            lambda msg, color = None, ptime = True:
+            wx.CallAfter(self.AddMessage, msg, color, ptime))
+
+        from .communitor.core import register_main_process
+        register_main_process(self.response_children)

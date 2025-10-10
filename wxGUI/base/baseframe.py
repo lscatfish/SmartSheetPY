@@ -15,32 +15,48 @@ class BaseFrame(wx.Frame):
             wx.FONTFAMILY_DEFAULT,
             wx.FONTSTYLE_NORMAL,
             wx.FONTWEIGHT_NORMAL)
+        """默认字体"""
         self.main_panel = wx.Panel(self)  # 创建主画布
+        """主画布"""
 
         self.msg_panel_default = wx.Panel(self.main_panel)  # 创建默认消息画布
+        """默认消息画布"""
         self.msg_text_default = self.CreateStyledTextCtrl(
             self.msg_panel_default,
             self.font_default
-        )  # 定义一个msg_text用于容纳消息，标准消息器
+        )
+        """定义一个msg_text用于容纳消息，标准消息器"""
         msg_sizer = wx.BoxSizer(wx.VERTICAL)
         msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
         self.msg_panel_default.SetSizer(msg_sizer)
         self.msg_text_default.SetEditable(False)
 
         self.progress_panel_default = wx.Panel(self.main_panel)
+        """进度条画布"""
+        self.progress_gauge_default_using = False
+        """默认进度条是否被占用"""
         self.progress_gauge_default = (
             wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 20)))
-        self.progress_text_default = wx.StaticText(self.progress_panel_default, label = "0%")
-        self.progress_text_default.SetFont(self.font_default)
+        """默认进度条"""
+        self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0%")
+        """进度条进度值"""
+        self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "就绪！")
+        """进度条提示"""
+        self.progress_percent_default.SetFont(self.font_default)
+        self.progress_prompt_default.SetFont(self.font_default)
         progress_sizer = wx.BoxSizer(wx.HORIZONTAL)
         progress_sizer.Add(
             self.progress_gauge_default, 1,
-            flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM,
+            flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM | wx.LEFT,
+            border = 20)
+        progress_sizer.Add(
+            self.progress_percent_default, 0,
+            flag = wx.ALIGN_LEFT,
             border = 5)
         progress_sizer.Add(
-            self.progress_text_default, 0,
-            flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.BOTTOM,
-            border = 5)
+            self.progress_prompt_default, 0,
+            flag = wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM | wx.RIGHT,
+            border = 10)
         self.progress_panel_default.SetSizer(progress_sizer)
 
     def AddMessage(self, msg, color = 'default', ptime = True):
@@ -109,3 +125,17 @@ class BaseFrame(wx.Frame):
         """字体大小"""
         if isinstance(value, int) and value > 0:
             self.__font_size = value
+
+    def reset_progress_default(self):
+        """重置进度条"""
+
+        def __reset_progress_gauge_default_using():
+            self.progress_gauge_default_using = False
+
+        def __reset_progress_prompt_default():
+            self.progress_prompt_default = '就绪！'
+
+        wx.CallAfter(self.progress_gauge_default.SetValue, 0)
+        wx.CallAfter(self.progress_percent_default.SetLabelText, '0%')
+        wx.CallAfter(__reset_progress_gauge_default_using)
+        wx.CallAfter(__reset_progress_prompt_default)
