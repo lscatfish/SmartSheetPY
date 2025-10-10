@@ -1,7 +1,7 @@
 import wx
 from wx import Panel, stc
 from wx.stc import StyledTextCtrl
-from ..tools.funcs import _setSpec, _AddMessage, _ClearText
+from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
 
 
 class BaseFrame(wx.Frame):
@@ -16,6 +16,7 @@ class BaseFrame(wx.Frame):
             wx.FONTSTYLE_NORMAL,
             wx.FONTWEIGHT_NORMAL)
         self.main_panel = wx.Panel(self)  # 创建主画布
+
         self.msg_panel_default = wx.Panel(self.main_panel)  # 创建默认消息画布
         self.msg_text_default = self.CreateStyledTextCtrl(
             self.msg_panel_default,
@@ -25,6 +26,10 @@ class BaseFrame(wx.Frame):
         msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
         self.msg_panel_default.SetSizer(msg_sizer)
         self.msg_text_default.SetEditable(False)
+
+        self.progress_panel_default = wx.Panel(self.main_panel)
+        self.progress_gauge_default = wx.Gauge(
+            self.progress_panel_default, range = 100, size = (-1, 20))
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """
@@ -37,10 +42,16 @@ class BaseFrame(wx.Frame):
         pass
 
     def ClearText(self, event):
-        """
-        可以重写
-        """
+        """清除默认StyledTextCtrl中的内容，可以重写"""
         wx.CallAfter(_ClearText, self.msg_text_default)
+        pass
+
+    def response_children(self, request: str | tuple | list):
+        """应答子线程"""
+        pass
+
+    def register(self):
+        """注册器，注册各个模块必要的模块"""
         pass
 
 
