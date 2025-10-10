@@ -37,3 +37,11 @@ def _AddMessage(text_obj: StyledTextCtrl, msg, color = 'default', ptime = True):
 
     if not editable:
         text_obj.SetEditable(False)
+
+def _ClearText(text_obj: StyledTextCtrl):
+    editable = text_obj.IsEditable()
+    if not editable:
+        text_obj.SetEditable(True)
+    text_obj.ClearAll()
+    if not editable:
+        text_obj.SetEditable(False)
