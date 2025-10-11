@@ -1,4 +1,3 @@
-import asyncio
 import threading
 
 import wx
@@ -168,6 +167,7 @@ class BaseFrame(wx.Frame):
         Args:
             shared_int:共享变量
         """
+        import asyncio
         wx.CallAfter(self.progress_default_start)
         while True:
             """每100ms检测一次"""

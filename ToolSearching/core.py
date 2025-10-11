@@ -1,7 +1,6 @@
 """
 搜索类的基础工具
 """
-import anyio
 from SSPY.datastorage import *
 from SSPY.communitor.sharedvalue import SharedInt
 
@@ -88,12 +87,12 @@ class SearchingTool:
         if not (isinstance(in_list, list) and len(in_list) > 0): return None
 
         from SSPY.communitor.core import get_response
-
+        import asyncio
         while True:
             response, shared_int = get_response(('request_progress_gauge', len(in_list)))
             if response == 'wait':
                 if isinstance(shared_int, int):
-                    anyio.sleep(abs(shared_int))
+                    asyncio.sleep(abs(shared_int))
             elif response == 'done' and isinstance(shared_int, SharedInt):
                 break
             else:
