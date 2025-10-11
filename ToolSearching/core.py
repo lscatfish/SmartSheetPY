@@ -43,7 +43,7 @@ class SearchingTool:
         length = len(self.__docx)
         for i in range(length):
             self.post_progress(i, length)
-            file = DocxLoad(self.__docx[i], True, True, True)
+            file = DocxLoad(self.__docx[i], True, True, False)
             d = DOCXDataStorage(
                 path = self.__docx[i],
                 sheets = file.sheets,

@@ -54,7 +54,7 @@ class BaseFrame(wx.Frame):
             border = 20)
         progress_sizer.Add(
             self.progress_percent_default, 0,
-            flag = wx.ALIGN_LEFT| wx.RIGHT,
+            flag = wx.ALIGN_LEFT | wx.RIGHT,
             border = 10)
         progress_sizer.Add(
             self.progress_prompt_default, 0,
@@ -62,8 +62,8 @@ class BaseFrame(wx.Frame):
             border = 10)
         self.progress_panel_default.SetSizer(progress_sizer)
 
-        # 线程列
-        self.thread_list: list[threading.Thread] = []
+        self.__event_stop = threading.Event()
+        """停止线程的标志"""
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """
@@ -134,29 +134,21 @@ class BaseFrame(wx.Frame):
 
     def progress_default_reset(self):
         """重置进度条"""
-
         def __reset_progress_gauge_default_using():
             self.progress_gauge_default_using = False
-
-        def __reset_progress_prompt_default():
-            self.progress_prompt_default = '已就绪！！'
 
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
         wx.CallAfter(__reset_progress_gauge_default_using)
-        wx.CallAfter(__reset_progress_prompt_default)
+        wx.CallAfter(self.progress_prompt_default.SetLabelText, '已就绪！！')
 
     def progress_default_start(self):
         """开始进度条"""
-
         def __set_progress_gauge_default_using():
             self.progress_gauge_default_using = True
 
-        def __set_progress_prompt_default():
-            self.progress_prompt_default = '工作中...'
-
         wx.CallAfter(__set_progress_gauge_default_using)
-        wx.CallAfter(__set_progress_prompt_default)
+        wx.CallAfter(self.progress_prompt_default.SetLabelText, '工作中...')
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
 

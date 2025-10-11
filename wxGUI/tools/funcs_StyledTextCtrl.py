@@ -1,8 +1,8 @@
 import wx
 from wx.stc import StyledTextCtrl
 
-color2style = {'red': 1, 'green': 2, 'default': 0}
-style2spec = {0: 'fore:#000000', 1: 'fore:#DC143C,bold', 2: 'fore:#2E8B57'}
+color2style = {'red': 1, 'green': 2, 'yellow': 3, 'default': 0}
+style2spec = {0: 'fore:#000000', 1: 'fore:#DC143C,bold', 2: 'fore:#2E8B57', 3: "fore:#FFFF00,bold"}
 
 
 def _setSpec(text_obj: StyledTextCtrl):
@@ -38,6 +38,7 @@ def _AddMessage(text_obj: StyledTextCtrl, msg, color = 'default', ptime = True):
 
     if not editable:
         text_obj.SetEditable(False)
+
 
 def _ClearText(text_obj: StyledTextCtrl):
     """请加入到主线程队列"""

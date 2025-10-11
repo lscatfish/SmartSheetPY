@@ -43,9 +43,9 @@ class BaseDataStorage:
     def find_value(self, target: str):
         """寻找目标量"""
         # 构建回复量
-        f =[]
+        f = []
         if target in self.__path:
-            f = [(target, self.__path, self.__path)]
+            f = [(self.__path, self.__path)]
         return f
 
 
@@ -70,10 +70,10 @@ class PDFDataStorage(BaseDataStorage):
         sp = super().find_value(target)
         if sp is not None: likely.extend(sp)
         for ans in search_recursive(target, self.__sheets, target_as_sub = True):
-            st = (target, ans, self.path)
+            st = (ans, self.path)
             likely.append(st)
         for ans in search_recursive(target, self.__paragraphs, target_as_sub = True):
-            st = (target, ans, self.path)
+            st = (ans, self.path)
             likely.append(st)
         return likely
 
@@ -94,7 +94,7 @@ class XLSXDataStorage(BaseDataStorage):
         sp = super().find_value(target)
         if sp is not None: likely.extend(sp)
         for ans in search_recursive(target, self.__sheets, target_as_sub = True):
-            st = (target, ans, self.path)
+            st = (ans, self.path)
             likely.append(st)
         return likely
 
@@ -118,9 +118,9 @@ class DOCXDataStorage(BaseDataStorage):
         sp = super().find_value(target)
         if sp is not None: likely.extend(sp)
         for ans in search_recursive(target, self.__sheets, target_as_sub = True):
-            st = (target, ans, self.path)
+            st = (ans, self.path)
             likely.append(st)
         for ans in search_recursive(target, self.__paragraphs, target_as_sub = True):
-            st = (target, ans, self.path)
+            st = (ans, self.path)
             likely.append(st)
         return likely

@@ -56,7 +56,9 @@ class TSMainFrame(BaseFrame):
         st1.SetFont(self.font_default)
         st2.SetFont(self.font_default)
         self.target_text_text = wx.TextCtrl(target_panel_1, pos = (10, 10), size = (600, 30))
+        """搜索的文字"""
         self.target_path_text = wx.TextCtrl(target_panel_2, pos = (10, 10), size = (600, 30))
+        """目标路径"""
         self.btn_select = wx.Button(target_panel_2, label = "浏览...", pos = (10, 10), size = (100, 30))
         self.btn_select.Bind(wx.EVT_BUTTON, self.on_select)
         self.btn_select.SetFont(self.font_default)
@@ -82,6 +84,7 @@ class TSMainFrame(BaseFrame):
         from ToolSearching.core import SearchingTool
         self.__searching_tool = SearchingTool()  # 示例
         self.__if_preload = False  # 是否被预加载了
+        self.btn_find.Disable()
 
     def on_load(self, event):
         """加载文件中的文件"""
@@ -92,11 +95,17 @@ class TSMainFrame(BaseFrame):
             wx.CallAfter(self.btn_load.SetLabelText, '加载')
             wx.CallAfter(self.target_path_text.SetEditable, True)
             wx.CallAfter(self.__searching_tool.clear)
+            wx.CallAfter(self.btn_find.Disable)
             self.__if_preload = False
-            pass
+            self.EnableButtons()
+
         else:  # 没有加载，加载
             self.target_path = self.target_path_text.GetValue()
-            if not os.path.exists(self.target_path):
+            if self.target_path == '':
+                postText('请输入路径！！！', 'red', False)
+                self.EnableButtons()
+                return
+            elif not os.path.exists(self.target_path):
                 postText(f'{self.target_path} 不存在', 'red', False)
                 self.EnableButtons()
                 return
@@ -110,11 +119,15 @@ class TSMainFrame(BaseFrame):
                 target = self.TaskLoad,
                 daemon = True)
             t.start()
-            # t.join()
+            # 主线程禁止join
 
-            pass
+    def on_find(self, event):
+        self.DisableButtons()
+        self.target_text_text.SetEditable(False)
+        self.target_text = self.target_text_text.GetValue()
+        wx.CallAfter(self.TaskFind)
+        self.target_text_text.SetEditable(True)
         self.EnableButtons()
-
 
     def on_select(self, event):
         dlg = wx.DirDialog(
@@ -131,43 +144,35 @@ class TSMainFrame(BaseFrame):
             self.__if_preload = False
         dlg.Destroy()
 
-    def on_find(self, event):
-        self.DisableButtons()
-        self.target_path_text.SetEditable(False)
-        self.target_text_text.SetEditable(False)
-
-        self.target_path = self.target_path_text.GetValue()
-        self.target_text = self.target_text_text.GetValue()
-        if self.target_path == '':
-            postText('请输入路径！！！', 'red')
-        elif not os.path.exists(self.target_path):
-            postText('选择的路径不存在！！！', 'red')
-
-        self.target_path_text.SetEditable(True)
-        self.target_text_text.SetEditable(True)
-        self.EnableButtons()
 
     def TaskLoad(self):
         """预加载工作"""
         self.__searching_tool.start(root_dir = self.target_path)
-
+        wx.CallAfter(self.btn_find.Enable)
+        wx.CallAfter(self.EnableButtons)
 
     def TaskFind(self):
         """运行搜索任务"""
-
-        rst = []
-
-        pass
+        rst: list[tuple] = []
+        if self.target_text == '':
+            postText('请输入搜索值！！！', 'red', False)
+            return
+        self.__searching_tool.find(self.target_text, rst)
+        if len(rst) == 0:
+            postText(f'搜索目标“{self.target_text}”未找到', 'yellow', False)
+            return
+        for line in rst:
+            postText(str(line), ptime = False)
 
     def DisableButtons(self):
         """禁用部分按钮"""
-        for b in (self.btn_load, self.btn_save, self.btn_find, self.btn_clear):
+        for b in (self.btn_load, self.btn_save, self.btn_clear):
             wx.CallAfter(b.Disable)
         pass
 
     def EnableButtons(self):
         """启用部分按钮"""
-        for b in (self.btn_load, self.btn_save, self.btn_find, self.btn_clear):
+        for b in (self.btn_load, self.btn_save, self.btn_clear):
             wx.CallAfter(b.Enable)
         pass
 
@@ -207,3 +212,7 @@ class TSMainFrame(BaseFrame):
 
         from SSPY import register_SSPY_communitor
         register_SSPY_communitor(wxGUI.communitor.msg)
+
+
+    def rsp_str(self):
+        """回复函数的str类型"""
