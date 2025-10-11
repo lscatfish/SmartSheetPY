@@ -3,6 +3,7 @@ import os
 import threading
 import wx
 
+import wxGUI.communitor
 from .base.baseframe import BaseFrame
 from wxGUI.communitor.text_hub import postText
 
@@ -28,13 +29,14 @@ class TSMainFrame(BaseFrame):
         # 上方按钮区域
         btn_panel = wx.Panel(self.main_panel)  # 按钮画布
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)  # 按钮区域
+        self.btn_load = wx.Button(btn_panel, label = '加载')
         self.btn_find = wx.Button(btn_panel, label = '查找')
         self.btn_save = wx.Button(btn_panel, label = '保存结果')
         self.btn_stop = wx.Button(btn_panel, label = '中止')
         self.btn_clear = wx.Button(btn_panel, label = '清屏')
         self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
         self.btn_clear.Bind(wx.EVT_BUTTON, self.ClearText)
-        for btn in (self.btn_find, self.btn_save, self.btn_stop, self.btn_clear):
+        for btn in (self.btn_load, self.btn_find, self.btn_save, self.btn_stop, self.btn_clear):
             btn.SetFont(self.font_default)
             btn_sizer.Add(btn, 1, wx.ALL | wx.CENTER, 10)
         btn_panel.SetSizer(btn_sizer)
@@ -72,6 +74,10 @@ class TSMainFrame(BaseFrame):
         self.main_panel.SetSizer(main_sizer)
         self.Center()
         self.Show()
+        self.register()  # 注册
+
+        from ToolSearching.core import SearchingTool
+        self.__searching_tool = SearchingTool()  # 示例
 
 
     def on_select(self, event):
@@ -106,7 +112,12 @@ class TSMainFrame(BaseFrame):
 
     def TaskFind(self):
         """运行搜索任务"""
+
+        rst = []
+
         pass
+    def TaskLoad(self):
+        """预加载工作"""
 
     def DisableButtons(self):
         """禁用部分按钮"""
@@ -128,7 +139,7 @@ class TSMainFrame(BaseFrame):
             if len(request) == 2:
                 if request[0] == 'request_progress_gauge':
                     """请求一个进度条过程"""
-                    if self.progress_gauge_default_using:#线程不安全
+                    if self.progress_gauge_default_using:  # 线程不安全
                         """只有没有被使用的进度条可以被使用"""
                         return 'wait', 3  # 回复等待3秒
                     from SSPY.communitor.sharedvalue import SharedInt
@@ -138,8 +149,7 @@ class TSMainFrame(BaseFrame):
                     threading.Thread(
                         target = self.progress_default_control,
                         args = (shared_int,),
-                        daemon = True
-                    ).start()
+                        daemon = True).start()
                     return 'done', shared_int
 
         return "exit-error"
@@ -153,3 +163,6 @@ class TSMainFrame(BaseFrame):
 
         from .communitor.core import register_main_process
         register_main_process(self.response_children)
+
+        from SSPY.communitor.core import register_communitor
+        register_communitor(wxGUI.communitor.msg)

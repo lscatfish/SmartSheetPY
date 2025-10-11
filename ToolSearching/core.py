@@ -107,11 +107,15 @@ class SearchingTool:
         self.__xlsx.clear()
         self.__datas.clear()
 
-    def find(self, target: str):
-        """搜索所有"""
-        rst = []
+    def find(self, target: str, rst: list):
+        """
+        搜索所有
+        Args:
+            target:搜索目标
+            rst:搜索结果
+        """
+        # from SSPY.communitor.core import get_response
         if isinstance(target, str) and target == '':
-            return rst
+            return
         for d in self.__datas:
             rst.extend(d.find_value(target))
-        return rst
