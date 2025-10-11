@@ -43,13 +43,18 @@ class BaseDataStorage:
 class PDFDataStorage(BaseDataStorage):
     """PDF中文本的解析类型"""
 
-    def __init__(self, path: str, paragraphs: list[list[str]]):
+    def __init__(self, path: str, sheets: list[list[list[str]]], paragraphs: list[list[str]]):
         super().__init__(path, datatype = DataType.pdf)
         self.__paragraphs = paragraphs
+        self.__sheets = sheets
 
     @property
     def paragraphs(self) -> list[list[str]]:
         return deepcopy(self.__paragraphs)
+
+    @property
+    def sheets(self) -> list[list[list[str]]]:
+        return deepcopy(self.__sheets)
 
 
 class XLSXDataStorage(BaseDataStorage):
@@ -65,13 +70,13 @@ class XLSXDataStorage(BaseDataStorage):
 
 
 class DOCXDataStorage(BaseDataStorage):
-    def __init__(self, path: str, sheets: list[list[list[str]]], paragraphs: list[list[str]]):
+    def __init__(self, path: str, sheets: list[list[list[str]]], paragraphs: list[str]):
         super().__init__(path, DataType.docx)
         self.__paragraphs = paragraphs
         self._sheets = sheets
 
     @property
-    def paragraphs(self) -> list[list[str]]:
+    def paragraphs(self) -> list[str]:
         return deepcopy(self.__paragraphs)
 
     @property
