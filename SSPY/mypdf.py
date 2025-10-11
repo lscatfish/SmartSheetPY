@@ -21,6 +21,7 @@ class PdfLoad:
         if self.__tableOnly:
             self.__extract_tables()
         else:
+            self.__extract_tables()
             self.__extract_text()
 
     @property
@@ -87,15 +88,5 @@ class PdfLoad:
         return True
 
     def __extract_text(self):
-        pdf = pypdfium2.PdfDocument(self.__path)
-        for page_num in range(len(pdf)):
-            textpage = pdf[page_num].get_textpage()
-            n_rects = textpage.count_rects()
-            apage = []
-            for i in range(n_rects):
-                bbox = textpage.get_rect(i)
-                text = textpage.get_text_bounded(*bbox)
-                c = MyRectCell(text = text, left = bbox[0], bottom = bbox[1], right = bbox[2], top = bbox[3])
-                apage.append(c)
-            self.__pageList.append(apage)
-        pdf.close()
+        import fitz  # PyMuPDF
+        pdf=fitz.open(self.__path)
