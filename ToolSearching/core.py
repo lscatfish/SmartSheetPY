@@ -13,6 +13,7 @@ class SearchingTool:
         """我们还是选择预加载所有数据"""
         from SSPY.globalconstants import GlobalConstants as gc
         from SSPY.myfolder import DefFolder
+        self.__root_dir = root_dir
         self.__folder = DefFolder(root_dir)
         self.__docx: list[str] = self.__folder.get_paths_by(gc.extensions_DOCX)
         self.__pdf: list[str] = self.__folder.get_paths_by(gc.extensions_PDF)
@@ -24,7 +25,6 @@ class SearchingTool:
         self.preload_docx()
         self.preload_pdf()
         self.preload_xlsx()
-        pass
 
     def preload_docx(self):
         shared_int: SharedInt | None = self.connect_progress(self.__docx)
@@ -90,3 +90,20 @@ class SearchingTool:
             else:
                 raise ValueError(f'main thread response error : response = {response}')
         return shared_int
+
+    def clear(self):
+        self.__root_dir = ''
+        self.__folder = None
+        self.__docx.clear()
+        self.__pdf.clear()
+        self.__xlsx.clear()
+        self.__datas.clear()
+
+    def find(self, target: str):
+        """搜索所有"""
+        rst = []
+        if isinstance(target, str) and target == '':
+            return rst
+        for d in self.__datas:
+            rst.extend(d.find_value(target))
+        return rst
