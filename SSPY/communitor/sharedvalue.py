@@ -158,6 +158,20 @@ class SharedInt(BaseSharedValue):
             else:
                 raise TypeError('SharedInt: value must be int')
 
+# class SharedBool(BaseSharedValue):
+#     """共享变量"""
+#     def __init__(self):
+#         super().__init__()
+#         self.__bool1 = False
+#         self.__bool2 = False
+#         self.__bool3 = False
+#         self.__bool4 = False
+#         self.__bool5 = False
+#     def get_value(self, value_name: str):
+#         with self.rlock:
+#             if isinstance(value_name, str):
+#                 pass
+
 
 class SharedFloat(BaseSharedValue):
     def __init__(self):
