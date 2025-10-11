@@ -1,4 +1,6 @@
 from .point import Point
+
+
 class MyRectCell:
     """定义一个单元格地址和内容"""
 
@@ -14,6 +16,9 @@ class MyRectCell:
         self.__top = top
         self.__right = right
         self.__bottom = bottom
+
+    def __str__(self):
+        return str(self.__text)
 
     def init_by_cell(self, cell = None):
         from cell import MyCell
