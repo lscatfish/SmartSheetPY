@@ -21,6 +21,9 @@ class SearchingTool:
 
     def preload(self):
         """预加载所有数据，总控制函数"""
+        self.preload_docx()
+        self.preload_pdf()
+        self.preload_xlsx()
         pass
 
     def preload_docx(self):

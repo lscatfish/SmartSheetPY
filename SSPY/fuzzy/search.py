@@ -138,7 +138,7 @@ def search_recursive(
         target_as_sub:将目标视作字串搜索
         lib_as_sub:将库字符视作字串搜索
     Returns:
-        满足条件搜索值的列表
+        满足条件搜索值组成的一个列表
     """
     ms: list[str] = []
     if target is None: return ms
