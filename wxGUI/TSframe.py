@@ -239,7 +239,6 @@ class TSMainFrame(BaseFrame):
         return 'exit-error'
 
     def rsp_tuple3(self, request: tuple):
-
         return 'exit-error'
 
     def rsp_tuple4(self, request: tuple):

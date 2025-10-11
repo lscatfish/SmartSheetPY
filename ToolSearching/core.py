@@ -1,9 +1,19 @@
 """
 搜索类的基础工具
 """
+import threading
 import time
 
 from SSPY.datastorage import *
+from SSPY.helperfunction import _exit
+from SSPY.tracker.core import monitor_variables, VariableType
+
+
+def _exit_core(in_flag: threading.Event | None = None):
+    """这个模块的退出方法，不同的方法退出程序不同"""
+    if isinstance(in_flag, threading.Event):
+        if in_flag.is_set():
+            return True
 
 
 class SearchingTool:
@@ -17,8 +27,15 @@ class SearchingTool:
         self.__pdf: list[str] = []
         self.__xlsx: list[str] = []
         self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
+        self.__stopFlag = None
+        """中止event"""
 
-    def start(self, root_dir = './input/'):
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit)
+    def start(self, root_dir = './input/', stop_flag: threading.Event | None = None):
+        self.__stopFlag = stop_flag
         from SSPY.globalconstants import GlobalConstants as gc
         from SSPY.myfolder import DefFolder
         self.__root_dir = root_dir
@@ -29,12 +46,20 @@ class SearchingTool:
         self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
         self.preload()
 
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit)
     def preload(self):
         """预加载所有数据，总控制函数"""
         self.preload_docx()
         self.preload_pdf()
         self.preload_xlsx()
 
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit)
     def preload_docx(self):
         shared_int: str | None = self.connect_progress(self.__docx)
         if shared_int is None: return
@@ -51,7 +76,10 @@ class SearchingTool:
             self.__datas.append(d)
         self.disconnect_progress()
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit)
     def preload_pdf(self):
         shared_int: str | None = self.connect_progress(self.__pdf)
         if shared_int is None: return
@@ -68,7 +96,10 @@ class SearchingTool:
             self.__datas.append(d)
         self.disconnect_progress()
 
-
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit)
     def preload_xlsx(self):
         shared_int: str | None = self.connect_progress(self.__xlsx)
         if shared_int is None: return
