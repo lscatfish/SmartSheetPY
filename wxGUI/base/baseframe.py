@@ -45,8 +45,16 @@ class BaseFrame(wx.Frame):
         """进度条进度值"""
         self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "已就绪！！")
         """进度条提示"""
+        self.progress_downp_default = wx.StaticText(self.main_panel, label = "", size = (-1, 20))
+        """下方解析提示"""
         self.progress_percent_default.SetFont(self.font_default)
         self.progress_prompt_default.SetFont(self.font_default)
+        self.progress_downp_default.SetFont(
+            wx.Font(10,
+                wx.FONTFAMILY_DEFAULT,
+                wx.FONTSTYLE_NORMAL,
+                wx.FONTWEIGHT_NORMAL))
+        """下方的全部布局"""
         progress_sizer = wx.BoxSizer(wx.HORIZONTAL)
         progress_sizer.Add(
             self.progress_gauge_default, 1,
@@ -134,6 +142,7 @@ class BaseFrame(wx.Frame):
 
     def progress_default_reset(self):
         """重置进度条"""
+
         def __reset_progress_gauge_default_using():
             self.progress_gauge_default_using = False
 
@@ -141,9 +150,11 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
         wx.CallAfter(__reset_progress_gauge_default_using)
         wx.CallAfter(self.progress_prompt_default.SetLabelText, '已就绪！！')
+        wx.CallAfter(self.progress_downp_default.SetLabelText, '')
 
     def progress_default_start(self):
         """开始进度条"""
+
         def __set_progress_gauge_default_using():
             self.progress_gauge_default_using = True
 
@@ -151,13 +162,17 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(self.progress_prompt_default.SetLabelText, '工作中...')
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
+        wx.CallAfter(self.progress_downp_default.SetLabelText, '')
 
-    def progress_default_set(self, int1, int2):
+
+    def progress_default_set(self, int1, int2, path):
         """
         """
         if int2 == 0:
             self.progress_gauge_default.SetValue(100)
             self.progress_percent_default.SetLabelText("100.00%")
+            self.progress_downp_default.SetLabelText(path)
         rg = abs(100 * float(int1) / float(int2))
-        self.progress_percent_default.SetLabelText(f"{rg:.2f}%")
         self.progress_gauge_default.SetValue(int(rg))
+        self.progress_percent_default.SetLabelText(f"{rg:.2f}%")
+        self.progress_downp_default.SetLabelText(path)

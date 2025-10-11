@@ -1,11 +1,12 @@
 """搜索器的界面"""
 import os
+import sys
 import threading
 import wx
 
-import wxGUI.communitor
 from .base.baseframe import BaseFrame
 from wxGUI.communitor.text_hub import postText
+from .hijack.hijack_sysstd import WxTextCtrlStdout
 
 
 class TSMainFrame(BaseFrame):
@@ -18,7 +19,7 @@ class TSMainFrame(BaseFrame):
         from .DPIset import set_DPI
         set_DPI()
 
-        super().__init__(parent = parent, title = title, size = (1500, 800))
+        super().__init__(parent = parent, title = title, size = (1500, 900))
 
         self.target_path = ''
         """目标路径"""
@@ -55,9 +56,9 @@ class TSMainFrame(BaseFrame):
         st2 = wx.StaticText(target_panel_2, label = "搜索路径:", pos = (10, 10))
         st1.SetFont(self.font_default)
         st2.SetFont(self.font_default)
-        self.target_text_text = wx.TextCtrl(target_panel_1, pos = (10, 10), size = (600, 30))
+        self.target_text_text = wx.TextCtrl(target_panel_1, pos = (10, 10), size = (800, 30))
         """搜索的文字"""
-        self.target_path_text = wx.TextCtrl(target_panel_2, pos = (10, 10), size = (600, 30))
+        self.target_path_text = wx.TextCtrl(target_panel_2, pos = (10, 10), size = (800, 30))
         """目标路径"""
         self.btn_select = wx.Button(target_panel_2, label = "浏览...", pos = (10, 10), size = (100, 30))
         self.btn_select.Bind(wx.EVT_BUTTON, self.on_select)
@@ -75,7 +76,8 @@ class TSMainFrame(BaseFrame):
         for f in (btn_panel, target_panel):
             main_sizer.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         main_sizer.Add(self.msg_panel_default, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        main_sizer.Add(self.progress_panel_default, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, 5)
+        main_sizer.Add(self.progress_panel_default, 0, wx.EXPAND | wx.RIGHT, 5)
+        main_sizer.Add(self.progress_downp_default, 0, wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM, 20)
         self.main_panel.SetSizer(main_sizer)
         self.register()  # 注册
         self.Center()
@@ -190,6 +192,15 @@ class TSMainFrame(BaseFrame):
             lambda msg, color = None, ptime = True:
             wx.CallAfter(self.AddMessage, msg, color, ptime))
 
+        # ===== 重定向 stdout / stderr =====
+        # 让第三方库的 print 也进窗口
+        sys.stdout = WxTextCtrlStdout(self.msg_text_default)  # 普通信息
+        sys.stderr = WxTextCtrlStdout(self.msg_text_default, 'red')  # 错误染红
+
+        # 劫持 Windows C 运行时 stderr，使其输出重定向到 wx 消息窗口
+        import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
+        a = wxGUI.hijack.crt_redirect.a
+
         from .communitor.core import register_main_process
         register_main_process(self.response_children)
 
@@ -228,13 +239,14 @@ class TSMainFrame(BaseFrame):
         return 'exit-error'
 
     def rsp_tuple3(self, request: tuple):
-        if request[0] == 'progress_now':
-            self.progress_default_set(request[1], request[2])
-            return 'done'
+
         return 'exit-error'
 
     def rsp_tuple4(self, request: tuple):
         if request[0] == 'msg':
             postText(msg = request[1], color = request[2], ptime = request[3])
             return ''
+        elif request[0] == 'progress_now':
+            self.progress_default_set(request[1], request[2],request[3])
+            return 'done'
         return 'exit-error'

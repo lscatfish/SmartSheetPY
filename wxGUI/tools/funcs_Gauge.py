@@ -1,6 +1,5 @@
 """针对进度条的操做"""
 import wx
-from SSPY.communitor.sharedvalue import SharedInt
 
 
 def _CtrlProgress(gauge_obj: wx.Gauge, int1, int2, text: wx.StaticText = None):

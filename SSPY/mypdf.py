@@ -10,8 +10,11 @@ class PdfLoad:
     def __init__(
         self,
         pdf_path: str = None,
-        table_only: bool = True):
-        print(pdf_path)
+        table_only: bool = True,
+        if_print: bool = False):
+        self.__if_print = if_print
+        if if_print:
+            print(pdf_path)
         self.__path = pdf_path
         self.__tableOnly = table_only
         self.__sheets = []

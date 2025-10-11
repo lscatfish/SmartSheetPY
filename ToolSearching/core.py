@@ -42,7 +42,7 @@ class SearchingTool:
 
         length = len(self.__docx)
         for i in range(length):
-            self.post_progress(i, length)
+            self.post_progress(i, length, self.__docx[i])
             file = DocxLoad(self.__docx[i], True, True, False)
             d = DOCXDataStorage(
                 path = self.__docx[i],
@@ -59,7 +59,7 @@ class SearchingTool:
 
         length = len(self.__pdf)
         for i in range(len(self.__pdf)):
-            self.post_progress(i, length)
+            self.post_progress(i, length, self.__pdf[i])
             file = PdfLoad(self.__pdf[i], table_only = False)
             d = PDFDataStorage(
                 path = self.__pdf[i],
@@ -69,7 +69,6 @@ class SearchingTool:
         self.disconnect_progress()
 
 
-
     def preload_xlsx(self):
         shared_int: str | None = self.connect_progress(self.__xlsx)
         if shared_int is None: return
@@ -77,7 +76,7 @@ class SearchingTool:
 
         length = len(self.__xlsx)
         for i in range(len(self.__xlsx)):
-            self.post_progress(i, length)
+            self.post_progress(i, length, self.__xlsx[i])
             file = XlsxLoad(
                 self.__xlsx[i],
                 const_classname = False)
@@ -108,10 +107,10 @@ class SearchingTool:
         get_response('close_progress_gauge')
 
 
-    def post_progress(self, now_idx, max_idx):
+    def post_progress(self, now_idx, max_idx, path):
         """发布进度信息"""
         from SSPY.communitor.core import get_response
-        get_response(('progress_now', now_idx, max_idx))
+        get_response(('progress_now', now_idx, max_idx, path))
 
     def clear(self):
         self.__root_dir = ''
