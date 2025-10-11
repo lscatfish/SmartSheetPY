@@ -255,8 +255,9 @@ class SSPYMainFrame(wx.Frame):
                             self.StopQCTask()
                             postText('# -------------------------- 退出功能2 -------------------------- #', 'red', False)
                             return 'exit'
+                        case _:
+                            return 'exit-error'
                     # self.__thread_wait_response_children.wait()
-                    return 'exit-error'
             if request[0] == 'msg':
                 if len(request) == 4:
                     postText(request[1], color = request[2], ptime = request[3])

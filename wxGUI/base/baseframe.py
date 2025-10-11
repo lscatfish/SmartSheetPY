@@ -1,7 +1,12 @@
+import asyncio
+import threading
+
 import wx
 from wx import Panel, stc
 from wx.stc import StyledTextCtrl
 from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
+from ..tools.funcs_Gauge import _SetProgress
+from SSPY.communitor.sharedvalue import SharedInt
 
 
 class BaseFrame(wx.Frame):
@@ -38,7 +43,7 @@ class BaseFrame(wx.Frame):
         self.progress_gauge_default = (
             wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 25)))
         """默认进度条"""
-        self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0%")
+        self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0.00%")
         """进度条进度值"""
         self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "已就绪！！")
         """进度条提示"""
@@ -58,6 +63,9 @@ class BaseFrame(wx.Frame):
             flag = wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM | wx.RIGHT,
             border = 10)
         self.progress_panel_default.SetSizer(progress_sizer)
+
+        # 线程列
+        self.thread_list: list[threading.Thread] = []
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """
@@ -126,7 +134,7 @@ class BaseFrame(wx.Frame):
         if isinstance(value, int) and value > 0:
             self.__font_size = value
 
-    def reset_progress_default(self):
+    def progress_default_reset(self):
         """重置进度条"""
 
         def __reset_progress_gauge_default_using():
@@ -136,11 +144,11 @@ class BaseFrame(wx.Frame):
             self.progress_prompt_default = '已就绪！！'
 
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
-        wx.CallAfter(self.progress_percent_default.SetLabelText, '0%')
+        wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
         wx.CallAfter(__reset_progress_gauge_default_using)
         wx.CallAfter(__reset_progress_prompt_default)
 
-    def start_progress_default(self):
+    def progress_default_start(self):
         """开始进度条"""
 
         def __set_progress_gauge_default_using():
@@ -152,4 +160,23 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(__set_progress_gauge_default_using)
         wx.CallAfter(__set_progress_prompt_default)
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
-        wx.CallAfter(self.progress_percent_default.SetLabelText, '0%')
+        wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
+
+    def progress_default_control(self, shared_int: SharedInt):
+        """
+        默认进度条的控制函数
+        Args:
+            shared_int:共享变量
+        """
+        wx.CallAfter(self.progress_default_start)
+        while True:
+            """每100ms检测一次"""
+            if shared_int.int1 >= shared_int.int2:
+                break
+            wx.CallAfter(
+                _SetProgress,
+                self.progress_gauge_default,
+                shared_int,
+                self.progress_prompt_default)
+            asyncio.sleep(0.1)
+        wx.CallAfter(self.progress_default_reset)

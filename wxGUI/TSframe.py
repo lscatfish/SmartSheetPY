@@ -121,13 +121,26 @@ class TSMainFrame(BaseFrame):
         pass
 
     def response_children(self, request: str | tuple | list):
-        """回复子线程"""
+        """回复子线程，ATT：此函数不在主函数运行"""
         if isinstance(request, str):
             pass
         elif isinstance(request, tuple):
             if len(request) == 2:
-                if request[0]=='request_progress_gauge':
+                if request[0] == 'request_progress_gauge':
                     """请求一个进度条过程"""
+                    if self.progress_gauge_default_using:#线程不安全
+                        """只有没有被使用的进度条可以被使用"""
+                        return 'wait', 3  # 回复等待3秒
+                    from SSPY.communitor.sharedvalue import SharedInt
+                    shared_int = SharedInt()
+                    shared_int.int1 = 0
+                    shared_int.int2 = request[1]
+                    threading.Thread(
+                        target = self.progress_default_control,
+                        args = (shared_int,),
+                        daemon = True
+                    ).start()
+                    return 'done', shared_int
 
         return "exit-error"
 
