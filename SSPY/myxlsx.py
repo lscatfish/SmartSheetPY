@@ -93,7 +93,7 @@ class XlsxLoad:
         header: list[str] = None) -> None:
         from .myfolder import split_filename_and_extension
         self.__path = _path
-        self.__sheet = []
+        self.__sheets = []
         self.__ifp = ifp
         self.__const_classname = const_classname
         if const_classname:
@@ -109,9 +109,12 @@ class XlsxLoad:
         if self.__ifp:
             print('xlsx文件读取\"' + self.__path + '\"', end = '')
         wb = load_workbook(self.__path, data_only = True, read_only = True)
-        ws = wb.worksheets[0]
-        for row in ws.iter_rows(values_only = True):  # 遍历全部
-            self.__sheet.append(row)
+
+        for ws in wb.worksheets:
+            sh = []
+            for row in ws.iter_rows(values_only = True):  # 遍历全部
+                sh.append(row)
+            self.__sheets.append(sh)
         wb.close()
         if self.__ifp:
             print(' - Done!')
@@ -122,15 +125,16 @@ class XlsxLoad:
         return self.__path
 
     @property
-    def sheet(self):
+    def sheets(self):
         """返回解析到的sheet"""
-        return copy.deepcopy(self.__sheet)
+        return copy.deepcopy(self.__sheets)
 
-    def get_personList(self,
-                       inkey_as_sub: bool = False,
-                       stdkey_as_sub: bool = False):
+    def get_personList(
+        self,
+        inkey_as_sub: bool = False,
+        stdkey_as_sub: bool = False):
         pers: list[DefPerson] = []
-        header, only_sheet = get_header_from_xlsx(self.sheet, stdkey_as_sub = stdkey_as_sub)
+        header, only_sheet = get_header_from_xlsx(self.sheets[0], stdkey_as_sub = stdkey_as_sub)
         if self.__header is None and header is None:
             print('文件 \"' + self.__path + '\" 未找到表头')
             return pers
