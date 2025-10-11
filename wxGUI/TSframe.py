@@ -18,7 +18,7 @@ class TSMainFrame(BaseFrame):
         from .DPIset import set_DPI
         set_DPI()
 
-        super().__init__(parent = parent, title = title, size = (1000, 650))
+        super().__init__(parent = parent, title = title, size = (1500, 800))
 
         self.target_path = ''
         """目标路径"""
@@ -134,8 +134,7 @@ class TSMainFrame(BaseFrame):
             self,
             message = "选择文件夹",
             defaultPath = self.target_path_text.GetValue(),  # 使用当前输入框的值作为默认路径
-            style = wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST
-        )
+            style = wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
             selected_path = dlg.GetPath()
@@ -179,25 +178,9 @@ class TSMainFrame(BaseFrame):
     def response_children(self, request: str | tuple | list):
         """回复子线程，ATT：此函在主函数运行"""
         if isinstance(request, str):
-            if request == 'close_progress_gauge':
-                self.progress_gauge_default_using = False
-                self.progress_default_reset()
-
+            return self.rsp_str(request)
         elif isinstance(request, tuple):
-            if len(request) == 2:
-                if request[0] == 'request_progress_gauge':
-                    """请求一个进度条过程"""
-                    if self.progress_gauge_default_using:  # 线程不安全
-                        """只有没有被使用的进度条可以被使用"""
-                        return 'wait', 3  # 回复等待3秒
-                    self.progress_default_start()
-                    return 'done', ''
-
-            elif len(request) == 3:
-                if request[0] == 'progress_now':
-                    self.progress_default_set(request[1], request[2])
-                    return 'done'
-
+            return self.rsp_tuple(request)
         return "exit-error"
 
     def register(self):
@@ -214,5 +197,44 @@ class TSMainFrame(BaseFrame):
         register_SSPY_communitor(wxGUI.communitor.msg)
 
 
-    def rsp_str(self):
+    def rsp_str(self, request: str):
         """回复函数的str类型"""
+        if request == 'close_progress_gauge':
+            self.progress_gauge_default_using = False
+            self.progress_default_reset()
+            return ''
+        return 'exit-error'
+
+    def rsp_tuple(self, request: tuple):
+        """回复tuple类型"""
+        match len(request):
+            case 2:
+                return self.rsp_tuple2(request)
+            case 3:
+                return self.rsp_tuple3(request)
+            case 4:
+                return self.rsp_tuple4(request)
+            case _:
+                return 'exit-error'
+
+    def rsp_tuple2(self, request: tuple):
+        if request[0] == 'request_progress_gauge':
+            """请求一个进度条过程"""
+            if self.progress_gauge_default_using:  # 线程不安全
+                """只有没有被使用的进度条可以被使用"""
+                return 'wait', 3  # 回复等待3秒
+            self.progress_default_start()
+            return 'done', ''
+        return 'exit-error'
+
+    def rsp_tuple3(self, request: tuple):
+        if request[0] == 'progress_now':
+            self.progress_default_set(request[1], request[2])
+            return 'done'
+        return 'exit-error'
+
+    def rsp_tuple4(self, request: tuple):
+        if request[0] == 'msg':
+            postText(msg = request[1], color = request[2], ptime = request[3])
+            return ''
+        return 'exit-error'

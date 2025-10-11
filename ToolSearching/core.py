@@ -128,7 +128,6 @@ class SearchingTool:
             target:搜索目标
             rst:搜索结果
         """
-        # from SSPY.communitor.core import get_response
         if isinstance(target, str) and target == '':
             return
         for d in self.__datas:
