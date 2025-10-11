@@ -1,194 +1,64 @@
-import wx
-import time
-import random
+import fitz  # PyMuPDF
 
 
-class MyFrame(wx.Frame):
-    def __init__(self):
-        super().__init__(None, title = "文件处理进度示例", size = (600, 400))
+def extract_text_blocks(pdf_path):
+    """
+    提取PDF中每个页面的文本块信息，包括内容、位置和字体样式。
+    """
+    doc = fitz.open(pdf_path)
+    text_blocks_info = []
 
-        # 创建主面板
-        self.main_panel = wx.Panel(self)
-        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.main_panel.SetSizer(self.main_sizer)
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        # 关键步骤：以字典形式获取页面中的所有块信息
+        blocks_dict = page.get_text("dict")
 
-        # 添加一些控制按钮和文件信息显示
-        self.setup_controls()
+        for block in blocks_dict["blocks"]:
+            if block["type"] == 0:  # 类型为0表示文本块
+                block_text = ""
+                font_sizes = []
+                fonts_used = set()
 
-        # 添加弹性空间，将进度条部分推到底部
-        self.main_sizer.AddStretchSpacer(prop = 1)
+                # 遍历块中的每一行和每一个span
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        # 拼接文本内容
+                        block_text += span["text"]
+                        print(span["text"])
+                        # 记录字体大小和字体名称
+                        font_sizes.append(span["size"])
+                        fonts_used.add(span["font"])
 
-        # 设置底部进度条区域
-        self.setup_progress_section()
+                # 汇总该文本块的信息
+                block_info = {
+                    "page"     : page_num + 1,
+                    "bbox"     : block["bbox"],  # 边界框坐标 [x0, y0, x1, y1]
+                    "text"     : block_text.strip(),
+                    "font_size": max(font_sizes) if font_sizes else 0,  # 取最大字体作为代表
+                    "font"     : list(fonts_used)[0] if fonts_used else None,  # 取第一种字体
+                }
+                text_blocks_info.append(block_info)
 
-        # 创建定时器
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.update_progress, self.timer)
-
-        # 初始化任务状态变量
-        self.current_progress = 0
-        self.total_files = 0
-        self.processed_files = 0
-        self.is_paused = False
-        self.current_file = ""
-
-        self.Centre()
-        self.Show()
-
-    def setup_controls(self):
-        """设置上部控制区域"""
-        # 文件数量选择控件
-        file_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        file_label = wx.StaticText(self.main_panel, label = "模拟文件数量:")
-        self.file_choice = wx.Choice(self.main_panel, choices = ['10', '50', '100', '200'])
-        self.file_choice.SetSelection(0)  # 默认选择10个文件
-        file_sizer.Add(file_label, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 5)
-        file_sizer.Add(self.file_choice, 1, wx.EXPAND)
-
-        # 按钮控件
-        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.start_btn = wx.Button(self.main_panel, label = "开始处理")
-        self.pause_btn = wx.Button(self.main_panel, label = "暂停")
-        self.reset_btn = wx.Button(self.main_panel, label = "重置")
-
-        self.pause_btn.Disable()  # 初始时暂停按钮不可用
-
-        button_sizer.Add(self.start_btn, 1, wx.EXPAND | wx.RIGHT, 5)
-        button_sizer.Add(self.pause_btn, 1, wx.EXPAND | wx.RIGHT, 5)
-        button_sizer.Add(self.reset_btn, 1, wx.EXPAND)
-
-        # 当前文件处理信息显示
-        self.current_file_label = wx.StaticText(self.main_panel, label = "当前文件: 无")
-        self.file_info_label = wx.StaticText(self.main_panel, label = "已处理: 0/0 文件")
-
-        # 绑定按钮事件
-        self.start_btn.Bind(wx.EVT_BUTTON, self.on_start_task)
-        self.pause_btn.Bind(wx.EVT_BUTTON, self.on_pause_task)
-        self.reset_btn.Bind(wx.EVT_BUTTON, self.on_reset_task)
-
-        # 添加到主sizer
-        self.main_sizer.Add(file_sizer, 0, wx.EXPAND | wx.ALL, 10)
-        self.main_sizer.Add(button_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        self.main_sizer.Add(self.current_file_label, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-        self.main_sizer.Add(self.file_info_label, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
-
-    def setup_progress_section(self):
-        """设置底部进度条区域"""
-        self.bottom_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        # 创建进度条，范围设为100表示百分比
-        self.progress_gauge = wx.Gauge(self.main_panel, range = 100, size = (-1, 20), style = wx.GA_HORIZONTAL)
-
-        # 创建进度百分比文本
-        self.progress_text = wx.StaticText(self.main_panel, label = "0%")
-
-        # 创建状态文本
-        self.status_text = wx.StaticText(self.main_panel, label = "准备就绪", style = wx.ALIGN_LEFT)
-
-        # 将控件添加到水平sizer
-        self.bottom_sizer.Add(self.progress_gauge, 1, flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border = 5)
-        self.bottom_sizer.Add(self.progress_text, 0, flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border = 10)
-        self.bottom_sizer.Add(self.status_text, 0, flag = wx.ALIGN_CENTER_VERTICAL)
-
-        # 将水平sizer添加到主sizer
-        self.main_sizer.Add(self.bottom_sizer, 0, flag = wx.EXPAND | wx.ALL, border = 10)
-
-    def on_start_task(self, event):
-        """开始处理任务"""
-        if self.current_progress >= 100:  # 如果任务已完成，先重置
-            self.on_reset_task(None)
-
-        # 获取选择的文件数量
-        self.total_files = int(self.file_choice.GetString(self.file_choice.GetSelection()))
-        self.processed_files = 0
-
-        # 更新按钮状态
-        self.start_btn.Disable()
-        self.pause_btn.Enable()
-        self.reset_btn.Enable()
-
-        # 更新状态信息
-        self.status_text.SetLabelText("文件处理中...")
-        self.file_info_label.SetLabelText(f"已处理: {self.processed_files}/{self.total_files} 文件")
-
-        # 启动定时器，每100毫秒更新一次
-        self.timer.Start(100)
-
-    def on_pause_task(self, event):
-        """暂停/继续任务"""
-        if self.is_paused:
-            # 继续任务
-            self.timer.Start(100)
-            self.pause_btn.SetLabel("暂停")
-            self.status_text.SetLabelText("文件处理中...")
-            self.is_paused = False
-        else:
-            # 暂停任务
-            self.timer.Stop()
-            self.pause_btn.SetLabel("继续")
-            self.status_text.SetLabelText("已暂停")
-            self.is_paused = True
-
-    def on_reset_task(self, event):
-        """重置任务"""
-        self.timer.Stop()
-        self.current_progress = 0
-        self.processed_files = 0
-        self.total_files = 0
-        self.is_paused = False
-
-        # 重置UI状态
-        self.progress_gauge.SetValue(0)
-        self.progress_text.SetLabelText("0%")
-        self.status_text.SetLabelText("准备就绪")
-        self.current_file_label.SetLabelText("当前文件: 无")
-        self.file_info_label.SetLabelText("已处理: 0/0 文件")
-
-        # 重置按钮状态
-        self.start_btn.Enable()
-        self.pause_btn.Disable()
-        self.pause_btn.SetLabel("暂停")
-
-    def update_progress(self, event):
-        """定时器事件，更新进度条和状态文本"""
-        # 模拟文件处理 - 每次增加随机进度
-        increment = random.randint(1, 5)
-        self.current_progress += increment
-
-        # 确保进度不超过100%
-        if self.current_progress > 100:
-            self.current_progress = 100
-
-        # 更新进度条和百分比文本
-        self.progress_gauge.SetValue(self.current_progress)
-        self.progress_text.SetLabelText(f"{self.current_progress}%")
-
-        # 模拟文件处理完成
-        if self.current_progress >= 100:
-            self.processed_files += 1
-            self.current_progress = 0
-
-            # 更新文件信息
-            self.file_info_label.SetLabelText(f"已处理: {self.processed_files}/{self.total_files} 文件")
-
-            # 模拟下一个文件
-            if self.processed_files < self.total_files:
-                file_number = self.processed_files + 1
-                self.current_file_label.SetLabelText(f"当前文件: 示例文件_{file_number}.txt")
-                self.status_text.SetLabelText(f"处理文件 {file_number}/{self.total_files}")
-            else:
-                # 所有文件处理完成
-                self.timer.Stop()
-                self.status_text.SetLabelText("所有文件处理完成！")
-                self.current_file_label.SetLabelText("当前文件: 无")
-
-                # 更新按钮状态
-                self.start_btn.Enable()
-                self.pause_btn.Disable()
-                self.reset_btn.Enable()
+    doc.close()
+    return text_blocks_info
 
 
 if __name__ == "__main__":
-    app = wx.App()
-    frame = MyFrame()
-    app.MainLoop()
+    # 使用示例
+    pdf_path = "组织推荐班委-刘禹初.pdf"  # 替换为你的PDF文件路径
+    blocks = extract_text_blocks(pdf_path)
+
+    # 打印结果
+    for i, block in enumerate(blocks):
+        print(f"块 {i + 1} (第{block['page']}页):")
+        print(f"  位置: {block['bbox']}")
+        print(f"  字体: {block['font']}, 大小: {block['font_size']:.1f}")
+        print(f"  内容: {block['text']}")  # 只打印前100个字符
+        print("-" * 50)
+
+    # from SSPY.mypdf import PdfLoad
+    # a = PdfLoad(pdf_path, table_only = False)
+    # print(a.pages)
+    # from SSPY.mydocx import DocxLoad
+    # doc = DocxLoad('环境与生态学院-环境工程与科学-陈展202417021024.docx',parse_paragraphs = True)
+    # print(doc.paragraphs)
