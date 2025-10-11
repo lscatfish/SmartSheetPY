@@ -9,8 +9,16 @@ from SSPY.communitor.sharedvalue import SharedInt
 class SearchingTool:
     """搜索工具"""
 
-    def __init__(self, root_dir = './input/'):
+    def __init__(self):
         """我们还是选择预加载所有数据"""
+        self.__root_dir = ''
+        self.__folder = None
+        self.__docx: list[str] = []
+        self.__pdf: list[str] = []
+        self.__xlsx: list[str] = []
+        self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
+
+    def start(self, root_dir = './input/'):
         from SSPY.globalconstants import GlobalConstants as gc
         from SSPY.myfolder import DefFolder
         self.__root_dir = root_dir
@@ -19,6 +27,7 @@ class SearchingTool:
         self.__pdf: list[str] = self.__folder.get_paths_by(gc.extensions_PDF)
         self.__xlsx: list[str] = self.__folder.get_paths_by(gc.extensions_XLSX)
         self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
+        self.preload()
 
     def preload(self):
         """预加载所有数据，总控制函数"""
