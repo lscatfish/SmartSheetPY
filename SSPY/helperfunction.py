@@ -4,18 +4,30 @@ import platform
 import threading
 
 
-def clean_enter(in_list: list | tuple) -> list:
+def clean_enter(in_list: list | tuple | str) -> list | str:
     """清除in_sheet中的\\n，返回一个list[list]"""
     out_list = []
-    if in_list is None: return out_list
-    for row in in_list:
-        if isinstance(row, list | tuple):
+    if in_list is None:
+        return out_list
+    elif isinstance(in_list, str):
+        return in_list.replace('\n', '').replace('\r', '')
+    elif isinstance(in_list, list | tuple):
+        for row in in_list:
             out_list.append(clean_enter(row))
-        else:
-            c = str(row)
-            nc = c.replace('\n', '').replace('\r', '')
-            out_list.append(nc)
     return out_list
+
+
+def clean_space(in_list: list | tuple | str) -> list | str:
+    out_list = []
+    if in_list is None:
+        return out_list
+    elif isinstance(in_list, str):
+        return in_list.replace(' ', '')
+    elif isinstance(in_list, list | tuple):
+        for row in in_list:
+            out_list.append(clean_space(row))
+    return out_list
+
 
 def _exit(in_flag: threading.Event | None) -> bool:
     """退出方法，检测进程flag是否标志为set"""
