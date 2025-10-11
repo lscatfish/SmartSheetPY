@@ -20,8 +20,10 @@ class TSMainFrame(BaseFrame):
 
         super().__init__(parent = parent, title = title, size = (1000, 650))
 
-        self.target_path = ''  # 目标路径
-        self.target_text = ''  # 目标文字
+        self.target_path = ''
+        """目标路径"""
+        self.target_text = ''
+        """目标文字"""
         self.main_stop_event = threading.Event()  # 主暂停器
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)  # 主结构
@@ -34,6 +36,7 @@ class TSMainFrame(BaseFrame):
         self.btn_save = wx.Button(btn_panel, label = '保存结果')
         self.btn_stop = wx.Button(btn_panel, label = '中止')
         self.btn_clear = wx.Button(btn_panel, label = '清屏')
+        self.btn_load.Bind(wx.EVT_BUTTON, self.on_load)
         self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
         self.btn_clear.Bind(wx.EVT_BUTTON, self.ClearText)
         for btn in (self.btn_load, self.btn_find, self.btn_save, self.btn_stop, self.btn_clear):
@@ -72,16 +75,48 @@ class TSMainFrame(BaseFrame):
         main_sizer.Add(self.msg_panel_default, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
         main_sizer.Add(self.progress_panel_default, 0, wx.EXPAND | wx.RIGHT | wx.BOTTOM, 5)
         self.main_panel.SetSizer(main_sizer)
+        self.register()  # 注册
         self.Center()
         self.Show()
-        self.register()  # 注册
 
         from ToolSearching.core import SearchingTool
         self.__searching_tool = SearchingTool()  # 示例
+        self.__if_preload = False  # 是否被预加载了
+
+    def on_load(self, event):
+        """加载文件中的文件"""
+
+        self.DisableButtons()
+        if self.__if_preload:  # 已经加载成功了，解除加载
+            wx.CallAfter(self.btn_select.Enable)
+            wx.CallAfter(self.btn_load.SetLabelText, '加载')
+            wx.CallAfter(self.target_path_text.SetEditable, True)
+            wx.CallAfter(self.__searching_tool.clear)
+            self.__if_preload = False
+            pass
+        else:  # 没有加载，加载
+            self.target_path = self.target_path_text.GetValue()
+            if not os.path.exists(self.target_path):
+                postText(f'{self.target_path} 不存在', 'red', False)
+                self.EnableButtons()
+                return
+
+            wx.CallAfter(self.btn_load.SetLabelText, '解除')
+            wx.CallAfter(self.btn_select.Disable)
+            wx.CallAfter(self.target_path_text.SetEditable, False)
+            self.__if_preload = True
+
+            t = threading.Thread(
+                target = self.TaskLoad,
+                daemon = True)
+            t.start()
+            # t.join()
+
+            pass
+        self.EnableButtons()
 
 
     def on_select(self, event):
-        # 创建文件夹选择对话框
         dlg = wx.DirDialog(
             self,
             message = "选择文件夹",
@@ -92,6 +127,8 @@ class TSMainFrame(BaseFrame):
         if dlg.ShowModal() == wx.ID_OK:
             selected_path = dlg.GetPath()
             self.target_path_text.SetValue(selected_path)  # 将选择的路径设置到输入框
+            wx.CallAfter(self.__searching_tool.clear)
+            self.__if_preload = False
         dlg.Destroy()
 
     def on_find(self, event):
@@ -110,31 +147,37 @@ class TSMainFrame(BaseFrame):
         self.target_text_text.SetEditable(True)
         self.EnableButtons()
 
+    def TaskLoad(self):
+        """预加载工作"""
+        self.__searching_tool.start(root_dir = self.target_path)
+
+
     def TaskFind(self):
         """运行搜索任务"""
 
         rst = []
 
         pass
-    def TaskLoad(self):
-        """预加载工作"""
 
     def DisableButtons(self):
         """禁用部分按钮"""
-        for b in (self.btn_save, self.btn_find, self.btn_clear, self.btn_select):
+        for b in (self.btn_load, self.btn_save, self.btn_find, self.btn_clear):
             wx.CallAfter(b.Disable)
         pass
 
     def EnableButtons(self):
         """启用部分按钮"""
-        for b in (self.btn_save, self.btn_find, self.btn_clear, self.btn_select):
+        for b in (self.btn_load, self.btn_save, self.btn_find, self.btn_clear):
             wx.CallAfter(b.Enable)
         pass
 
     def response_children(self, request: str | tuple | list):
-        """回复子线程，ATT：此函数不在主函数运行"""
+        """回复子线程，ATT：此函在主函数运行"""
         if isinstance(request, str):
-            pass
+            if request == 'close_progress_gauge':
+                self.progress_gauge_default_using = False
+                self.progress_default_reset()
+
         elif isinstance(request, tuple):
             if len(request) == 2:
                 if request[0] == 'request_progress_gauge':
@@ -142,15 +185,13 @@ class TSMainFrame(BaseFrame):
                     if self.progress_gauge_default_using:  # 线程不安全
                         """只有没有被使用的进度条可以被使用"""
                         return 'wait', 3  # 回复等待3秒
-                    from SSPY.communitor.sharedvalue import SharedInt
-                    shared_int = SharedInt()
-                    shared_int.int1 = 0
-                    shared_int.int2 = request[1]
-                    threading.Thread(
-                        target = self.progress_default_control,
-                        args = (shared_int,),
-                        daemon = True).start()
-                    return 'done', shared_int
+                    self.progress_default_start()
+                    return 'done', ''
+
+            elif len(request) == 3:
+                if request[0] == 'progress_now':
+                    self.progress_default_set(request[1], request[2])
+                    return 'done'
 
         return "exit-error"
 
@@ -164,5 +205,5 @@ class TSMainFrame(BaseFrame):
         from .communitor.core import register_main_process
         register_main_process(self.response_children)
 
-        from SSPY.communitor.core import register_communitor
-        register_communitor(wxGUI.communitor.msg)
+        from SSPY import register_SSPY_communitor
+        register_SSPY_communitor(wxGUI.communitor.msg)

@@ -1,11 +1,10 @@
 import threading
+import time
 
 import wx
 from wx import Panel, stc
 from wx.stc import StyledTextCtrl
 from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
-from ..tools.funcs_Gauge import _CtrlProgress
-from SSPY.communitor.sharedvalue import SharedInt
 
 
 class BaseFrame(wx.Frame):
@@ -55,8 +54,8 @@ class BaseFrame(wx.Frame):
             border = 20)
         progress_sizer.Add(
             self.progress_percent_default, 0,
-            flag = wx.ALIGN_LEFT,
-            border = 5)
+            flag = wx.ALIGN_LEFT| wx.RIGHT,
+            border = 10)
         progress_sizer.Add(
             self.progress_prompt_default, 0,
             flag = wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM | wx.RIGHT,
@@ -73,7 +72,7 @@ class BaseFrame(wx.Frame):
             color 可选：'default' | 'red' | 'green'  （想加颜色再扩字典即可）
         """
         if isinstance(self.msg_text_default, StyledTextCtrl):
-            wx.CallAfter(_AddMessage(self.msg_text_default, msg, color, ptime))
+            wx.CallAfter(_AddMessage, self.msg_text_default, msg, color, ptime)
         pass
 
     def ClearText(self, event):
@@ -161,24 +160,12 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
 
-    def progress_default_control(self, shared_int: SharedInt):
+    def progress_default_set(self, int1, int2):
         """
-        默认进度条的控制函数
-        Args:
-            shared_int:共享变量
         """
-        import asyncio
-        wx.CallAfter(self.progress_default_start)
-        while True:
-            """每100ms检测一次"""
-            i1 = shared_int.int1
-            i2 = shared_int.int2
-            wx.CallAfter(
-                _CtrlProgress,
-                self.progress_gauge_default,
-                i1, i2,
-                self.progress_prompt_default)
-            if i2 == 0 or i1 >= i2:
-                break
-            asyncio.sleep(0.05)
-        wx.CallAfter(self.progress_default_reset)
+        if int2 == 0:
+            self.progress_gauge_default.SetValue(100)
+            self.progress_percent_default.SetLabelText("100.00%")
+        rg = abs(100 * float(int1) / float(int2))
+        self.progress_percent_default.SetLabelText(f"{rg:.2f}%")
+        self.progress_gauge_default.SetValue(int(rg))

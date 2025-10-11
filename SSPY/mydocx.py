@@ -155,14 +155,14 @@ class DocxLoad:
                             except ValueError as e:
                                 # ① 单行坏掉，只丢这一行
                                 stderr.write(f"表格 {tbl_idx} 第 {row_idx} 行结构损坏，已跳过：{e}")
-                                return None
+                                return [],[]
 
                         all_tables.append(table_data)
 
                     except ValueError as e:
                         # ② 整个表格坏掉，直接丢
                         stderr.write(f"表格 {tbl_idx} 完全损坏，已跳过：{e}\n")
-                        return None
+                        return [],[]
             if self.__parse_paragraphs:
                 for p in doc.paragraphs:
                     all_paragraphs.append(p.text.strip())
@@ -176,8 +176,8 @@ class DocxLoad:
                     ct = z.read('[Content_Types].xml').decode('utf-8', 'ignore').lower()
                     if 'spreadsheetml.main' in ct:
                         stderr.write(f'{file_path.name} 实为 Excel，已跳过\n')
-                        return None  # 静默跳过
-                return None
+                        return [],[]  # 静默跳过
+                return [],[]
 
         finally:
             if doc is not None:
