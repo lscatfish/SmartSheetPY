@@ -5,7 +5,7 @@ import wx
 from wx import Panel, stc
 from wx.stc import StyledTextCtrl
 from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
-from ..tools.funcs_Gauge import _SetProgress
+from ..tools.funcs_Gauge import _CtrlProgress
 from SSPY.communitor.sharedvalue import SharedInt
 
 
@@ -171,12 +171,14 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(self.progress_default_start)
         while True:
             """每100ms检测一次"""
-            if shared_int.int1 >= shared_int.int2:
-                break
+            i1 = shared_int.int1
+            i2 = shared_int.int2
             wx.CallAfter(
-                _SetProgress,
+                _CtrlProgress,
                 self.progress_gauge_default,
-                shared_int,
+                i1, i2,
                 self.progress_prompt_default)
-            asyncio.sleep(0.1)
+            if i2 == 0 or i1 >= i2:
+                break
+            asyncio.sleep(0.05)
         wx.CallAfter(self.progress_default_reset)
