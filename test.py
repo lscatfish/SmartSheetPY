@@ -55,7 +55,10 @@ if __name__ == "__main__":
         print(f"  字体: {block['font']}, 大小: {block['font_size']:.1f}")
         print(f"  内容: {block['text']}")  # 只打印前100个字符
         print("-" * 50)
-
+    if None:
+        print(True)
+    else:
+        print(False)
     # from SSPY.mypdf import PdfLoad
     # a = PdfLoad(pdf_path, table_only = False)
     # print(a.pages)
