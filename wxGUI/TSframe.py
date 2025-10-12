@@ -163,7 +163,7 @@ class TSMainFrame(BaseFrame):
             postText(f'搜索目标“{self.target_text}”未找到\n\n', 'yellow', False)
             return
         for line in rst:
-            postText(line[0] + '   ' + line[1], ptime = False)
+            postText(line[0] + '      ' + line[1], ptime = False)
 
     def on_select(self, event):
         dlg = wx.DirDialog(

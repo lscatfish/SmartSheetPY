@@ -14,5 +14,5 @@ def _CtrlProgress(gauge_obj: wx.Gauge, int1, int2, text: wx.StaticText = None):
         gauge_obj.SetValue(100)
         text.SetLabelText("100.00%")
     rg = abs(100 * float(int1) / float(int2))
-    text.SetLabelText(f"{rg}%")
+    text.SetLabelText(f"{rg:.2f}%")
     gauge_obj.SetValue(int(rg))
