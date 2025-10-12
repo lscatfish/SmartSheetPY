@@ -9,12 +9,6 @@ from SSPY.helperfunction import _exit
 from SSPY.tracker.core import monitor_variables, VariableType
 
 
-def _exit_core(in_flag: threading.Event | None = None):
-    """这个模块的退出方法，不同的方法退出程序不同"""
-    if isinstance(in_flag, threading.Event):
-        if in_flag.is_set():
-            return True
-
 
 class SearchingTool:
     """搜索工具"""
@@ -28,6 +22,7 @@ class SearchingTool:
         self.__xlsx: list[str] = []
         self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
         self.__stopFlag = None
+        self.rlock = threading.RLock()
         """中止event"""
 
     @monitor_variables(
@@ -35,16 +30,17 @@ class SearchingTool:
         var_type = VariableType.INSTANCE_PRIVATE,
         condition = _exit)
     def start(self, root_dir = './input/', stop_flag: threading.Event | None = None):
-        self.__stopFlag = stop_flag
-        from SSPY.globalconstants import GlobalConstants as gc
-        from SSPY.myfolder import DefFolder
-        self.__root_dir = root_dir
-        self.__folder = DefFolder(root_dir)
-        self.__docx: list[str] = self.__folder.get_paths_by(gc.extensions_DOCX)
-        self.__pdf: list[str] = self.__folder.get_paths_by(gc.extensions_PDF)
-        self.__xlsx: list[str] = self.__folder.get_paths_by(gc.extensions_XLSX)
-        self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
-        self.preload()
+        with self.rlock:
+            self.__stopFlag = stop_flag
+            from SSPY.globalconstants import GlobalConstants as gc
+            from SSPY.myfolder import DefFolder
+            self.__root_dir = root_dir
+            self.__folder = DefFolder(root_dir)
+            self.__docx: list[str] = self.__folder.get_paths_by(gc.extensions_DOCX)
+            self.__pdf: list[str] = self.__folder.get_paths_by(gc.extensions_PDF)
+            self.__xlsx: list[str] = self.__folder.get_paths_by(gc.extensions_XLSX)
+            self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
+            self.preload()
 
     @monitor_variables(
         target_var = '__stopFlag',
@@ -117,6 +113,10 @@ class SearchingTool:
             self.__datas.append(d)
         self.disconnect_progress()
 
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit)
     def connect_progress(self, in_list: list[str] | None):
         """链接到进度条"""
         if not (isinstance(in_list, list) and len(in_list) > 0): return None
@@ -144,12 +144,14 @@ class SearchingTool:
         get_response(('progress_now', now_idx, max_idx, path))
 
     def clear(self):
-        self.__root_dir = ''
-        self.__folder = None
-        self.__docx.clear()
-        self.__pdf.clear()
-        self.__xlsx.clear()
-        self.__datas.clear()
+        """这里要等待对lock锁的结束"""
+        with self.rlock:
+            self.__root_dir = ''
+            self.__folder = None
+            self.__docx.clear()
+            self.__pdf.clear()
+            self.__xlsx.clear()
+            self.__datas.clear()
 
     def find(self, target: str, rst: list):
         """

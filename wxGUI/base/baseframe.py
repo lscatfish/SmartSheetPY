@@ -1,5 +1,4 @@
 import threading
-import time
 
 import wx
 from wx import Panel, stc
@@ -70,8 +69,13 @@ class BaseFrame(wx.Frame):
             border = 10)
         self.progress_panel_default.SetSizer(progress_sizer)
 
-        self.__event_stop = threading.Event()
+        self.event_thread_interrupt = threading.Event()
         """停止线程的标志"""
+        self.__interrupt_resource_recovery: dict = {}
+
+
+    def RecoveryInterruptResource(self):
+        """回收中断之后的资源"""
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """

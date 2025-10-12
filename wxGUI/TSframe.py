@@ -35,12 +35,13 @@ class TSMainFrame(BaseFrame):
         self.btn_load = wx.Button(btn_panel, label = '加载')
         self.btn_find = wx.Button(btn_panel, label = '查找')
         self.btn_save = wx.Button(btn_panel, label = '保存结果')
-        self.btn_stop = wx.Button(btn_panel, label = '中止')
+        self.btn_interrupt = wx.Button(btn_panel, label = '中止')
         self.btn_clear = wx.Button(btn_panel, label = '清屏')
         self.btn_load.Bind(wx.EVT_BUTTON, self.on_load)
         self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
         self.btn_clear.Bind(wx.EVT_BUTTON, self.ClearText)
-        for btn in (self.btn_load, self.btn_find, self.btn_save, self.btn_stop, self.btn_clear):
+        self.btn_interrupt.Bind(wx.EVT_BUTTON, self.on_interrupt)
+        for btn in (self.btn_load, self.btn_find, self.btn_save, self.btn_interrupt, self.btn_clear):
             btn.SetFont(self.font_default)
             btn_sizer.Add(btn, 1, wx.ALL | wx.CENTER, 10)
         btn_panel.SetSizer(btn_sizer)
@@ -88,17 +89,21 @@ class TSMainFrame(BaseFrame):
         self.__if_preload = False  # 是否被预加载了
         self.btn_find.Disable()
 
+    def unload(self):
+        """子任务，解除加载"""
+        threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
+        wx.CallAfter(self.btn_select.Enable)
+        wx.CallAfter(self.btn_load.SetLabelText, '加载')
+        wx.CallAfter(self.target_path_text.SetEditable, True)
+        wx.CallAfter(self.btn_find.Disable)
+        wx.CallAfter(self.progress_default_reset)
+        self.__if_preload = False
+
     def on_load(self, event):
         """加载文件中的文件"""
-
         self.DisableButtons()
         if self.__if_preload:  # 已经加载成功了，解除加载
-            wx.CallAfter(self.btn_select.Enable)
-            wx.CallAfter(self.btn_load.SetLabelText, '加载')
-            wx.CallAfter(self.target_path_text.SetEditable, True)
-            wx.CallAfter(self.__searching_tool.clear)
-            wx.CallAfter(self.btn_find.Disable)
-            self.__if_preload = False
+            self.unload()
             self.EnableButtons()
 
         else:  # 没有加载，加载
@@ -113,8 +118,8 @@ class TSMainFrame(BaseFrame):
                 return
 
             wx.CallAfter(self.btn_load.SetLabelText, '解除')
-            wx.CallAfter(self.btn_select.Disable)
-            wx.CallAfter(self.target_path_text.SetEditable, False)
+            wx.CallAfter(self.btn_select.Disable)  # 禁用浏览文件夹
+            wx.CallAfter(self.target_path_text.SetEditable, False)  # 禁用编辑路径
             self.__if_preload = True
 
             t = threading.Thread(
@@ -123,6 +128,20 @@ class TSMainFrame(BaseFrame):
             t.start()
             # 主线程禁止join
 
+    def TaskLoad(self):
+        """预加载工作"""
+        self.__searching_tool.start(
+            root_dir = self.target_path,
+            stop_flag = self.event_thread_interrupt)
+        if self.event_thread_interrupt.is_set():  # 退出方法
+            wx.CallAfter(self.unload)
+            postText('中断加载成功！！！', 'green', False)
+            self.event_thread_interrupt.clear()
+        else:
+            wx.CallAfter(self.btn_find.Enable)
+        wx.CallAfter(self.EnableButtons)
+
+
     def on_find(self, event):
         self.DisableButtons()
         self.target_text_text.SetEditable(False)
@@ -130,27 +149,6 @@ class TSMainFrame(BaseFrame):
         wx.CallAfter(self.TaskFind)
         self.target_text_text.SetEditable(True)
         self.EnableButtons()
-
-    def on_select(self, event):
-        dlg = wx.DirDialog(
-            self,
-            message = "选择文件夹",
-            defaultPath = self.target_path_text.GetValue(),  # 使用当前输入框的值作为默认路径
-            style = wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            selected_path = dlg.GetPath()
-            self.target_path_text.SetValue(selected_path)  # 将选择的路径设置到输入框
-            wx.CallAfter(self.__searching_tool.clear)
-            self.__if_preload = False
-        dlg.Destroy()
-
-
-    def TaskLoad(self):
-        """预加载工作"""
-        self.__searching_tool.start(root_dir = self.target_path)
-        wx.CallAfter(self.btn_find.Enable)
-        wx.CallAfter(self.EnableButtons)
 
     def TaskFind(self):
         """运行搜索任务"""
@@ -165,17 +163,35 @@ class TSMainFrame(BaseFrame):
         for line in rst:
             postText(str(line), ptime = False)
 
+
+    def on_select(self, event):
+        dlg = wx.DirDialog(
+            self,
+            message = "选择文件夹",
+            defaultPath = self.target_path_text.GetValue(),  # 使用当前输入框的值作为默认路径
+            style = wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            selected_path = dlg.GetPath()
+            self.target_path_text.SetValue(selected_path)  # 将选择的路径设置到输入框
+            threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
+            self.__if_preload = False
+        dlg.Destroy()
+
+    def on_interrupt(self, event):
+        """中断函数"""
+        self.event_thread_interrupt.set()
+
+
     def DisableButtons(self):
         """禁用部分按钮"""
         for b in (self.btn_load, self.btn_save, self.btn_clear):
             wx.CallAfter(b.Disable)
-        pass
 
     def EnableButtons(self):
         """启用部分按钮"""
         for b in (self.btn_load, self.btn_save, self.btn_clear):
             wx.CallAfter(b.Enable)
-        pass
 
     def response_children(self, request: str | tuple | list):
         """回复子线程，ATT：此函在主函数运行"""
@@ -206,7 +222,6 @@ class TSMainFrame(BaseFrame):
 
         from SSPY import register_SSPY_communitor
         register_SSPY_communitor(wxGUI.communitor.msg)
-
 
     def rsp_str(self, request: str):
         """回复函数的str类型"""
@@ -246,6 +261,6 @@ class TSMainFrame(BaseFrame):
             postText(msg = request[1], color = request[2], ptime = request[3])
             return ''
         elif request[0] == 'progress_now':
-            self.progress_default_set(request[1], request[2],request[3])
+            self.progress_default_set(request[1], request[2], request[3])
             return 'done'
         return 'exit-error'
