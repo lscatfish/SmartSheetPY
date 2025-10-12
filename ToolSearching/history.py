@@ -5,7 +5,7 @@ from copy import deepcopy
 class ASearch:
     """一次搜索的结果"""
 
-    def __init__(self, target: str, root: str, rst: tuple):
+    def __init__(self, target: str, root: str, rst: list[tuple]):
         """
         Args:
             target:搜索目标
@@ -48,6 +48,7 @@ class HistorySearch:
         self.__history: list[ASearch] = []
 
     def push_back(self, _in: ASearch):
+        if self.has_history(_in.target, _in.root): return
         self.__history.append(_in)
 
     def has_history(self, target: str, root: str):

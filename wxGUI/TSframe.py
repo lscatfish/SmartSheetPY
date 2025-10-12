@@ -7,6 +7,7 @@ import wx
 from .base.baseframe import BaseFrame
 from wxGUI.communitor.text_hub import postText
 from .hijack.hijack_sysstd import WxTextCtrlStdout
+from ToolSearching.history import HistorySearch, ASearch
 
 
 class TSMainFrame(BaseFrame):
@@ -86,6 +87,9 @@ class TSMainFrame(BaseFrame):
 
         from ToolSearching.core import SearchingTool
         self.__searching_tool = SearchingTool()  # 示例
+
+        self.__history = HistorySearch()
+
         self.__if_preload = False  # 是否被预加载了
         self.btn_find.Disable()
 
@@ -158,12 +162,19 @@ class TSMainFrame(BaseFrame):
         if self.target_text == '':
             postText('请输入搜索值！！！\n\n', 'red', False)
             return
-        self.__searching_tool.find(self.target_text, rst)
+        rst = self.__history.get_history(self.target_text, self.target_path, rst)
+        if len(rst) == 0:
+            self.__searching_tool.find(self.target_text, rst)
+        else:
+            for line in rst:
+                postText(line[0] + '      ' + line[1], ptime = False)
+            return
         if len(rst) == 0:
             postText(f'搜索目标“{self.target_text}”未找到\n\n', 'yellow', False)
             return
         for line in rst:
             postText(line[0] + '      ' + line[1], ptime = False)
+        self.__history.push_back(ASearch(self.target_text, self.target_path, rst))
 
     def on_select(self, event):
         dlg = wx.DirDialog(
