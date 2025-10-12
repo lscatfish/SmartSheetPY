@@ -91,7 +91,8 @@ class TSMainFrame(BaseFrame):
 
     def unload(self):
         """子任务，解除加载"""
-        threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
+        # threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
+        wx.CallAfter(self.__searching_tool.clear)
         wx.CallAfter(self.btn_select.Enable)
         wx.CallAfter(self.btn_load.SetLabelText, '加载')
         wx.CallAfter(self.target_path_text.SetEditable, True)
@@ -101,6 +102,7 @@ class TSMainFrame(BaseFrame):
 
     def on_load(self, event):
         """加载文件中的文件"""
+        self.event_thread_interrupt.clear()
         self.DisableButtons()
         if self.__if_preload:  # 已经加载成功了，解除加载
             self.unload()
@@ -135,17 +137,17 @@ class TSMainFrame(BaseFrame):
             stop_flag = self.event_thread_interrupt)
         if self.event_thread_interrupt.is_set():  # 退出方法
             wx.CallAfter(self.unload)
-            postText('中断加载成功！！！', 'green', False)
+            postText('中断成功！！！\n\n', 'green', False)
             self.event_thread_interrupt.clear()
         else:
             wx.CallAfter(self.btn_find.Enable)
         wx.CallAfter(self.EnableButtons)
 
-
     def on_find(self, event):
         self.DisableButtons()
         self.target_text_text.SetEditable(False)
         self.target_text = self.target_text_text.GetValue()
+        self.ClearText(None)
         wx.CallAfter(self.TaskFind)
         self.target_text_text.SetEditable(True)
         self.EnableButtons()
@@ -154,15 +156,14 @@ class TSMainFrame(BaseFrame):
         """运行搜索任务"""
         rst: list[tuple] = []
         if self.target_text == '':
-            postText('请输入搜索值！！！', 'red', False)
+            postText('请输入搜索值！！！\n\n', 'red', False)
             return
         self.__searching_tool.find(self.target_text, rst)
         if len(rst) == 0:
-            postText(f'搜索目标“{self.target_text}”未找到', 'yellow', False)
+            postText(f'搜索目标“{self.target_text}”未找到\n\n', 'yellow', False)
             return
         for line in rst:
-            postText(str(line), ptime = False)
-
+            postText(line[0] + '   ' + line[1], ptime = False)
 
     def on_select(self, event):
         dlg = wx.DirDialog(
@@ -174,7 +175,7 @@ class TSMainFrame(BaseFrame):
         if dlg.ShowModal() == wx.ID_OK:
             selected_path = dlg.GetPath()
             self.target_path_text.SetValue(selected_path)  # 将选择的路径设置到输入框
-            threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
+            # threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
             self.__if_preload = False
         dlg.Destroy()
 
