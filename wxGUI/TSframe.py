@@ -167,13 +167,15 @@ class TSMainFrame(BaseFrame):
             self.__searching_tool.find(self.target_text, rst)
         else:
             for line in rst:
-                postText(line[0] + '      ' + line[1], ptime = False)
+                postText(f'原文：   {line[0]}',ptime = False)
+                postText(f'文件路径：{line[1]}',ptime = False)
             return
         if len(rst) == 0:
             postText(f'搜索目标“{self.target_text}”未找到\n\n', 'yellow', False)
             return
         for line in rst:
-            postText(line[0] + '      ' + line[1], ptime = False)
+            postText(f'原文：   {line[0]}', ptime = False)
+            postText(f'文件路径：{line[1]}', ptime = False)
         self.__history.push_back(ASearch(self.target_text, self.target_path, rst))
 
     def on_select(self, event):
