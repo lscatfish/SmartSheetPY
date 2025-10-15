@@ -40,6 +40,7 @@ class TSMainFrame(BaseFrame):
         self.btn_clear = wx.Button(btn_panel, label = '清屏')
         self.btn_load.Bind(wx.EVT_BUTTON, self.on_load)
         self.btn_find.Bind(wx.EVT_BUTTON, self.on_find)
+        self.btn_save.Bind(wx.EVT_BUTTON, self.on_save)
         self.btn_clear.Bind(wx.EVT_BUTTON, self.ClearText)
         self.btn_interrupt.Bind(wx.EVT_BUTTON, self.on_interrupt)
         for btn in (self.btn_load, self.btn_find, self.btn_save, self.btn_interrupt, self.btn_clear):
@@ -184,10 +185,9 @@ class TSMainFrame(BaseFrame):
 
     def on_save(self, event):
         """运行保存修改结果"""
-
-    def TaskSave(self):
-        """保存查找的修改"""
-
+        postText('正在保存中......', ptime = False)
+        wx.CallAfter(self.__history.save_all)
+        postText('保存完毕......', color = 'green', ptime = False)
 
     def DisableButtons(self):
         """禁用部分按钮"""

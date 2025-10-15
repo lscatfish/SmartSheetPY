@@ -1,4 +1,5 @@
 import wx
+import time
 from wx.stc import StyledTextCtrl
 
 color2style = {'red': 1, 'green': 2, 'yellow': 3, 'default': 0}
@@ -16,7 +17,6 @@ def _AddMessage(text_obj: StyledTextCtrl, msg, color = 'default', ptime = True):
     请加入到主线程队列
     color 可选：'default' | 'red' | 'green'  （想加颜色再扩字典即可）
     """
-    import time
     editable = text_obj.IsEditable()
     if not editable:
         text_obj.SetEditable(True)

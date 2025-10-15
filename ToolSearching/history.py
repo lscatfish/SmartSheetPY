@@ -10,7 +10,7 @@ class ASearch:
         Args:
             target:搜索目标
             root:搜索子路径
-            rst:搜索结果
+            rst:搜索结果(二元)
         """
         self.__target = target
         self.__root = root
@@ -65,4 +65,27 @@ class HistorySearch:
 
     def save_all(self):
         """保存所有的搜索历史"""
-        pass
+
+        def _table():
+            """转换为表格形式"""
+            sh: list[list[str]] = [['搜索目标', '原文', '文件位置']]
+            for asr in self.__history:
+                for t in asr.rst:
+                    if len(t) > 0:
+                        line = [asr.target, t[0], t[1]]
+                    else:
+                        line = [asr.target, '', '']
+                    sh.append(line)
+            return sh
+
+        def _save(sh):
+            from SSPY.globalconstants import GlobalConstants as gc
+            from SSPY.myxlsx import XlsxWrite
+            XlsxWrite(
+                path = './output/search_log.xlsx',
+                sheet = sh,
+                widths = [30, 80],
+                alignment = gc.alignmentLeft
+            ).write()
+
+        _save(_table())

@@ -66,6 +66,7 @@ class GlobalConstants:
     """定义粗边框样式：粗实线、蓝色"""
     alignmentStd = Alignment(horizontal = 'center', vertical = 'center')
     """标准对齐方式"""
+    alignmentLeft = Alignment(vertical = 'center')
 
     dir_INPUT_ = '.\\input\\'
     dir_STORAGE_ = '.\\storage\\'

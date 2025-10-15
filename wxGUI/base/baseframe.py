@@ -7,7 +7,7 @@ from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
 
 
 class BaseFrame(wx.Frame):
-    """为了多态"""
+    """为了多态!!!"""
 
     def __init__(self, parent, title, size):
         super().__init__(parent, title = title, size = size)
@@ -25,8 +25,8 @@ class BaseFrame(wx.Frame):
         """默认消息画布"""
         self.msg_text_default = self.CreateStyledTextCtrl(
             self.msg_panel_default,
-            self.font_default
-        )
+            self.font_default)
+        self.msg_text_default.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
         """定义一个msg_text用于容纳消息，标准消息器"""
         msg_sizer = wx.BoxSizer(wx.VERTICAL)
         msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
@@ -72,7 +72,7 @@ class BaseFrame(wx.Frame):
         self.event_thread_interrupt = threading.Event()
         """停止线程的标志"""
         self.__interrupt_resource_recovery: dict = {}
-
+        """线程紧急中断的回收机制"""
 
     def RecoveryInterruptResource(self):
         """回收中断之后的资源"""
@@ -88,7 +88,7 @@ class BaseFrame(wx.Frame):
             wx.CallAfter(_AddMessage, self.msg_text_default, msg, color, ptime)
         pass
 
-    def ClearText(self, event):
+    def ClearText(self, event = None):
         """清除默认StyledTextCtrl中的内容，可以重写"""
         wx.CallAfter(_ClearText, self.msg_text_default)
         pass
@@ -109,6 +109,17 @@ class BaseFrame(wx.Frame):
             TextCtrl_obj.SetValue(selected_path)  # 将选择的路径设置到输入框
         dlg.Destroy()
 
+    def OnMouseWheel(self, event):
+        """控制鼠标滚轮的滑动"""
+        if event.ShiftDown():
+            # 横向滚动
+            delta = -event.GetWheelRotation() // 60  # 正负方向
+            current_x = self.msg_text_default.GetXOffset()
+            new_x = max(0, current_x + delta * 20)  # 20 px/步
+            self.msg_text_default.SetXOffset(new_x)
+        else:
+            event.Skip()  # 纵向交给原生
+
     def response_children(self, request: str | tuple | list):
         """应答子线程"""
         pass
@@ -125,8 +136,7 @@ class BaseFrame(wx.Frame):
         ScrollWidth: int = 5000,
         ScrollWidthTracking: bool = True,
         font_styleNum = stc.STC_STYLE_DEFAULT,
-        style_spec_default = True
-    ):
+        style_spec_default = True):
         """
         自parent_msg_panel创建一个StyledTextCtrl
         Args:
@@ -156,10 +166,9 @@ class BaseFrame(wx.Frame):
         TextCtrl_size = (800, 30),
         Button_size = (100, 30),
         Button_binder_auto = False,
-        StaticText_prompt_lib: str = None,
-    ):
+        StaticText_prompt_lib: str = None):
         """
-        创建一个路径选择器
+        创建一个路径选择器行
         Args:
             parent_msg_panel:父panel
             font:字体
@@ -179,7 +188,6 @@ class BaseFrame(wx.Frame):
         if Button_binder_auto:
             btn.Bind(wx.EVT_BUTTON, lambda event: self.ChoosePath(tc))
         return stp, tc, btn  # 返回提示，选择框，选择按钮
-
 
     @property
     def font_size(self):
@@ -218,6 +226,7 @@ class BaseFrame(wx.Frame):
 
     def progress_default_set(self, int1, int2, path):
         """
+        设置进度条的量
         """
         if int2 == 0:
             self.progress_gauge_default.SetValue(100)
