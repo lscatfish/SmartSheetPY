@@ -182,6 +182,12 @@ class TSMainFrame(BaseFrame):
         """中断函数"""
         self.event_thread_interrupt.set()
 
+    def on_save(self, event):
+        """运行保存修改结果"""
+
+    def TaskSave(self):
+        """保存查找的修改"""
+
 
     def DisableButtons(self):
         """禁用部分按钮"""

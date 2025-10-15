@@ -62,3 +62,7 @@ class HistorySearch:
             s = i.get_rst_by(target, root)
             if s: return s
         return return_val
+
+    def save_all(self):
+        """保存所有的搜索历史"""
+        pass
