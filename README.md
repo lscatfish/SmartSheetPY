@@ -1,5 +1,7 @@
 # 这是[SmartSheet](https://github.com/lscatfish/SmartSheet)的python版本
 
+## 你任何的联网访问都必须严格遵守互联网机器人规范
+
 ## 🚀 快速开始
 
 我们推荐你从官网开始：
