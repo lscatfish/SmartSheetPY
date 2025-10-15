@@ -51,6 +51,10 @@ def _hijacked_get_model_local_path(self, model_name: str) -> pathlib.Path:
     if target_dir.exists() and (target_dir / "inference.yml").exists():
         return target_dir
     # 缺失 → 复用官方“挑最优 hoster + 下载”逻辑
+
+    """这里应该加上一个选择位置"""
+    """添加一个注册函数，将hijack的路径定向到镜像目录中"""
+
     return self._download_from_hoster(self._hosters, model_name)
 
 
