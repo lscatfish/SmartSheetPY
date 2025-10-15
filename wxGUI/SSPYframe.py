@@ -23,6 +23,14 @@ class SSPYMainFrame(wx.Frame):
             QC:青字班控制类
         """
 
+        self.msg_text = None
+        self.msg_panel = None
+        self.btn_stop = None
+        self.btn_clear = None
+        self.btn3 = None
+        self.btn2 = None
+        self.btn1 = None
+
         self.__thread_stop_flag_qc = threading.Event()
         """监控qc的终止工具"""
         self.__thread_wait_response_children = threading.Event()

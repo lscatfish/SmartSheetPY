@@ -54,17 +54,17 @@ class TSMainFrame(BaseFrame):
         target_sizer = wx.BoxSizer(wx.VERTICAL)
         target_sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
         target_sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
+        st2, self.target_path_text, self.btn_select = self.CreatePathChooseFs(
+            target_panel_2,
+            self.font_default,
+            StaticText_prompt_lib = '搜索路径:',
+            Button_binder_auto = True
+        )
         st1 = wx.StaticText(target_panel_1, label = "搜索目标:", pos = (10, 10))
-        st2 = wx.StaticText(target_panel_2, label = "搜索路径:", pos = (10, 10))
         st1.SetFont(self.font_default)
-        st2.SetFont(self.font_default)
-        self.target_text_text = wx.TextCtrl(target_panel_1, pos = (10, 10), size = (800, 30))
+        self.target_text_text = wx.TextCtrl(target_panel_1, size = (800, 30))
         """搜索的文字"""
-        self.target_path_text = wx.TextCtrl(target_panel_2, pos = (10, 10), size = (800, 30))
-        """目标路径"""
-        self.btn_select = wx.Button(target_panel_2, label = "浏览...", pos = (10, 10), size = (100, 30))
-        self.btn_select.Bind(wx.EVT_BUTTON, self.on_select)
-        self.btn_select.SetFont(self.font_default)
+
         for f in (st1, self.target_text_text):
             target_sizer_1.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         for f in (st2, self.target_path_text, self.btn_select):
@@ -167,8 +167,8 @@ class TSMainFrame(BaseFrame):
             self.__searching_tool.find(self.target_text, rst)
         else:
             for line in rst:
-                postText(f'原文：   {line[0]}',ptime = False)
-                postText(f'文件路径：{line[1]}',ptime = False)
+                postText(f'原文：   {line[0]}', ptime = False)
+                postText(f'文件路径：{line[1]}', ptime = False)
             return
         if len(rst) == 0:
             postText(f'搜索目标“{self.target_text}”未找到\n\n', 'yellow', False)
@@ -177,20 +177,6 @@ class TSMainFrame(BaseFrame):
             postText(f'原文：   {line[0]}', ptime = False)
             postText(f'文件路径：{line[1]}', ptime = False)
         self.__history.push_back(ASearch(self.target_text, self.target_path, rst))
-
-    def on_select(self, event):
-        dlg = wx.DirDialog(
-            self,
-            message = "选择文件夹",
-            defaultPath = self.target_path_text.GetValue(),  # 使用当前输入框的值作为默认路径
-            style = wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            selected_path = dlg.GetPath()
-            self.target_path_text.SetValue(selected_path)  # 将选择的路径设置到输入框
-            # threading.Thread(target = self.__searching_tool.clear, daemon = True).start()
-            self.__if_preload = False
-        dlg.Destroy()
 
     def on_interrupt(self, event):
         """中断函数"""

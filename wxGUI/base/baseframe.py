@@ -76,6 +76,7 @@ class BaseFrame(wx.Frame):
 
     def RecoveryInterruptResource(self):
         """回收中断之后的资源"""
+        pass
 
     def AddMessage(self, msg, color = 'default', ptime = True):
         """
@@ -92,6 +93,22 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(_ClearText, self.msg_text_default)
         pass
 
+    def ChoosePath(self, TextCtrl_obj: wx.TextCtrl):
+        """
+        为一个TextCtrl添加路径选择
+        Args:
+            TextCtrl_obj:要修改的wx.TextCtrl对象
+        """
+        dlg = wx.DirDialog(
+            self,
+            message = "选择文件夹",
+            defaultPath = TextCtrl_obj.GetValue(),  # 使用当前输入框的值作为默认路径
+            style = wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        if dlg.ShowModal() == wx.ID_OK:
+            selected_path = dlg.GetPath()
+            TextCtrl_obj.SetValue(selected_path)  # 将选择的路径设置到输入框
+        dlg.Destroy()
+
     def response_children(self, request: str | tuple | list):
         """应答子线程"""
         pass
@@ -99,7 +116,6 @@ class BaseFrame(wx.Frame):
     def register(self):
         """注册器，注册各个模块必要的模块"""
         pass
-
 
     def CreateStyledTextCtrl(
         self,
@@ -114,7 +130,7 @@ class BaseFrame(wx.Frame):
         """
         自parent_msg_panel创建一个StyledTextCtrl
         Args:
-            parent_msg_panel:父panel，是一个
+            parent_msg_panel:父panel
             style: default : wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.VSCROLL
             ScrollWidth:横向滚动条宽度
             ScrollWidthTracking:横向滚动条追踪
@@ -132,6 +148,38 @@ class BaseFrame(wx.Frame):
         if style_spec_default:
             _setSpec(mt)
         return mt
+
+    def CreatePathChooseFs(
+        self,
+        parent_msg_panel: Panel,
+        font,
+        TextCtrl_size = (800, 30),
+        Button_size = (100, 30),
+        Button_binder_auto = False,
+        StaticText_prompt_lib: str = None,
+    ):
+        """
+        创建一个路径选择器
+        Args:
+            parent_msg_panel:父panel
+            font:字体
+            TextCtrl_size:可以控制的输入文字的size
+            Button_size:按钮的大小
+            Button_binder_auto:自动绑定按钮
+            StaticText_prompt_lib:固定提示词
+        """
+        stp = None  # 提示
+        if isinstance(StaticText_prompt_lib, str):
+            stp = wx.StaticText(parent = parent_msg_panel, label = StaticText_prompt_lib)
+            stp.SetFont(font)
+        btn = wx.Button(parent = parent_msg_panel, label = '浏览...', size = Button_size)
+        btn.SetFont(font)
+        tc = wx.TextCtrl(parent_msg_panel, size = TextCtrl_size)
+        # tc.SetFont(font)
+        if Button_binder_auto:
+            btn.Bind(wx.EVT_BUTTON, lambda event: self.ChoosePath(tc))
+        return stp, tc, btn  # 返回提示，选择框，选择按钮
+
 
     @property
     def font_size(self):
@@ -167,7 +215,6 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(self.progress_gauge_default.SetValue, 0)
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
         wx.CallAfter(self.progress_downp_default.SetLabelText, '')
-
 
     def progress_default_set(self, int1, int2, path):
         """
