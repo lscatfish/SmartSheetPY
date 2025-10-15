@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_dynamic_libs
 from PyInstaller.utils.hooks import copy_metadata
 
 datas = [('D:\\Python\\Lib\\site-packages\\Cython\\Utility', 'Cython/Utility'),
-           ('D:\\Python\\Lib\\asyncio\\__pycache__\\windows_utils.cpython-313.pyc', 'runtime/asyncio')]
+         ('D:\\Python\\Lib\\asyncio\\__pycache__\\windows_utils.cpython-313.pyc', 'runtime/asyncio')]
 binaries = []
 datas += collect_data_files('paddlex')
 datas += copy_metadata('aiohttp')
