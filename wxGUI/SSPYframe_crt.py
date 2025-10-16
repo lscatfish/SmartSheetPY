@@ -7,7 +7,6 @@ import sys
 import threading
 import wx
 import wx.stc as stc  # 关键控件
-from wxGUI.hijack.hijack_sysstd import WxTextCtrlStdout
 from wxGUI.communitor.text_hub import postText
 from wxGUI.base.baseframe import BaseFrame
 
