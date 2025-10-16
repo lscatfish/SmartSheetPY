@@ -1,8 +1,11 @@
+import sys
 import threading
 
 import wx
 from wx import Panel, stc
 from wx.stc import StyledTextCtrl
+
+from ..hijack.hijack_sysstd import WxTextCtrlStdout
 from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
 
 
@@ -125,8 +128,44 @@ class BaseFrame(wx.Frame):
         pass
 
     def register(self):
-        """注册器，注册各个模块必要的模块"""
+        """运行注册器，注册各个模块必要的模块"""
         pass
+
+    def ReregisterSysOut(self):
+        """===== 重定向 stdout / stderr ====="""
+        # 让第三方库的 print 也进窗口
+        sys.stdout = WxTextCtrlStdout(self.msg_text_default)  # 普通信息
+        sys.stderr = WxTextCtrlStdout(self.msg_text_default, 'red')  # 错误染红
+
+    def ReregisterCOut(self):
+        """重定向C的输出库"""
+        # 劫持 Windows C 运行时 stderr，使其输出重定向到 wx 消息窗口
+        import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
+        a = wxGUI.hijack.crt_redirect.a
+
+    def RegisterTextHubDefault(self):
+        """注册默认消息站"""
+        from wxGUI.communitor.text_hub import register_text_hub
+        register_text_hub(
+            lambda msg, color = 'default', ptime = True:
+            wx.CallAfter(self.AddMessage, msg, color, ptime))
+
+    def RegisterSSPYCommunitor(self):
+        """注册SSPY对外的交流器，请在RegisterResponseCommunitor注册只后注册此程序"""
+        from SSPY import register_SSPY_communitor
+        from wxGUI.communitor import msg
+        register_SSPY_communitor(msg)
+
+    def RegisterResponseCommunitor(self):
+        """注册主线程回复函数"""
+        # 注册并启动子线程交流器
+        import wxGUI.communitor
+        wxGUI.communitor.register_main_process(self.response_children)
+
+    def SetDPIHigh(self):
+        """设置高DPI"""
+        from wxGUI.DPIset import set_DPI
+        set_DPI()
 
     def CreateStyledTextCtrl(
         self,
