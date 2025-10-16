@@ -22,7 +22,6 @@ class SSPYMainFrame(BaseFrame):
             title:标题
             QC:青字班控制类
         """
-        self.msg_text = None
         self.btn_stop = None
         self.btn_clear = None
         self.btn3 = None
@@ -37,13 +36,8 @@ class SSPYMainFrame(BaseFrame):
         self.__font_size = 12  # 全局字体大小
         super().__init__(parent, title = title, size = (1000, 650))
 
-        # 1. 先注册消息站
-        from wxGUI.communitor.text_hub import register_text_hub
-        register_text_hub(
-            lambda msg, color = 'default', ptime = True:
-            wx.CallAfter(self.AddMessage, msg, color, ptime))
-        from wxGUI.DPIset import set_DPI
-        set_DPI()
+        self.RegisterTextHub(self.AddMessage)
+        self.SetDPIHigh()
 
         self.InitUI()
         self.DisableButtons()
@@ -103,25 +97,19 @@ class SSPYMainFrame(BaseFrame):
         def __worker():
             # ===== 重定向 stdout / stderr =====
             # 让第三方库的 print 也进窗口
-            sys.stdout = WxTextCtrlStdout(self.msg_text)  # 普通信息
-            sys.stderr = WxTextCtrlStdout(self.msg_text, 'red')  # 错误染红
-
+            self.ReregisterSysOut()
             # 劫持 Windows C 运行时 stderr，使其输出重定向到 wx 消息窗口
-            import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
-            a = wxGUI.hijack.crt_redirect.a
+            self.ReregisterCOut()
 
-            from wxGUI.communitor.text_hub import postText
             import SSPY.hijack.hijack_paddlex
             a = SSPY.hijack.hijack_paddlex
 
             # 注册子线程交流器
-            import wxGUI.communitor
-            wxGUI.communitor.register_main_process(self.response_children)
-
+            self.RegisterResponseCommunitor(self.response_children)
             # 注册SSPY的交流器
-            from SSPY import register_SSPY_communitor
-            register_SSPY_communitor(wxGUI.communitor.core.msg)
+            self.RegisterSSPYCommunitor()
 
+            from wxGUI.communitor.text_hub import postText
             postText('配置文件加载成功！！！')
 
             from SSPY.globalconstants import GlobalConstants as gc
@@ -141,7 +129,7 @@ class SSPYMainFrame(BaseFrame):
 
     def BackgroundTask(self, task_type):
         pompt = f"开始执行功能{task_type}，按钮已锁定..." \
-            if self.msg_text.GetLength() == 0 \
+            if self.msg_text_default.GetLength() == 0 \
             else f"\n\n开始执行功能{task_type}，按钮已锁定..."
         self.AddMessage(pompt, ptime = False)
         try:
@@ -172,33 +160,10 @@ class SSPYMainFrame(BaseFrame):
     def response_children(self, request: str | tuple | list):
         """回复子线程，注册为_main_process_func，此函数在主线程中运行"""
         if isinstance(request, str):
-            pass
+            return self.rsp_str(request)
         elif isinstance(request, tuple):
-            if request[0] == 'ppocr_model_dir_unexist':
-                if isinstance(request[1], list) and len(request[1]) > 0:
-                    # 等待用户选择
-                    m = '以下模型不存在：\n'
-                    for i in request[1]:
-                        m += (i + '\n')
-                    m += ('下载需要 ' + str(len(request[1]) * 110) + 'MB\n')
-                    m += '是否下载？'
-                    r = wx.MessageBox(m, '信息', wx.OK | wx.ICON_INFORMATION | wx.CANCEL)
-                    match r:
-                        case wx.OK:
-                            return 'continue'
-                        case wx.CANCEL:
-                            self.StopQCTask()
-                            postText('# -------------------------- 退出功能2 -------------------------- #', 'red', False)
-                            return 'exit'
-                        case _:
-                            return 'exit-error'
-                    # self.__thread_wait_response_children.wait()
-            if request[0] == 'msg':
-                if len(request) == 4:
-                    postText(request[1], color = request[2], ptime = request[3])
-                    return None
+            return self.rsp_tuple(request)
         return 'exit-error'
-
 
     def on_exit(self, _):
         sys.stdout = sys.__stdout__
@@ -213,6 +178,8 @@ class SSPYMainFrame(BaseFrame):
         match len(request):
             case 2:
                 return self.rsp_tuple2(request)
+            case 4:
+                return self.rsp_tuple4(request)
             case _:
                 return 'exit-error'
 
@@ -223,6 +190,37 @@ class SSPYMainFrame(BaseFrame):
             case _:
                 return 'exit-error'
 
+    def rsp_tuple4(self, request: tuple):
+        match request[0]:
+            case 'msg':
+                return self.handle_postText(request)
+            case _:
+                return 'exit-error'
+
     def handle_model_unexist(self, unexist: list):
         """处理模型不存在的问题"""
+        # 等待用户选择
+        l = len(unexist)
+        if l == 0:
+            return 'exit-error'
+        m = '以下模型不存在：\n'
+        for un in unexist:
+            m += (un + '\n')
+        m += ('下载需要 ' + str(l * 110) + 'MB\n')
+        m += '是否下载？'
+        r = wx.MessageBox(m, '信息', wx.OK | wx.ICON_INFORMATION | wx.CANCEL)
+        match r:
+            case wx.OK:
+                return 'continue'
+            case wx.CANCEL:
+                self.StopQCTask()
+                postText('# -------------------------- 退出功能2 -------------------------- #',
+                    'red', False)
+                return 'exit'
+            case _:
+                return 'exit-error'
 
+    def handle_postText(self, request: tuple):
+        """处理发送消息的问题"""
+        postText(request[1], color = request[2], ptime = request[3])
+        return None

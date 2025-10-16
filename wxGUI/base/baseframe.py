@@ -143,12 +143,12 @@ class BaseFrame(wx.Frame):
         import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
         a = wxGUI.hijack.crt_redirect.a
 
-    def RegisterTextHubDefault(self):
-        """注册默认消息站"""
+    def RegisterTextHub(self,addmsg):
+        """注册消息站"""
         from wxGUI.communitor.text_hub import register_text_hub
         register_text_hub(
             lambda msg, color = 'default', ptime = True:
-            wx.CallAfter(self.AddMessage, msg, color, ptime))
+            wx.CallAfter(addmsg, msg, color, ptime))
 
     def RegisterSSPYCommunitor(self):
         """注册SSPY对外的交流器，请在RegisterResponseCommunitor注册只后注册此程序"""
@@ -156,11 +156,11 @@ class BaseFrame(wx.Frame):
         from wxGUI.communitor import msg
         register_SSPY_communitor(msg)
 
-    def RegisterResponseCommunitor(self):
+    def RegisterResponseCommunitor(self,resp):
         """注册主线程回复函数"""
         # 注册并启动子线程交流器
         import wxGUI.communitor
-        wxGUI.communitor.register_main_process(self.response_children)
+        wxGUI.communitor.register_main_process(resp)
 
     def SetDPIHigh(self):
         """设置高DPI"""
