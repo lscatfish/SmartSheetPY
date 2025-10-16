@@ -1,3 +1,5 @@
+"""请严格遵守互联网针对机器人的条例"""
+
 import imaplib
 import email
 import os
