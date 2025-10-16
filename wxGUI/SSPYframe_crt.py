@@ -55,7 +55,6 @@ class SSPYMainFrame(BaseFrame):
         # 大文件加载
         wx.CallAfter(self.__background_load)
 
-
     def InitUI(self):
         main_panel = wx.Panel(self)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -206,3 +205,24 @@ class SSPYMainFrame(BaseFrame):
         sys.stderr = sys.__stderr__
         del self.__qc
         self.Destroy()
+
+    def rsp_str(self, request: str):
+        return 'exit-error'
+
+    def rsp_tuple(self, request: tuple):
+        match len(request):
+            case 2:
+                return self.rsp_tuple2(request)
+            case _:
+                return 'exit-error'
+
+    def rsp_tuple2(self, request: tuple):
+        match request[0]:
+            case 'ppocr_model_dir_unexist':
+                return self.handle_model_unexist(request[1])
+            case _:
+                return 'exit-error'
+
+    def handle_model_unexist(self, unexist: list):
+        """处理模型不存在的问题"""
+
