@@ -81,6 +81,8 @@ class HistorySearch:
         def _save(sh):
             from SSPY.globalconstants import GlobalConstants as gc
             from SSPY.myxlsx import XlsxWrite
+            from SSPY.myfolder import create_nested_folders
+            create_nested_folders('./output/')  # 确保文件夹存在
             XlsxWrite(
                 path = './output/search_log.xlsx',
                 sheet = sh,
