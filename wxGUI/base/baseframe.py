@@ -1,4 +1,3 @@
-import sys
 import threading
 
 import wx
@@ -12,7 +11,13 @@ from ..tools.funcs_StyledTextCtrl import _setSpec, _AddMessage, _ClearText
 class BaseFrame(wx.Frame):
     """为了多态!!!"""
 
-    def __init__(self, parent, title, size):
+    def __init__(
+        self,
+        parent,
+        title,
+        size,
+        init_msg_text = True,
+        init_progress = True, ):
         super().__init__(parent, title = title, size = size)
         self.__font_size = 12
         self.font_default = wx.Font(
@@ -24,53 +29,55 @@ class BaseFrame(wx.Frame):
         self.main_panel = wx.Panel(self)  # 创建主画布
         """主画布"""
 
-        self.msg_panel_default = wx.Panel(self.main_panel)  # 创建默认消息画布
-        """默认消息画布"""
-        self.msg_text_default = self.CreateStyledTextCtrl(
-            self.msg_panel_default,
-            self.font_default)
-        self.msg_text_default.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
-        """定义一个msg_text用于容纳消息，标准消息器"""
-        msg_sizer = wx.BoxSizer(wx.VERTICAL)
-        msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
-        self.msg_panel_default.SetSizer(msg_sizer)
-        self.msg_text_default.SetEditable(False)
+        if init_msg_text:
+            self.msg_panel_default = wx.Panel(self.main_panel)  # 创建默认消息画布
+            """默认消息画布"""
+            self.msg_text_default = self.CreateStyledTextCtrl(
+                self.msg_panel_default,
+                self.font_default)
+            self.msg_text_default.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
+            """定义一个msg_text用于容纳消息，标准消息器"""
+            msg_sizer = wx.BoxSizer(wx.VERTICAL)
+            msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
+            self.msg_panel_default.SetSizer(msg_sizer)
+            self.msg_text_default.SetEditable(False)
 
-        self.progress_panel_default = wx.Panel(self.main_panel)
-        """进度条画布"""
-        self.progress_gauge_default_using = False
-        """默认进度条是否被占用"""
-        self.progress_gauge_default = (
-            wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 25)))
-        """默认进度条"""
-        self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0.00%")
-        """进度条进度值"""
-        self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "已就绪！！")
-        """进度条提示"""
-        self.progress_downp_default = wx.StaticText(self.main_panel, label = "", size = (-1, 20))
-        """下方解析提示"""
-        self.progress_percent_default.SetFont(self.font_default)
-        self.progress_prompt_default.SetFont(self.font_default)
-        self.progress_downp_default.SetFont(
-            wx.Font(10,
-                wx.FONTFAMILY_DEFAULT,
-                wx.FONTSTYLE_NORMAL,
-                wx.FONTWEIGHT_NORMAL))
-        """下方的全部布局"""
-        progress_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        progress_sizer.Add(
-            self.progress_gauge_default, 1,
-            flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM | wx.LEFT,
-            border = 20)
-        progress_sizer.Add(
-            self.progress_percent_default, 0,
-            flag = wx.ALIGN_LEFT | wx.RIGHT,
-            border = 10)
-        progress_sizer.Add(
-            self.progress_prompt_default, 0,
-            flag = wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM | wx.RIGHT,
-            border = 10)
-        self.progress_panel_default.SetSizer(progress_sizer)
+        if init_progress:
+            self.progress_panel_default = wx.Panel(self.main_panel)
+            """进度条画布"""
+            self.progress_gauge_default_using = False
+            """默认进度条是否被占用"""
+            self.progress_gauge_default = (
+                wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 25)))
+            """默认进度条"""
+            self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0.00%")
+            """进度条进度值"""
+            self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "已就绪！！")
+            """进度条提示"""
+            self.progress_downp_default = wx.StaticText(self.main_panel, label = "", size = (-1, 20))
+            """下方解析提示"""
+            self.progress_percent_default.SetFont(self.font_default)
+            self.progress_prompt_default.SetFont(self.font_default)
+            self.progress_downp_default.SetFont(
+                wx.Font(10,
+                    wx.FONTFAMILY_DEFAULT,
+                    wx.FONTSTYLE_NORMAL,
+                    wx.FONTWEIGHT_NORMAL))
+            """下方的全部布局"""
+            progress_sizer = wx.BoxSizer(wx.HORIZONTAL)
+            progress_sizer.Add(
+                self.progress_gauge_default, 1,
+                flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM | wx.LEFT,
+                border = 20)
+            progress_sizer.Add(
+                self.progress_percent_default, 0,
+                flag = wx.ALIGN_LEFT | wx.RIGHT,
+                border = 10)
+            progress_sizer.Add(
+                self.progress_prompt_default, 0,
+                flag = wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM | wx.RIGHT,
+                border = 10)
+            self.progress_panel_default.SetSizer(progress_sizer)
 
         self.event_thread_interrupt = threading.Event()
         """停止线程的标志"""
@@ -134,6 +141,7 @@ class BaseFrame(wx.Frame):
     def ReregisterSysOut(self):
         """===== 重定向 stdout / stderr ====="""
         # 让第三方库的 print 也进窗口
+        import sys
         sys.stdout = WxTextCtrlStdout(self.msg_text_default)  # 普通信息
         sys.stderr = WxTextCtrlStdout(self.msg_text_default, 'red')  # 错误染红
 
@@ -143,7 +151,7 @@ class BaseFrame(wx.Frame):
         import wxGUI.hijack.crt_redirect  # 只要 import 就自动完成重定向
         a = wxGUI.hijack.crt_redirect.a
 
-    def RegisterTextHub(self,addmsg):
+    def RegisterTextHub(self, addmsg):
         """注册消息站"""
         from wxGUI.communitor.text_hub import register_text_hub
         register_text_hub(
@@ -153,10 +161,10 @@ class BaseFrame(wx.Frame):
     def RegisterSSPYCommunitor(self):
         """注册SSPY对外的交流器，请在RegisterResponseCommunitor注册只后注册此程序"""
         from SSPY import register_SSPY_communitor
-        from wxGUI.communitor import msg
+        from wxGUI.communitor.core import msg
         register_SSPY_communitor(msg)
 
-    def RegisterResponseCommunitor(self,resp):
+    def RegisterResponseCommunitor(self, resp):
         """注册主线程回复函数"""
         # 注册并启动子线程交流器
         import wxGUI.communitor
@@ -253,7 +261,6 @@ class BaseFrame(wx.Frame):
 
     def progress_default_start(self):
         """开始进度条"""
-
         def __set_progress_gauge_default_using():
             self.progress_gauge_default_using = True
 
@@ -263,15 +270,19 @@ class BaseFrame(wx.Frame):
         wx.CallAfter(self.progress_percent_default.SetLabelText, '0.00%')
         wx.CallAfter(self.progress_downp_default.SetLabelText, '')
 
-    def progress_default_set(self, int1, int2, path):
+    def progress_default_set(self, int1, int2, prompt):
         """
         设置进度条的量
+        Args:
+            int1:当前值
+            int2:总的值
+            prompt:提示词
         """
         if int2 == 0:
             self.progress_gauge_default.SetValue(100)
             self.progress_percent_default.SetLabelText("100.00%")
-            self.progress_downp_default.SetLabelText(path)
+            self.progress_downp_default.SetLabelText(prompt)
         rg = abs(100 * float(int1) / float(int2))
         self.progress_gauge_default.SetValue(int(rg))
         self.progress_percent_default.SetLabelText(f"{rg:.2f}%")
-        self.progress_downp_default.SetLabelText(path)
+        self.progress_downp_default.SetLabelText(prompt)
