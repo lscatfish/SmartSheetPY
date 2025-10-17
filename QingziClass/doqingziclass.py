@@ -278,7 +278,7 @@ class DoQingziClass:
             """保存签到表"""
             if _exit(self.__stopFlag): return
             if sheet is None or classname is None: return
-            from openpyxl.styles import Font, Border, Alignment
+            from openpyxl.styles import Font
             path = gc.dir_OUTPUT_ATT_ + classname + '线下签到汇总表.xlsx'
             writer = XlsxWrite(
                 path = path,
