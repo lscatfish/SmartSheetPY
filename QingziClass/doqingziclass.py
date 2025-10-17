@@ -256,10 +256,10 @@ class DoQingziClass:
                 i = 0
                 for cn in cn_ip.keys():
                     for ip in cn_ip[cn]:
-                        i += 1
                         if _exit(self.__stopFlag): return []
                         post_progress_default(i, len_sum, f'OCR正在识别文件 {ip}')
                         ocr.predict(ip)
+                        i += 1
                     persons_att.extend(ocr.get_personList(cn, ifp = True))
             finally:
                 disconnect_progress_default()
