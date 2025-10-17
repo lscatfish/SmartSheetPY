@@ -36,8 +36,8 @@ class BaseFrame(wx.Frame):
             self.msg_text_default = self.CreateStyledTextCtrl(
                 self.msg_panel_default,
                 self.font_default)
-            self.msg_text_default.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
             """定义一个msg_text用于容纳消息，标准消息器"""
+            self.msg_text_default.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
             msg_sizer = wx.BoxSizer(wx.VERTICAL)
             msg_sizer.Add(self.msg_text_default, 1, wx.EXPAND | wx.ALL, 10)
             self.msg_panel_default.SetSizer(msg_sizer)
@@ -48,8 +48,6 @@ class BaseFrame(wx.Frame):
             """进度条画布"""
             progress_panel1 = wx.Panel(self.progress_panel_default)
             """上方画布"""
-            # progress_panel2 = wx.Panel(self.progress_panel_default)
-            # """下方的画布"""
             self.progress_gauge_default_using = False
             """默认进度条是否被占用"""
             self.progress_gauge_default = (
@@ -97,7 +95,7 @@ class BaseFrame(wx.Frame):
 
         self.event_thread_interrupt = threading.Event()
         """停止线程的标志"""
-        self.__interrupt_resource_recovery: dict = {}
+        self.interrupt_resource_recovery: dict = {}
         """线程紧急中断的回收机制"""
 
     def RecoveryInterruptResource(self):
@@ -108,7 +106,9 @@ class BaseFrame(wx.Frame):
         """
         标准消息，可重写的方法
         Args:
-            color 可选：'default' | 'red' | 'green'  （想加颜色再扩字典即可）
+            msg:发送的消息
+            color:颜色（默认颜色为黑色）可选：'default' | 'red' | 'green'  （想加颜色再扩字典即可）
+            ptime:是否打印时间
         """
         if isinstance(self.msg_text_default, StyledTextCtrl):
             wx.CallAfter(_AddMessage, self.msg_text_default, msg, color, ptime)

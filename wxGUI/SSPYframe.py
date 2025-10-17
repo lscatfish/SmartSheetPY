@@ -20,28 +20,31 @@ class SSPYMainFrame(BaseFrame):
             QC:青字班控制类
         """
         self.btn_stop = None
+        """中止"""
         self.btn_clear = None
+        """清屏"""
         self.btn3 = None
+        """青字班报名"""
         self.btn2 = None
+        """生成汇总表"""
         self.btn1 = None
-
+        """生成签到表"""
+        self.btn_prompt = None
+        """提示"""
         self.__thread_stop_flag_qc = threading.Event()
         """监控qc的终止工具"""
-        self.__thread_wait_response_children = threading.Event()
-        """阻塞回复函数等待用户输入的工具"""
-
-        self.__font_size = 12  # 全局字体大小
-
-        self.SetDPIHigh()
+        self.__font_size = 12
+        """全局字体大小"""
+        self.SetDPIHigh()  # 设置高DPI
         super().__init__(parent, title = title, size = (1300, 900))
 
-        self.RegisterTextHub(self.AddMessage)
-        self.InitUI()
+        self.RegisterTextHub(self.AddMessage)  # 注册消息站
+        self.InitUI()  # 初始化UI构架
         self.DisableButtons()
         self.Center()
         self.Show()
 
-        wx.CallAfter(self.AddMessage, '加载配置文件中...')
+        wx.CallAfter(self.AddMessage, '加载配置文件中...')  # 害怕加载未成功，用原来的函数
         self.__qc = QC
 
         # 大文件加载
@@ -54,13 +57,14 @@ class SSPYMainFrame(BaseFrame):
         btn_panel = wx.Panel(self.main_panel)
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
+        self.btn_prompt = wx.Button(btn_panel, label = '提示')
         self.btn1 = wx.Button(btn_panel, label = "功能1：生成签到表")
         self.btn2 = wx.Button(btn_panel, label = "功能2：生成汇总表")
         self.btn3 = wx.Button(btn_panel, label = "功能3：青字班报名")
         self.btn_stop = wx.Button(btn_panel, label = "中止")
         self.btn_clear = wx.Button(btn_panel, label = "清屏")
 
-        for btn in (self.btn1, self.btn2, self.btn3, self.btn_stop, self.btn_clear):
+        for btn in (self.btn_prompt, self.btn1, self.btn2, self.btn3, self.btn_stop, self.btn_clear):
             btn.SetFont(self.font_default)
             btn_sizer.Add(btn, 1, wx.ALL | wx.CENTER, 15)
         btn_panel.SetSizer(btn_sizer)
@@ -70,6 +74,7 @@ class SSPYMainFrame(BaseFrame):
         main_sizer.Add(self.msg_panel_default, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
         # 3. 按钮事件
+        self.btn_prompt.Bind(wx.EVT_BUTTON, lambda event: self.on_prompt(event))
         self.btn1.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(1))
         self.btn2.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(2))
         self.btn3.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(3))
@@ -114,11 +119,11 @@ class SSPYMainFrame(BaseFrame):
         threading.Thread(target = __worker, daemon = True).start()
 
     def DisableButtons(self):
-        for btn in (self.btn1, self.btn2, self.btn3):
+        for btn in (self.btn_prompt, self.btn1, self.btn2, self.btn3):
             btn.Disable()
 
     def EnableButtons(self):
-        for btn in (self.btn1, self.btn2, self.btn3):
+        for btn in (self.btn_prompt, self.btn1, self.btn2, self.btn3):
             btn.Enable()
 
     def BackgroundTask(self, task_type):
@@ -153,13 +158,56 @@ class SSPYMainFrame(BaseFrame):
         else:
             postText("没有正在执行的功能！！！", color = 'red', ptime = False)
 
-    def response_children(self, request: str | tuple | list):
-        """回复子线程，注册为_main_process_func，此函数在主线程中运行"""
-        if isinstance(request, str):
-            return self.rsp_str(request)
-        elif isinstance(request, tuple):
-            return self.rsp_tuple(request)
-        return 'exit-error'
+    def on_prompt(self, _):
+        """提示"""
+        from SSPY.globalconstants import GlobalConstants
+        if self.msg_text_default.GetLength() > 0:
+            postText('\n\n', ptime = False)
+        postText(msg = '# ------------------- 提示 ------------------- #\n',
+            color = 'green', ptime = False)
+
+        postText(msg = '请保证同源文件 "output/" 已备份，任何功能的运行都可能覆盖 "output/" 中的文件！！！\n',
+            color = 'red', ptime = False)
+
+        postText(msg = '* 功能1与功能2的输入文件的文件名应按照以下规则：', color = 'green', ptime = False)
+        postText(msg = '  ①文件名必须至少含有青字班班名的关键字（如：“青科班”的xlsx文件必须含有“科”字）',
+            color = 'green', ptime = False)
+        postText(msg = '  ②文件名不能含多于一个关键字（如：“青科班的志向”这个文件名包含了“科”“志”两个关键字',
+            color = 'green', ptime = False)
+        postText(msg = f'  ③这些关键字包含：{[c[0] for c in GlobalConstants.cns]}\n',
+            color = 'green', ptime = False)
+
+        postText(msg = '* 功能 1', color = 'green', ptime = False)
+        postText(msg = '  ①青字班的花名册请放置在与程序同源的文件夹 "input/all/" 中',
+            color = 'green', ptime = False)
+        postText(msg = '  ②班委提供的集中授课报名表请放置在与程序同源的文件夹 "input/app/" 中',
+            color = 'green', ptime = False)
+        postText(msg = '  ③如果要生成所有人的花名册，请将花名册复制一份放置在文件夹 "input/app/" 中',
+            color = 'green', ptime = False)
+        postText(msg = '  ④如果输出了未知人员，请修改花名册中的信息，让未知人员不再输出！！！\n',
+            color = 'green', ptime = False)
+
+        postText(msg = '* 功能 2', color = 'green', ptime = False)
+        postText(msg = '  ①青字班的花名册请放置在与程序同源的文件夹 "input/all/" 中',
+            color = 'green', ptime = False)
+        postText(msg = '  ②请确保与程序同源的文件夹文件 "storage/storage.xlsx" 存在',
+            color = 'green', ptime = False)
+        postText(msg = '  ③请确保签到照片的命名含有关键词且不多于一个',
+            color = 'green', ptime = False)
+        postText(msg = '  ④如果一个班的照片有多个，可以使用在照片最后加上数字的方式来区分',
+            color = 'green', ptime = False)
+        postText(msg = '  ⑤第一次运行功能2的时候会下载接近1.2GB的大模型文件，此过程需要联网',
+            color = 'green', ptime = False)
+        postText(msg = '  ⑥功能2运行所需时间有点长，请耐心等待\n', color = 'green', ptime = False)
+
+        postText(msg = '* 功能 3', color = 'green', ptime = False)
+        postText(msg = '  ①请将解压之后的文件直接放置在文件放置在 "input/sign_for_QingziClass/" 中',
+            color = 'green', ptime = False)
+        postText(msg = '  ②无法解析的文报名表会输出到 "output/sign_for_QingziClass_out/unknown/" 中，请一定前去查看！\n',
+            color = 'green', ptime = False)
+
+        postText('# ------------------- 提示 ------------------- #', 'green', False)
+
 
     def on_exit(self, _):
         import sys
@@ -167,6 +215,14 @@ class SSPYMainFrame(BaseFrame):
         sys.stderr = sys.__stderr__
         del self.__qc
         self.Destroy()
+
+    def response_children(self, request: str | tuple | list):
+        """回复子线程，注册为_main_process_func，此函数在主线程中运行"""
+        if isinstance(request, str):
+            return self.rsp_str(request)
+        elif isinstance(request, tuple):
+            return self.rsp_tuple(request)
+        return 'exit-error'
 
     def rsp_str(self, request: str):
         match request:
