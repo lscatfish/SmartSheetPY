@@ -28,7 +28,7 @@ if getattr(sys, 'frozen', False) and sys.platform == 'win32':
 
 #-----------------------------------正常入口-------------------------------------------#
 
-from wxGUI.SSPYframe_crt import SSPYMainFrame
+from wxGUI.SSPYframe import SSPYMainFrame
 from wx import App
 
 
