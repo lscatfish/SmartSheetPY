@@ -74,7 +74,7 @@ class BaseFrame(wx.Frame):
             progress_sizer1.Add(
                 self.progress_gauge_default, 1,
                 flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT,
-                border = 20)
+                border = 15)
             progress_sizer1.Add(
                 self.progress_percent_default, 0,
                 flag = wx.ALIGN_LEFT | wx.RIGHT,
@@ -87,7 +87,7 @@ class BaseFrame(wx.Frame):
             progress_sizer2 = wx.BoxSizer(wx.VERTICAL)
             progress_sizer2.Add(
                 progress_panel1,
-                flag = wx.EXPAND | wx.CENTER,
+                flag = wx.EXPAND | wx.LEFT | wx.RIGHT,
                 border = 5)
             progress_sizer2.Add(
                 self.progress_downp_default,
