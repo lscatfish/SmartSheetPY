@@ -163,50 +163,50 @@ class SSPYMainFrame(BaseFrame):
         from SSPY.globalconstants import GlobalConstants
         if self.msg_text_default.GetLength() > 0:
             postText('\n\n', ptime = False)
-        postText(msg = '# ------------------- 提示 ------------------- #\n',
+        postText(msg = '# -------------------------------------- 提示 -------------------------------------- #\n',
             color = 'green', ptime = False)
 
         postText(msg = '请保证同源文件 "output/" 已备份，任何功能的运行都可能覆盖 "output/" 中的文件！！！\n',
             color = 'red', ptime = False)
 
         postText(msg = '* 功能1与功能2的输入文件的文件名应按照以下规则：', color = 'green', ptime = False)
-        postText(msg = '  ①文件名必须至少含有青字班班名的关键字（如：“青科班”的xlsx文件必须含有“科”字）',
+        postText(msg = '  ① 文件名必须至少含有青字班班名的关键字（如：“青科班”的xlsx文件必须含有“科”字）',
             color = 'green', ptime = False)
-        postText(msg = '  ②文件名不能含多于一个关键字（如：“青科班的志向”这个文件名包含了“科”“志”两个关键字',
+        postText(msg = '  ② 文件名不能含多于一个关键字（如：“青科班的志向”这个文件名包含了“科”“志”两个关键字',
             color = 'green', ptime = False)
-        postText(msg = f'  ③这些关键字包含：{[c[0] for c in GlobalConstants.cns]}\n',
+        postText(msg = f'  ③ 这些关键字包含：{[c[0] for c in GlobalConstants.cns]}\n',
             color = 'green', ptime = False)
 
         postText(msg = '* 功能 1', color = 'green', ptime = False)
-        postText(msg = '  ①青字班的花名册请放置在与程序同源的文件夹 "input/all/" 中',
+        postText(msg = '  ① 青字班的花名册请放置在与程序同源的文件夹 "input/all/" 中',
             color = 'green', ptime = False)
-        postText(msg = '  ②班委提供的集中授课报名表请放置在与程序同源的文件夹 "input/app/" 中',
+        postText(msg = '  ② 班委提供的集中授课报名表请放置在与程序同源的文件夹 "input/app/" 中',
             color = 'green', ptime = False)
-        postText(msg = '  ③如果要生成所有人的花名册，请将花名册复制一份放置在文件夹 "input/app/" 中',
+        postText(msg = '  ③ 如果要生成所有人的花名册，请将花名册复制一份放置在文件夹 "input/app/" 中',
             color = 'green', ptime = False)
-        postText(msg = '  ④如果输出了未知人员，请修改花名册中的信息，让未知人员不再输出！！！\n',
+        postText(msg = '  ④ 如果输出了未知人员，请修改花名册中的信息，让未知人员不再输出！！！\n',
             color = 'green', ptime = False)
 
         postText(msg = '* 功能 2', color = 'green', ptime = False)
-        postText(msg = '  ①青字班的花名册请放置在与程序同源的文件夹 "input/all/" 中',
+        postText(msg = '  ① 青字班的花名册请放置在与程序同源的文件夹 "input/all/" 中',
             color = 'green', ptime = False)
-        postText(msg = '  ②请确保与程序同源的文件夹文件 "storage/storage.xlsx" 存在',
+        postText(msg = '  ② 请确保与程序同源的文件夹文件 "storage/storage.xlsx" 存在',
             color = 'green', ptime = False)
-        postText(msg = '  ③请确保签到照片的命名含有关键词且不多于一个',
+        postText(msg = '  ③ 请确保签到照片的命名含有关键词且不多于一个',
             color = 'green', ptime = False)
-        postText(msg = '  ④如果一个班的照片有多个，可以使用在照片最后加上数字的方式来区分',
+        postText(msg = '  ④ 如果一个班的照片有多个，可以使用在照片最后加上数字的方式来区分',
             color = 'green', ptime = False)
-        postText(msg = '  ⑤第一次运行功能2的时候会下载接近1.2GB的大模型文件，此过程需要联网',
+        postText(msg = '  ⑤ 第一次运行功能2的时候会下载接近1.2GB的大模型文件，此过程需要联网',
             color = 'green', ptime = False)
-        postText(msg = '  ⑥功能2运行所需时间有点长，请耐心等待\n', color = 'green', ptime = False)
+        postText(msg = '  ⑥ 功能2运行所需时间有点长，请耐心等待\n', color = 'green', ptime = False)
 
         postText(msg = '* 功能 3', color = 'green', ptime = False)
-        postText(msg = '  ①请将解压之后的文件直接放置在文件放置在 "input/sign_for_QingziClass/" 中',
+        postText(msg = '  ① 请将解压之后的文件直接放置在文件放置在 "input/sign_for_QingziClass/" 中',
             color = 'green', ptime = False)
-        postText(msg = '  ②无法解析的文报名表会输出到 "output/sign_for_QingziClass_out/unknown/" 中，请一定前去查看！\n',
+        postText(msg = '  ② 无法解析的文报名表会输出到 "output/sign_for_QingziClass_out/unknown/" 中，请一定前去查看！\n',
             color = 'green', ptime = False)
 
-        postText('# ------------------- 提示 ------------------- #', 'green', False)
+        postText('# -------------------------------------- 提示 -------------------------------------- #', 'green', False)
 
 
     def on_exit(self, _):
