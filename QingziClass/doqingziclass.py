@@ -11,6 +11,10 @@ from SSPY.myfolder import DefFolder, copy_file
 from SSPY.myxlsx import XlsxLoad, XlsxWrite
 from SSPY.helperfunction import _exit
 from SSPY.tracker.core import VariableType, monitor_variables, get_current_monitor
+from SSPY.communitor.connect import (
+    connect_progress_default,
+    disconnect_progress_default,
+    post_progress_default)
 
 
 class DoQingziClass:
@@ -91,14 +95,22 @@ class DoQingziClass:
         return_value = None)
     def __load_person_all(self):
         """加载所有的学员信息"""
-        print('加载所有的学员信息')
-        folder = DefFolder(gc.dir_INPUT_ALL_, extensions = gc.extensions_XLSX, if_print = True)
-        self.__classname_all = folder.pure_filenames
-        paths = folder.paths
-        for p in paths:
-            if _exit(self.__stopFlag): return
-            xlsx_sheet = XlsxLoad(_path = p, classname = gc.get_classname_from_path(path = p))  # 自动识别班级
-            self.__persons_all.extend(xlsx_sheet.get_personList())
+        try:
+            print('加载所有的学员信息')
+            folder = DefFolder(gc.dir_INPUT_ALL_, extensions = gc.extensions_XLSX, if_print = True)
+            self.__classname_all = folder.pure_filenames
+            paths = folder.paths
+            len_paths = len(paths)
+            connect_progress_default(paths)
+            i = 0
+            for p in paths:
+                i += 1
+                if _exit(self.__stopFlag): return
+                post_progress_default(i, len_paths, '加载文件 ' + p)
+                xlsx_sheet = XlsxLoad(_path = p, classname = gc.get_classname_from_path(path = p))  # 自动识别班级
+                self.__persons_all.extend(xlsx_sheet.get_personList())
+        finally:
+            disconnect_progress_default()
 
     @monitor_variables(
         target_var = '__stopFlag',
@@ -186,12 +198,19 @@ class DoQingziClass:
             ).write()
             print('报名信息已储存：\"' + path + '\"')
 
-
         pers_app, cns = __load_person_app()
-        __person_sign(pers_app)
-        for cn in cns:
-            sh = __make_sheet(cn)
-            __save(sh, cn)
+        try:
+            connect_progress_default(cns)
+            __person_sign(pers_app)
+            len_cns = len(cns)
+            """班级名字list的长度"""
+            for i in range(len_cns):
+                post_progress_default(i, len_cns, f'处理班级{cns[i]}中...')
+                sh = __make_sheet(cns[i])
+                __save(sh, cns[i])
+        finally:
+            disconnect_progress_default()
+
         __storage()
         self.__unknownSheet()
 
@@ -220,7 +239,6 @@ class DoQingziClass:
             # print(classname_imgpath)
             return classname_imgpath
 
-
         @current_monitor.add_nested_function(return_value = [])
         def __parse_imgs(cn_ip: dict[str, list[str]]) -> list[DefPerson] | None:
             if cn_ip is None: return None
@@ -230,13 +248,22 @@ class DoQingziClass:
             ocr = PPOCRImgByModel(stop_flag = self.__stopFlag)
             if _exit(self.__stopFlag):
                 return []
-            for cn in cn_ip.keys():
-                for ip in cn_ip[cn]:
-                    if _exit(self.__stopFlag): return []
-                    ocr.predict(ip)
-                persons_att.extend(ocr.get_personList(cn, ifp = True))
+            try:
+                len_sum = 0
+                for cn in cn_ip:
+                    len_sum += len(cn_ip[cn])
+                connect_progress_default(len_sum)
+                i = 0
+                for cn in cn_ip.keys():
+                    for ip in cn_ip[cn]:
+                        i += 0
+                        if _exit(self.__stopFlag): return []
+                        post_progress_default(i, len_sum, f'OCR正在识别文件 {ip}')
+                        ocr.predict(ip)
+                    persons_att.extend(ocr.get_personList(cn, ifp = True))
+            finally:
+                disconnect_progress_default()
             return persons_att
-
 
         @current_monitor.add_nested_function()
         def __person_checkin(persons_att: list[DefPerson]):
@@ -296,6 +323,7 @@ class DoQingziClass:
 
         self.__load_storage()
         pers_att = __parse_imgs(__organize_imgs())
+
         __person_checkin(pers_att)
         for cn in self.__classname_all:
             __save(__make_sheet(cn), cn)
@@ -326,30 +354,40 @@ class DoQingziClass:
         @current_monitor.add_nested_function(return_value = [])
         def __parse_docxs(paths: list[str]) -> list[DefPerson]:
             """解析docx文件"""
-
-            if paths is None or len(paths) == 0: return []
+            if paths is None or (isinstance(paths, list) and len(paths)) == 0: return []
             nonlocal unknown_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
-            for p in paths:
-                if _exit(self.__stopFlag):  return []
-                word = DocxLoad(p)
-                sh_per = word.get_sheet_without_enter('姓名')
-                if sh_per is not None:
-                    per = trans_sheet_to_person(sh_per, inkey_as_sub = True)  # 启用模糊处理
-                    per.set_information('地址', value = p)
-                    if '自' in p:
-                        per.set_information('报名方式', '自主报名')
-                    elif '组织' in p:
-                        per.set_information('报名方式', '组织推荐')
-                    elif '重庆大学团校' in p:
-                        per.set_information('报名方式', '自主报名')
+
+            try:
+                len_paths = len(paths)
+                connect_progress_default(len_paths)
+                i = 0
+                for p in paths:
+                    if _exit(self.__stopFlag):  return []
+                    i += 0
+                    post_progress_default(i, len_paths,
+                        f'解析DOCX文件 {p}')
+                    word = DocxLoad(p)
+                    sh_per = word.get_sheet_without_enter('姓名')
+                    if sh_per is not None:
+                        per = trans_sheet_to_person(sh_per, inkey_as_sub = True)  # 启用模糊处理
+                        per.set_information('地址', value = p)
+                        if '自' in p:
+                            per.set_information('报名方式', '自主报名')
+                        elif '组织' in p:
+                            per.set_information('报名方式', '组织推荐')
+                        elif '重庆大学团校' in p:
+                            per.set_information('报名方式', '自主报名')
+                        else:
+                            # 不以最坏情况思考
+                            per.set_information('报名方式', '组织推荐')
+                        pers.append(per)
                     else:
-                        # 不以最坏情况思考
-                        per.set_information('报名方式', '组织推荐')
-                    pers.append(per)
-                else:
-                    unknown_paths.append(p)
+                        unknown_paths.append(p)
+            finally:
+                disconnect_progress_default()
+
             return pers
 
         @current_monitor.add_nested_function(return_value = [])
@@ -577,6 +615,3 @@ class DoQingziClass:
             return fuzzy_search.match_by(a_number_part, b_number_part, fuzzy_search.LEVEL.High)
         else:
             return fuzzy_search.match_by(a, b, fuzzy_search.LEVEL.High)
-
-# def qcFunctionStart():
-#     """启动青字班功能"""
