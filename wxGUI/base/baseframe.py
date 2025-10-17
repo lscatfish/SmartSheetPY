@@ -19,6 +19,7 @@ class BaseFrame(wx.Frame):
         init_msg_text = True,
         init_progress = True, ):
         super().__init__(parent, title = title, size = size)
+
         self.__font_size = 12
         self.font_default = wx.Font(
             self.__font_size,  # 字号（点/磅）
@@ -45,16 +46,20 @@ class BaseFrame(wx.Frame):
         if init_progress:
             self.progress_panel_default = wx.Panel(self.main_panel)
             """进度条画布"""
+            progress_panel1 = wx.Panel(self.progress_panel_default)
+            """上方画布"""
+            # progress_panel2 = wx.Panel(self.progress_panel_default)
+            # """下方的画布"""
             self.progress_gauge_default_using = False
             """默认进度条是否被占用"""
             self.progress_gauge_default = (
-                wx.Gauge(self.progress_panel_default, range = 100, size = (-1, 25)))
+                wx.Gauge(progress_panel1, range = 100, size = (-1, 25)))
             """默认进度条"""
-            self.progress_percent_default = wx.StaticText(self.progress_panel_default, label = "0.00%")
+            self.progress_percent_default = wx.StaticText(progress_panel1, label = "0.00%")
             """进度条进度值"""
-            self.progress_prompt_default = wx.StaticText(self.progress_panel_default, label = "已就绪！！")
+            self.progress_prompt_default = wx.StaticText(progress_panel1, label = "已就绪！！")
             """进度条提示"""
-            self.progress_downp_default = wx.StaticText(self.main_panel, label = "", size = (-1, 20))
+            self.progress_downp_default = wx.StaticText(self.progress_panel_default, label = "", size = (-1, 20))
             """下方解析提示"""
             self.progress_percent_default.SetFont(self.font_default)
             self.progress_prompt_default.SetFont(self.font_default)
@@ -63,21 +68,33 @@ class BaseFrame(wx.Frame):
                     wx.FONTFAMILY_DEFAULT,
                     wx.FONTSTYLE_NORMAL,
                     wx.FONTWEIGHT_NORMAL))
-            """下方的全部布局"""
-            progress_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            progress_sizer.Add(
+
+            # 下方的全部布局
+            progress_sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+            progress_sizer1.Add(
                 self.progress_gauge_default, 1,
-                flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.BOTTOM | wx.LEFT,
+                flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT,
                 border = 20)
-            progress_sizer.Add(
+            progress_sizer1.Add(
                 self.progress_percent_default, 0,
                 flag = wx.ALIGN_LEFT | wx.RIGHT,
                 border = 10)
-            progress_sizer.Add(
+            progress_sizer1.Add(
                 self.progress_prompt_default, 0,
-                flag = wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM | wx.RIGHT,
+                flag = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT,
                 border = 10)
-            self.progress_panel_default.SetSizer(progress_sizer)
+            progress_panel1.SetSizer(progress_sizer1)
+            progress_sizer2=wx.BoxSizer(wx.VERTICAL)
+            progress_sizer2.Add(
+                progress_panel1,
+                flag = wx.EXPAND|wx.CENTER,
+                border = 5)
+            progress_sizer2.Add(
+                self.progress_downp_default,
+                flag = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT|wx.BOTTOM|wx.TOP,
+                border = 20  )
+            self.progress_panel_default.SetSizer(progress_sizer2)
+
 
         self.event_thread_interrupt = threading.Event()
         """停止线程的标志"""
@@ -261,6 +278,7 @@ class BaseFrame(wx.Frame):
 
     def progress_default_start(self):
         """开始进度条"""
+
         def __set_progress_gauge_default_using():
             self.progress_gauge_default_using = True
 

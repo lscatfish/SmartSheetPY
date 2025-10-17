@@ -80,7 +80,7 @@ class TSMainFrame(BaseFrame):
             main_sizer.Add(f, 0, wx.ALL | wx.CENTER | wx.EXPAND, 5)
         main_sizer.Add(self.msg_panel_default, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
         main_sizer.Add(self.progress_panel_default, 0, wx.EXPAND | wx.RIGHT, 5)
-        main_sizer.Add(self.progress_downp_default, 0, wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM, 20)
+        # main_sizer.Add(self.progress_downp_default, 0, wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM, 20)
         self.main_panel.SetSizer(main_sizer)
         self.register()  # 注册
         self.Center()
