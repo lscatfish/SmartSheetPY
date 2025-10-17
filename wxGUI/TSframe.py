@@ -232,7 +232,6 @@ class TSMainFrame(BaseFrame):
     def rsp_str(self, request: str):
         """回复函数的str类型"""
         if request == 'close_progress_gauge':
-            self.progress_gauge_default_using = False
             self.progress_default_reset()
             return ''
         return 'exit-error'
