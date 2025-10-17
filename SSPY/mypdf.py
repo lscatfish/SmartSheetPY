@@ -85,7 +85,7 @@ class PdfLoad:
             tables = []
             for page in mypdf.pages:
                 tables.extend(page.extract_tables())
-            self.__sheets = clean_enter(tables)
+            self.__sheets = clean_enter(tables, '')
         return True
 
     def __extract_text(self):
@@ -101,5 +101,5 @@ class PdfLoad:
                     # 遍历块中的每一行和每一个span
                     for line in block["lines"]:
                         for span in line["spans"]:
-                            p_text.append(clean_space(span["text"]))
+                            p_text.append(clean_space(span["text"], ''))
             self.__pageList.append(p_text)

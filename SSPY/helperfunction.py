@@ -4,28 +4,33 @@ import platform
 import threading
 
 
-def clean_enter(in_list: list | tuple | str) -> list | str:
-    """清除in_sheet中的\\n，返回一个list[list]"""
+def clean_enter(in_list: list | tuple | str, inst_None) -> list | str:
+    """
+    清除in_sheet中的\\n，返回一个list[list]
+    Args:
+        in_list:输入的list
+        inst_None:用什么参数来替换in_list中的None
+    """
     out_list = []
     if in_list is None:
-        return out_list
+        return inst_None
     elif isinstance(in_list, str):
         return in_list.replace('\n', '').replace('\r', '')
     elif isinstance(in_list, list | tuple):
         for row in in_list:
-            out_list.append(clean_enter(row))
+            out_list.append(clean_enter(row, inst_None))
     return out_list
 
 
-def clean_space(in_list: list | tuple | str) -> list | str:
+def clean_space(in_list: list | tuple | str,inst_None) -> list | str:
     out_list = []
     if in_list is None:
-        return out_list
+        return inst_None
     elif isinstance(in_list, str):
         return in_list.replace(' ', '')
     elif isinstance(in_list, list | tuple):
         for row in in_list:
-            out_list.append(clean_space(row))
+            out_list.append(clean_space(row,inst_None))
     return out_list
 
 

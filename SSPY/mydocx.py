@@ -154,14 +154,14 @@ class DocxLoad:
                                 table_data.append(row_data)
                             except ValueError as e:
                                 # ① 单行坏掉，只丢这一行
-                                stderr.write(f"表格 {tbl_idx} 第 {row_idx} 行结构损坏，已跳过：{e}")
+                                print(f"表格 {tbl_idx} 第 {row_idx} 行结构损坏，已跳过：{e}")
                                 return [],[]
 
                         all_tables.append(table_data)
 
                     except ValueError as e:
                         # ② 整个表格坏掉，直接丢
-                        stderr.write(f"表格 {tbl_idx} 完全损坏，已跳过：{e}\n")
+                        print(f"表格 {tbl_idx} 完全损坏，已跳过：{e}\n")
                         return [],[]
             if self.__parse_paragraphs:
                 for p in doc.paragraphs:
@@ -175,7 +175,7 @@ class DocxLoad:
                 with zipfile.ZipFile(tmp_path, 'r') as z:
                     ct = z.read('[Content_Types].xml').decode('utf-8', 'ignore').lower()
                     if 'spreadsheetml.main' in ct:
-                        stderr.write(f'{file_path.name} 实为 Excel，已跳过\n')
+                        print(f'{file_path.name} 实为 Excel，已跳过\n')
                         return [],[]  # 静默跳过
                 return [],[]
 
@@ -197,7 +197,7 @@ class DocxLoad:
     def sheets_without_enter(self) -> list[list[list]] | None:
         from .helperfunction import clean_enter
         if self.__sheets is None: return None
-        outs = clean_enter(self.__sheets)
+        outs = clean_enter(self.__sheets,'')
         return outs
 
     @property
@@ -223,7 +223,7 @@ class DocxLoad:
         sh = self.get_sheet(index = index)
         if sh is None:
             return None
-        outs = clean_enter(sh)
+        outs = clean_enter(sh,'')
         if isinstance(outs, list):
             return outs
         else:
