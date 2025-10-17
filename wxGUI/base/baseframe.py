@@ -84,17 +84,16 @@ class BaseFrame(wx.Frame):
                 flag = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT,
                 border = 10)
             progress_panel1.SetSizer(progress_sizer1)
-            progress_sizer2=wx.BoxSizer(wx.VERTICAL)
+            progress_sizer2 = wx.BoxSizer(wx.VERTICAL)
             progress_sizer2.Add(
                 progress_panel1,
-                flag = wx.EXPAND|wx.CENTER,
+                flag = wx.EXPAND | wx.CENTER,
                 border = 5)
             progress_sizer2.Add(
                 self.progress_downp_default,
-                flag = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT|wx.BOTTOM|wx.TOP,
-                border = 20  )
+                flag = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.TOP,
+                border = 20)
             self.progress_panel_default.SetSizer(progress_sizer2)
-
 
         self.event_thread_interrupt = threading.Event()
         """停止线程的标志"""
