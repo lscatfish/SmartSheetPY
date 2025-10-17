@@ -256,7 +256,7 @@ class DoQingziClass:
                 i = 0
                 for cn in cn_ip.keys():
                     for ip in cn_ip[cn]:
-                        i += 0
+                        i += 1
                         if _exit(self.__stopFlag): return []
                         post_progress_default(i, len_sum, f'OCR正在识别文件 {ip}')
                         ocr.predict(ip)
@@ -365,7 +365,7 @@ class DoQingziClass:
                 i = 0
                 for p in paths:
                     if _exit(self.__stopFlag):  return []
-                    i += 0
+                    i += 1
                     post_progress_default(i, len_paths,
                         f'解析DOCX文件 {p}')
                     word = DocxLoad(p)
@@ -398,38 +398,50 @@ class DoQingziClass:
             nonlocal cmtts_paths
             from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
-            for p in paths:
-                if _exit(self.__stopFlag):  return []
-                pdf = PdfLoad(p)
-                sh1 = pdf.get_sheet('应聘岗位', True)
-                sh2 = pdf.get_sheet('所任职务', True)
-                if sh1 is not None:
-                    cmtts_paths.append(p)
-                    per = trans_sheet_to_person(sh1, inkey_as_sub = True)
-                    per.ifsign = True  # 报名班委
-                    per.set_information('地址', value = p)
-                    if '自' in p:
-                        per.set_information('报名方式', '自主报名')
+
+            try:
+                len_paths = len(paths)
+                connect_progress_default(len_paths)
+                i = 0
+
+                for p in paths:
+                    if _exit(self.__stopFlag):  return []
+                    i += 1
+                    post_progress_default(i, len_paths,
+                        f'解析PDF文件 {p}')
+                    pdf = PdfLoad(p)
+                    sh1 = pdf.get_sheet('应聘岗位', True)
+                    sh2 = pdf.get_sheet('所任职务', True)
+                    if sh1 is not None:
+                        cmtts_paths.append(p)
+                        per = trans_sheet_to_person(sh1, inkey_as_sub = True)
+                        per.ifsign = True  # 报名班委
+                        per.set_information('地址', value = p)
+                        if '自' in p:
+                            per.set_information('报名方式', '自主报名')
+                        else:
+                            per.set_information('报名方式', '组织推荐')
+                        pers.append(per)
+                        continue
+                    elif sh2 is not None:
+                        per = trans_sheet_to_person(sh2, inkey_as_sub = True)
+                        per.set_information('地址', value = p)
+                        if '自' in p:
+                            per.set_information('报名方式', '自主报名')
+                        elif '组织' in p or '社团' in p or '学院' in p:
+                            per.set_information('报名方式', '组织推荐')
+                        elif '重庆大学团校' in p:
+                            per.set_information('报名方式', '自主报名')
+                        else:
+                            # 不以最坏情况思考
+                            per.set_information('报名方式', '组织推荐')
+                        pers.append(per)
+                        continue
                     else:
-                        per.set_information('报名方式', '组织推荐')
-                    pers.append(per)
-                    continue
-                elif sh2 is not None:
-                    per = trans_sheet_to_person(sh2, inkey_as_sub = True)
-                    per.set_information('地址', value = p)
-                    if '自' in p:
-                        per.set_information('报名方式', '自主报名')
-                    elif '组织' in p or '社团' in p or '学院' in p:
-                        per.set_information('报名方式', '组织推荐')
-                    elif '重庆大学团校' in p:
-                        per.set_information('报名方式', '自主报名')
-                    else:
-                        # 不以最坏情况思考
-                        per.set_information('报名方式', '组织推荐')
-                    pers.append(per)
-                    continue
-                else:
-                    unknown_paths.append(p)
+                        unknown_paths.append(p)
+            finally:
+                disconnect_progress_default()
+
             return pers
 
         @current_monitor.add_nested_function()

@@ -3,7 +3,6 @@
 修正方法
 wxPython 用于控制SSPY模块的的窗口
 """
-import sys
 import threading
 import wx
 import wx.stc as stc  # 关键控件
@@ -33,13 +32,14 @@ class SSPYMainFrame(BaseFrame):
         """阻塞回复函数等待用户输入的工具"""
 
         self.__font_size = 12  # 全局字体大小
-        super().__init__(parent, title = title, size = (1000, 650))
+
+        self.SetDPIHigh()
+        super().__init__(parent, title = title, size = (1300, 900))
 
         self.RegisterTextHub(self.AddMessage)
-        self.SetDPIHigh()
-
         self.InitUI()
         self.DisableButtons()
+        self.Center()
         self.Show()
 
         wx.CallAfter(self.AddMessage, '加载配置文件中...')
@@ -49,11 +49,10 @@ class SSPYMainFrame(BaseFrame):
         wx.CallAfter(self.__background_load)
 
     def InitUI(self):
-        main_panel = wx.Panel(self)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # 1. 上方按钮区
-        btn_panel = wx.Panel(main_panel)
+        btn_panel = wx.Panel(self.main_panel)
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.btn1 = wx.Button(btn_panel, label = "功能1：生成签到表")
@@ -61,14 +60,9 @@ class SSPYMainFrame(BaseFrame):
         self.btn3 = wx.Button(btn_panel, label = "功能3：青字班报名")
         self.btn_stop = wx.Button(btn_panel, label = "中止")
         self.btn_clear = wx.Button(btn_panel, label = "清屏")
-        font = wx.Font(
-            self.__font_size,  # 字号（点/磅）
-            wx.FONTFAMILY_DEFAULT,
-            wx.FONTSTYLE_NORMAL,
-            wx.FONTWEIGHT_NORMAL)
 
         for btn in (self.btn1, self.btn2, self.btn3, self.btn_stop, self.btn_clear):
-            btn.SetFont(font)
+            btn.SetFont(self.font_default)
             btn_sizer.Add(btn, 1, wx.ALL | wx.CENTER, 15)
         btn_panel.SetSizer(btn_sizer)
         main_sizer.Add(btn_panel, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 15)
@@ -80,12 +74,14 @@ class SSPYMainFrame(BaseFrame):
         self.btn1.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(1))
         self.btn2.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(2))
         self.btn3.Bind(wx.EVT_BUTTON, lambda e: self.StartTask(3))
-        self.btn_stop.Bind(wx.EVT_BUTTON, lambda e: self.StopQCTask())
+        self.btn_stop.Bind(wx.EVT_BUTTON, lambda e: self.on_interrupt())
         self.btn_clear.Bind(wx.EVT_BUTTON, lambda e: self.ClearText())
         # self.Bind(wx.EVT_CLOSE,self.on_exit)
         # 最好采用默认关闭方式
 
-        main_panel.SetSizer(main_sizer)
+        main_sizer.Add(self.progress_panel_default, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+
+        self.main_panel.SetSizer(main_sizer)
         self.Center()
         return
 
@@ -134,7 +130,6 @@ class SSPYMainFrame(BaseFrame):
         try:
             self.__thread_stop_flag_qc.clear()
             self.__qc.start(task_type, self.__thread_stop_flag_qc)
-            self.__qc.reset()
             wx.CallAfter(
                 self.AddMessage,
                 ptime = False,
@@ -142,13 +137,16 @@ class SSPYMainFrame(BaseFrame):
                 color = 'green')
         finally:
             wx.CallAfter(self.EnableButtons)
+            self.__qc.reset()
+            self.__thread_stop_flag_qc.clear()
+            self.progress_default_reset()
 
     def StartTask(self, task_type):
         self.DisableButtons()
         # 启动后台
         threading.Thread(target = self.BackgroundTask, args = (task_type,), daemon = True).start()
 
-    def StopQCTask(self):
+    def on_interrupt(self):
         """终止青字班的功能"""
         if not self.__thread_stop_flag_qc.is_set():
             postText("正在中止功能执行......", color = 'red', ptime = False)
@@ -165,12 +163,16 @@ class SSPYMainFrame(BaseFrame):
         return 'exit-error'
 
     def on_exit(self, _):
+        import sys
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
         del self.__qc
         self.Destroy()
 
     def rsp_str(self, request: str):
+        match request:
+            case 'close_progress_gauge_default':
+                self.progress_default_reset()  # 重置进度条
         return 'exit-error'
 
     def rsp_tuple(self, request: tuple):
@@ -186,6 +188,9 @@ class SSPYMainFrame(BaseFrame):
         match request[0]:
             case 'ppocr_model_dir_unexist':
                 return self.handle_model_unexist(request[1])
+            case 'request_progress_gauge_default':
+                """请求一个进度条"""
+                return self.handle_start_progress(request)
             case _:
                 return 'exit-error'
 
@@ -193,6 +198,9 @@ class SSPYMainFrame(BaseFrame):
         match request[0]:
             case 'msg':
                 return self.handle_postText(request)
+            case 'progress_gauge_default_now':
+                self.progress_default_set(request[1], request[2], request[3])
+                return ''
             case _:
                 return 'exit-error'
 
@@ -212,14 +220,24 @@ class SSPYMainFrame(BaseFrame):
             case wx.OK:
                 return 'continue'
             case wx.CANCEL:
-                self.StopQCTask()
+                self.on_interrupt()
                 postText('# -------------------------- 退出功能2 -------------------------- #',
                     'red', False)
                 return 'exit'
             case _:
-                return 'exit-error'
+                self.on_interrupt()
+                postText('# -------------------------- 退出功能2 -------------------------- #',
+                    'red', False)
+                return 'exit'
 
     def handle_postText(self, request: tuple):
         """处理发送消息的问题"""
         postText(request[1], color = request[2], ptime = request[3])
         return None
+
+    def handle_start_progress(self, request: tuple):
+        """请求一个进度条"""
+        if self.progress_gauge_default_using:
+            return 'wait', 3  # 暂停3s
+        self.progress_default_start()
+        return 'done', ''
