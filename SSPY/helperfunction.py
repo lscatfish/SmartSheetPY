@@ -41,7 +41,7 @@ def _exit(in_flag: threading.Event | None) -> bool:
 
 def sort_table(
     in_table: list[list[str]],
-    CompareMethod = lambda a, b: a < b,
+    CompareMethod = lambda a, b: a[0] < b[0],
     exclude_rows: list[int] = None,
     exclude_cols: list[int] = None, ):
     """
@@ -74,7 +74,7 @@ def sort_table(
     # 启动比较程序
     for i in include_rows:
         for j in include_rows:
-            if i <= j: continue
+            if i >= j: continue
             if CompareMethod(in_table[i], in_table[j]):
                 for k in include_cols:
                     in_table[j][k], in_table[i][k] = in_table[i][k], in_table[j][k]
