@@ -132,7 +132,7 @@ class SSPYMainFrame(BaseFrame):
             else f"\n\n开始执行功能{task_type}，按钮已锁定..."
         self.AddMessage(pompt, ptime = False)
         try:
-            self.__thread_stop_flag_qc.clear()
+            wx.CallAfter(self.__thread_stop_flag_qc.clear)
             self.__qc.start(task_type, self.__thread_stop_flag_qc)
             wx.CallAfter(
                 self.AddMessage,
@@ -142,7 +142,7 @@ class SSPYMainFrame(BaseFrame):
         finally:
             wx.CallAfter(self.EnableButtons)
             self.__qc.reset()
-            self.__thread_stop_flag_qc.clear()
+            wx.CallAfter(self.__thread_stop_flag_qc.clear)
             self.progress_default_reset()
 
     def StartTask(self, task_type):

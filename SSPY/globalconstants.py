@@ -42,8 +42,9 @@ class GlobalConstants:
     cYing = ('膺', '青膺班')
     cZhi = ('志', '青志班')
     cZu = ('组', '青组班')
+    cKe = ('科', '青科班')
 
-    cns = (cXuan, cWen, cGu, cXue, cYi, cFeng, cGong, cShe, cShu, cYing, cZhi, cZu)
+    cns = (cXuan, cWen, cGu, cXue, cYi, cFeng, cGong, cShe, cShu, cYing, cZhi, cZu, cKe)
 
     fontRegularGBK = Font(name = '仿宋_GB2312', size = 14)
     fontRegularSong = Font(name = '宋体', size = 14)
@@ -119,7 +120,7 @@ class GlobalConstants:
         for cn in GlobalConstants.cns:
             if cn[0] in path:
                 return cn[1]
-        return None  # 未找到匹配的结构
+        raise Exception(f'文件{path}命名错误，请包含关键词')  # 未找到匹配的结构
 
     @staticmethod
     def create_folders_must():
