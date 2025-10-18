@@ -479,10 +479,10 @@ class DoQingziClass:
                 gc.chstrSignPosition,
                 gc.chstrRegistrationMethod,
                 gc.chstrNote,
-                gc.chstrPersonalProfile,
-                gc.chstrPersonalStrengths,
-                gc.chstrWorkExperience,
-                gc.chstrAwardsAndHonors,
+                # gc.chstrPersonalProfile,
+                # gc.chstrPersonalStrengths,
+                # gc.chstrWorkExperience,
+                # gc.chstrAwardsAndHonors,
                 '文件地址']
             sheet: list[list[str]] = [copy.deepcopy(header)]
             sheet[0].append('是否报名班委')
