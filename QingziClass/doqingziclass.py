@@ -36,7 +36,7 @@ class DoQingziClass:
         self.__classname_all.clear()
         self.__unknownPersons.clear()
         if self.__stopFlag and isinstance(self.__stopFlag, threading.Event):
-            self.__stopFlag.clear()
+            self.__stopFlag.set()
         self.__stopFlag = None
 
     def start(self, callback_cfunction, stop_flag: threading.Event = None):
