@@ -164,6 +164,15 @@ class DoQingziClass:
         def __save(sheet: list[list[str]], classname: str):
             if sheet is None or classname is None: return
             if _exit(self.__stopFlag): return
+
+            from SSPY.helperfunction import sort_table
+            sort_table(sheet,
+                lambda a, b: True
+                if len(a[2]) > len(b[2])
+                else True if len(a[2]) == len(b[2]) and a[2] > b[2]
+                else False,
+                [0, ], [0, ])
+
             path = gc.dir_OUTPUT_APP_ + classname + '.xlsx'
             writer = XlsxWrite(
                 path = path,
@@ -299,13 +308,18 @@ class DoQingziClass:
                     out.append(l)
             return out
 
-
         @current_monitor.add_nested_function()
         def __save(sheet: list[list[str]], classname: str):
             """保存签到表"""
             if _exit(self.__stopFlag): return
             if sheet is None or classname is None: return
+
             from openpyxl.styles import Font
+            from SSPY.helperfunction import sort_table
+            sort_table(sheet,
+                lambda a, b: len(a[4]) > len(b[4]),
+                [0, ])
+
             path = gc.dir_OUTPUT_ATT_ + classname + '线下签到汇总表.xlsx'
             writer = XlsxWrite(
                 path = path,
@@ -500,7 +514,9 @@ class DoQingziClass:
         @current_monitor.add_nested_function()
         def __save(sheet: list[list[str]]):
             from openpyxl.styles import Alignment
+            from SSPY.helperfunction import sort_table
             if sheet is None or len(sheet) == 0: return
+            sort_table(sheet, lambda a, b: a[0] < b[0], [0, ], [0, ])
             writer = XlsxWrite(
                 sheet = sheet,
                 path = gc.dir_OUTPUT_SIGNFORQC_ + '报名.xlsx',
