@@ -32,6 +32,7 @@ class SSPYMainFrame(BaseFrame):
         self.btn_prompt = None
         """提示"""
         self.__thread_stop_flag_qc = threading.Event()
+        self.__thread_stop_flag_qc.set()
         """监控qc的终止工具"""
         self.__font_size = 12
         """全局字体大小"""
@@ -132,7 +133,7 @@ class SSPYMainFrame(BaseFrame):
             else f"\n\n开始执行功能{task_type}，按钮已锁定..."
         self.AddMessage(pompt, ptime = False)
         try:
-            wx.CallAfter(self.__thread_stop_flag_qc.clear)
+            self.__thread_stop_flag_qc.clear()
             self.__qc.start(task_type, self.__thread_stop_flag_qc)
             wx.CallAfter(
                 self.AddMessage,
@@ -141,8 +142,8 @@ class SSPYMainFrame(BaseFrame):
                 color = 'green')
         finally:
             wx.CallAfter(self.EnableButtons)
+            wx.CallAfter(self.__thread_stop_flag_qc.set)
             self.__qc.reset()
-            wx.CallAfter(self.__thread_stop_flag_qc.clear)
             self.progress_default_reset()
 
     def StartTask(self, task_type):
