@@ -1,6 +1,5 @@
 import copy
 import threading
-
 import SSPY.fuzzy.search as fuzzy_search
 
 from SSPY.mypdf import PdfLoad
@@ -266,9 +265,9 @@ class DoQingziClass:
                 for cn in cn_ip.keys():
                     for ip in cn_ip[cn]:
                         if _exit(self.__stopFlag): return []
+                        i += 1
                         post_progress_default(i, len_sum, f'OCR正在识别文件 {ip}')
                         ocr.predict(ip)
-                        i += 1
                     persons_att.extend(ocr.get_personList(cn, ifp = True))
             finally:
                 disconnect_progress_default()
@@ -317,7 +316,11 @@ class DoQingziClass:
             from openpyxl.styles import Font
             from SSPY.helperfunction import sort_table
             sort_table(sheet,
-                lambda a, b: len(a[4]) > len(b[4]),
+                lambda a, b: True
+                if len(a[4]) < len(b[4])
+                else True
+                if len(a[4]) == len(b[4]) and a[2] > b[2]
+                else False,
                 [0, ])
 
             path = gc.dir_OUTPUT_ATT_ + classname + '线下签到汇总表.xlsx'
