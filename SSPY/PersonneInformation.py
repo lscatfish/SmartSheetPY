@@ -147,7 +147,7 @@ class DefPerson:
                         self.__information[gc.chstrGrade] = first4 + '级'
                 else:
                     self.__information[gc.chstrGrade] = first4 + '级'
-        if len(self.__classname) > 4:
+        if len(self.__classname) > 0:
             if '青' not in self.__classname or '班' not in self.__classname or '例' in self.__classname:
                 for cn in gc.cns:
                     if cn[0] in self.__classname:
