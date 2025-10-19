@@ -30,6 +30,8 @@ class GlobalConstants:
     chstrAwardsAndHonors = '获奖情况'
     chstrMainAchievements = '主要事迹'
 
+    chstrFilePath = '文件地址'
+
     cXuan = ('宣', '青宣班')
     cWen = ('文', '青文班')
     cGu = ('骨', '青骨班')
@@ -83,6 +85,8 @@ class GlobalConstants:
     dir_OUTPUT_SIGNFORQC_ = '.\\output\\sign_for_QingziClass_out\\'
     dir_OUTPUT_SIGNFORQC_unknown = '.\\output\\sign_for_QingziClass_out\\unknown\\'
     dir_OUTPUT_SIGNFORQC_committee = '.\\output\\sign_for_QingziClass_out\\committee\\'
+    dir_OUTPUT_SIGNFORQC_classmate = '.\\output\\sign_for_QingziClass_out\\classmate\\'
+    dir_OUTPUT_SIGNFORQC_classmate_unc = '.\\output\\sign_for_QingziClass_out\\classmate\\unknown_class\\'
 
     dir_MODEL_NATURE_ = '.\\official_models\\'
 
@@ -99,6 +103,8 @@ class GlobalConstants:
         dir_OUTPUT_SIGNFORQC_,
         dir_OUTPUT_SIGNFORQC_unknown,
         dir_OUTPUT_SIGNFORQC_committee,
+        dir_OUTPUT_SIGNFORQC_classmate,
+        dir_OUTPUT_SIGNFORQC_classmate_unc,
         dir_MODEL_NATURE_,
     )
 

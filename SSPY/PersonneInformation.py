@@ -38,7 +38,7 @@ class DefPerson:
         gc.chstrWorkExperience    : (gc.chstrWorkExperience,),
         gc.chstrAwardsAndHonors   : (gc.chstrAwardsAndHonors,),
         gc.chstrMainAchievements  : (gc.chstrMainAchievements,),
-        '文件地址'                : ('文件地址', '地址', '文件路径', '路径', 'path')
+        gc.chstrFilePath          : (gc.chstrFilePath, '地址', '文件路径', '路径', 'path')
     }
     __keyWordTuple = types.MappingProxyType(__raw_key_word)
 
@@ -73,6 +73,7 @@ class DefPerson:
             gc.chstrEthnicity       : '',
             gc.chstrClub            : '',
             gc.chstrSignPosition    : ''}  # 信息
+        self.__filepaths: list[str] = []  # 此人员相关的文件路径
         if cname is not None: self.__classname = cname
         if name is not None: self.__information[gc.chstrName] = name
         if studentID is not None:
@@ -115,6 +116,7 @@ class DefPerson:
         new_instance.__ifsign = self.__ifsign
         # 覆盖__information：因为DefPerson.__init__会初始化空字典，需替换为深拷贝的字典
         new_instance.__information = new_information
+        new_instance.__filepaths = copy.deepcopy(self.__filepaths)
 
         # 6. 将新实例存入memo，标记为已拷贝
         memo[id(self)] = new_instance
@@ -156,30 +158,49 @@ class DefPerson:
     def set_information(
         self,
         inkey: str,
-        value: str,
+        value: str | list[str],
         inkey_as_sub: bool = False,
         stdkey_as_sub: bool = False):
         """添加信息"""
-        if value == 'None': return
+        if str(value) == 'None': return
         key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
         if key is None:
             self.__information[inkey] = value
         elif key == gc.chstrQClassname:
             self.__classname = value
+        elif key == gc.chstrFilePath:
+            self.filepath = value
         else:
             self.__information[key] = value
 
     def get_information(
         self, inkey: str,
         inkey_as_sub: bool = False,
-        stdkey_as_sub: bool = False) -> str:
-        """查找一个键，无论这个键是否存在都返回空字符"""
+        stdkey_as_sub: bool = False,
+        return_str = True) -> str | list[str]:
+        """
+        查找一个键，无论这个键是否存在都返回空字符
+        Args:
+            inkey:查找的键
+            inkey_as_sub:输入的键作为子串
+            stdkey_as_sub:标准键作为字串
+            return_str:只返回str
+        """
         if self.__information.get(inkey, None) is None:
             key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
             if key is None:
                 return self.__information.get(inkey, '')
             elif key == gc.chstrQClassname:
                 return self.__classname
+            elif key == gc.chstrFilePath:
+                if return_str:
+                    out = ''
+                    len_p=len(self.__filepaths)
+                    if len_p > 0:
+                        for i in range(len_p):
+                            out += self.__filepaths[i] + '' if i == (len_p - 1) else '\n'
+                    return out
+                return self.filepath
             else:
                 return self.__information.get(key, '')
         else:
@@ -336,6 +357,11 @@ class DefPerson:
     def ifcheck(self):
         return self.__ifcheck
 
+    @property
+    def filepath(self):
+        """文件的相关路径"""
+        return copy.deepcopy(self.__filepaths)
+
     @ifcheck.setter
     def ifcheck(self, value: bool):
         self.__ifcheck = value
@@ -404,6 +430,16 @@ class DefPerson:
     def gender(self, value: str):
         self.__information[gc.chstrGender] = str(value)
 
+    @filepath.setter
+    def filepath(self, value: str | list[str]):
+        """补充文件路径"""
+        if isinstance(value, str):
+            self.__filepaths.append(value)
+        elif isinstance(value, list):
+            self.__filepaths.extend(copy.deepcopy(value))
+        else:
+            raise Exception('filepath 只能接受 str 与 list[str] 格式！！！')
+
     def to_list(self, in_std: list[str]) -> list | None:
         """
         Parameters
@@ -427,9 +463,7 @@ class DefPerson:
                 continue
             else:  # 为空
                 self.__information[key] = oinfo[key]
-        if '地址' not in self.__information:
-            self.__information['地址'] = ''
-        self.__information['地址'] += oinfo.get('地址', '')
+        self.__filepaths.extend(copy.deepcopy(other.__filepaths))
 
 
 def is_studentID(s: str):

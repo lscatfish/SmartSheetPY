@@ -33,7 +33,10 @@ def split_filename_and_extension(file_path):
     return (name_part, ext_part)
 
 
-def create_nested_folders(folder_path: str, exist_ok: bool = True) -> None:
+def create_nested_folders(
+    folder_path: str,
+    exist_ok: bool = True,
+    if_print: bool = True) -> None:
     """
     创建嵌套的文件夹（支持多层目录结构）
 
@@ -44,9 +47,10 @@ def create_nested_folders(folder_path: str, exist_ok: bool = True) -> None:
     try:
         # 递归创建目录，exist_ok=True 避免目录已存在时的错误
         os.makedirs(folder_path, exist_ok = exist_ok)
-        print(f"成功创建嵌套文件夹：{folder_path}")
+        if if_print:
+            print(f"成功创建嵌套文件夹：{folder_path}")
     except OSError as e:
-        print(f"创建文件夹失败：{e}")
+        raise print(f"创建文件夹失败：{e}")
 
 
 def copy_file(source_path: str, target_path: str, if_print: bool = False) -> bool:
@@ -79,7 +83,7 @@ def copy_file(source_path: str, target_path: str, if_print: bool = False) -> boo
         else:
             target_full_path = target_path
         if if_print:
-            print(f"文件复制成功：{source_path} ----> {target_full_path}")
+            print(f"文件复制成功：{source_path} ---> {target_full_path}")
         return True
 
     except Exception as e:
