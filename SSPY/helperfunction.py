@@ -80,7 +80,7 @@ def sort_table(
                     in_table[j][k], in_table[i][k] = in_table[i][k], in_table[j][k]
 
 
-def trans_list_to_str(in_list: list[str], auto_enter = True) -> str:
+def trans_list_to_str(in_list: list[str]) -> str:
     """
     将输入的in_list转换为str
     Args:
@@ -92,5 +92,5 @@ def trans_list_to_str(in_list: list[str], auto_enter = True) -> str:
     len_l = len(in_list)
     if len_l == 0: return out_str
     for i in range(len_l):
-        out_str += (in_list[i] + '\n' if auto_enter and (i + 1) != len_l else ' ')
+        out_str += (in_list[i] + ('\n' if (i + 1) < len_l else ''))
     return out_str

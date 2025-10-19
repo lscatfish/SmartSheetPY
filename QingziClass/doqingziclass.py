@@ -8,7 +8,7 @@ from SSPY.PersonneInformation import DefPerson
 from SSPY.globalconstants import GlobalConstants as gc
 from SSPY.myfolder import DefFolder, copy_file
 from SSPY.myxlsx import XlsxLoad, XlsxWrite
-from SSPY.helperfunction import _exit
+from SSPY.helperfunction import _exit, trans_list_to_str
 from SSPY.tracker.core import VariableType, monitor_variables, get_current_monitor
 from SSPY.communitor.connect import (
     connect_progress_default,
@@ -528,8 +528,11 @@ class DoQingziClass:
 
                 for c in per.gen_classes():
                     if cn_sheet.get(c, None) is None:
-                        cn_sheet[c] = [copy.deepcopy(header)]
-                    cn_sheet[c].append(copy.deepcopy(row))
+                        cn_sheet[c] = [copy.deepcopy(header), ]
+                        cn_sheet[c][0].append('是否报名班委')
+                    cr = copy.deepcopy(row)
+                    cr[-1] = trans_list_to_str(per.savepath)
+                    cn_sheet[c].append(cr)
             # 生成序号
             sheet[0].insert(0, '序号')
             for i in range(1, len(sheet)):
