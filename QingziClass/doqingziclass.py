@@ -475,8 +475,8 @@ class DoQingziClass:
             self.__persons_all.extend(temps)
 
         @current_monitor.add_nested_function()
-        def __copy_all():
-            """复制所有文件"""
+        def __copy_classify():
+            """复制分类所有文件"""
             lens = len(self.__persons_all)
             connect_progress_default(lens)
             try:
@@ -484,15 +484,15 @@ class DoQingziClass:
                     post_progress_default(
                         i, lens,
                         "复制文件" + self.__persons_all[i].get_information(gc.chstrFilePath))
-                    self.__persons_all[i].copy_files()
+                    self.__persons_all[i].copy_files(gc.dir_OUTPUT_SIGNFORQC_classmate)
                     if self.__persons_all[i].ifsign:
                         self.__persons_all[i].copy_files(gc.dir_OUTPUT_SIGNFORQC_committee)
             finally:
                 disconnect_progress_default()
 
         @current_monitor.add_nested_function()
-        def __make_sheet():
-            """制表"""
+        def __make_sheet_all():
+            """制总表"""
             """预制表过程"""
             header: list[str] = [
                 gc.chstrName,
@@ -529,9 +529,9 @@ class DoQingziClass:
                 sheet[i].insert(0, str(i))
             return sheet
 
-
         @current_monitor.add_nested_function()
-        def __save(sheet: list[list[str]]):
+        def __save_all(sheet: list[list[str]]):
+            """总保存表"""
             from openpyxl.styles import Alignment
             from SSPY.helperfunction import sort_table
             if sheet is None or len(sheet) == 0: return
@@ -544,6 +544,10 @@ class DoQingziClass:
             )
             writer.write()
 
+        @current_monitor.add_nested_function()
+        def _make_sheet():
+
+
         pdf_paths, docx_paths = __organize_files()
         pers_doc = __parse_docxs(docx_paths)
         if pers_doc is None or len(pers_doc) == 0:
@@ -551,8 +555,8 @@ class DoQingziClass:
         else:
             self.__persons_all.extend(pers_doc)
         __merge(__parse_pdfs(pdf_paths))
-        __copy_all()
-        __save(__make_sheet())
+        __copy_classify()
+        __save_all(__make_sheet_all())
 
         """处理错误"""
         for p in unknown_paths:

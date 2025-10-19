@@ -78,3 +78,19 @@ def sort_table(
             if CompareMethod(in_table[i], in_table[j]):
                 for k in include_cols:
                     in_table[j][k], in_table[i][k] = in_table[i][k], in_table[j][k]
+
+
+def trans_list_to_str(in_list: list[str], auto_enter = True) -> str:
+    """
+    将输入的in_list转换为str
+    Args:
+        in_list:输入的list
+        auto_enter:自动换行
+    """
+    out_str = ''
+    if not isinstance(in_list, list): return out_str
+    len_l = len(in_list)
+    if len_l == 0: return out_str
+    for i in range(len_l):
+        out_str += (in_list[i] + '\n' if auto_enter and (i + 1) != len_l else ' ')
+    return out_str

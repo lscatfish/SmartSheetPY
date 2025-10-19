@@ -74,6 +74,7 @@ class DefPerson:
             gc.chstrClub            : '',
             gc.chstrSignPosition    : ''}  # 信息
         self.__filepaths: list[str] = []  # 此人员相关的文件路径
+        self.__savepaths: list[str] = []  # 保存的文件路径
         if cname is not None: self.__classname = cname
         if name is not None: self.__information[gc.chstrName] = name
         if studentID is not None:
@@ -192,6 +193,7 @@ class DefPerson:
             stdkey_as_sub:标准键作为字串
             return_str:只返回str
         """
+        from .helperfunction import trans_list_to_str
         if self.__information.get(inkey, None) is None:
             key = self.get_stdkey(inkey, inkey_as_sub = inkey_as_sub, stdkey_as_sub = stdkey_as_sub)
             if key is None:
@@ -200,12 +202,7 @@ class DefPerson:
                 return self.__classname
             elif key == gc.chstrFilePath:
                 if return_str:
-                    out = ''
-                    len_p = len(self.__filepaths)
-                    if len_p > 0:
-                        for i in range(len_p):
-                            out += self.__filepaths[i] + '' if i == (len_p - 1) else '\n'
-                    return out
+                    return trans_list_to_str(self.__filepaths)
                 return self.filepath
             else:
                 return self.__information.get(key, '')
@@ -368,6 +365,11 @@ class DefPerson:
         """文件的相关路径"""
         return copy.deepcopy(self.__filepaths)
 
+    @property
+    def savepath(self):
+        """保存文件的路径"""
+        return copy.deepcopy(self.__savepaths)
+
     @ifcheck.setter
     def ifcheck(self, value: bool):
         self.__ifcheck = value
@@ -446,6 +448,16 @@ class DefPerson:
         else:
             raise Exception('filepath 只能接受 str 与 list[str] 格式！！！')
 
+    @savepath.setter
+    def savepath(self, value: str | list[str]):
+        """补充保存路径"""
+        if isinstance(value, str):
+            self.__savepaths.append(value)
+        elif isinstance(value, list):
+            self.__savepaths.extend(copy.deepcopy(value))
+        else:
+            raise Exception('savepath 只能接受 str 与 list[str] 格式！！！')
+
     def to_list(self, in_std: list[str]) -> list | None:
         """
         Parameters
@@ -510,13 +522,12 @@ class DefPerson:
         # 复制文件
         for fp in self.__filepaths:
             for tr in target_root:
-                copy_file(fp,
-                    tr + get_filename_with_extension(fp) if keep_origin_name
-                    else tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1],
-                    True)
+                t = (tr + get_filename_with_extension(fp) if keep_origin_name
+                     else tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1])
+                copy_file(fp, t, True)
+                self.savepath = t
                 sum += 1
         return sum
-
 
     def is_studentID(s: str):
         import re
