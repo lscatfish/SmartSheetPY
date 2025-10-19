@@ -1,4 +1,5 @@
 ﻿import copy
+import os.path
 from dis import name
 from functools import singledispatchmethod
 from .globalconstants import GlobalConstants as gc
@@ -527,7 +528,13 @@ class DefPerson:
         for fp in self.__filepaths:
             for tr in target_root:
                 t = ((tr + get_filename_with_extension(fp)) if keep_origin_name
-                      else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))
+                     else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))
+                j = 0
+                while os.path.exists(t):
+                    j += 1
+                    a, b = split_filename_and_extension(fp)
+                    t = ((tr + a + f'({j})' + b) if keep_origin_name
+                         else (tr + self.name + '-' + self.studentID + f'({j})' + split_filename_and_extension(fp)[1]))
                 copy_file(fp, t, True)
                 self.savepath = t
                 sum += 1
