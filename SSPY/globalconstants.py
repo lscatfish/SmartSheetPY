@@ -132,6 +132,7 @@ class GlobalConstants:
     def generate_class_list(instr: str):
         """生成班级的列表"""
         out = []
+        if instr == '': return out
         for cn in GlobalConstants.cns:
             if cn[0] in instr:
                 out.append(cn[1])

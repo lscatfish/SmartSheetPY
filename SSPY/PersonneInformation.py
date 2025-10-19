@@ -494,7 +494,8 @@ class DefPerson:
         target_root: list[str] = []
         if len(self.__filepaths) == 0: return sum
         if under_class_folder:
-            classnames = gc.generate_class_list(self.__classname)
+            classnames = (gc.generate_class_list(self.__classname) +
+                          gc.generate_class_list(self.get_information(gc.chstrSignPosition)))
             if len(classnames) > 0:
                 for i in range(len(classnames)):
                     target_root.append(main_root + '/' + classnames[i] + '/')

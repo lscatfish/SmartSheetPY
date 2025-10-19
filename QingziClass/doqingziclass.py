@@ -485,6 +485,8 @@ class DoQingziClass:
                         i, lens,
                         "复制文件" + self.__persons_all[i].get_information(gc.chstrFilePath))
                     self.__persons_all[i].copy_files()
+                    if self.__persons_all[i].ifsign:
+                        self.__persons_all[i].copy_files(gc.dir_OUTPUT_SIGNFORQC_committee)
             finally:
                 disconnect_progress_default()
 
@@ -555,9 +557,6 @@ class DoQingziClass:
         """处理错误"""
         for p in unknown_paths:
             copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown, if_print = True)
-
-        for p in cmtts_paths:
-            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_committee, if_print = True)
 
     @monitor_variables(
         target_var = '__stopFlag',
