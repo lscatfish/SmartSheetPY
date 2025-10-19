@@ -150,10 +150,16 @@ class DefPerson:
                 else:
                     self.__information[gc.chstrGrade] = first4 + '级'
         if len(self.__classname) > 0:
-            if '青' not in self.__classname or '班' not in self.__classname or '例' in self.__classname:
-                for cn in gc.cns:
-                    if cn[0] in self.__classname:
-                        self.__classname = cn[1]
+            orgcn = self.__classname
+            self.__classname = ''
+            for cn in gc.cns:
+                if cn[0] in orgcn:
+                    if self.__classname != '':
+                        self.__classname += (',' + cn[1])
+                    self.__classname += cn[1]
+            if self.__classname == '':
+                self.__classname = orgcn
+
 
     def set_information(
         self,
@@ -195,7 +201,7 @@ class DefPerson:
             elif key == gc.chstrFilePath:
                 if return_str:
                     out = ''
-                    len_p=len(self.__filepaths)
+                    len_p = len(self.__filepaths)
                     if len_p > 0:
                         for i in range(len_p):
                             out += self.__filepaths[i] + '' if i == (len_p - 1) else '\n'
@@ -465,20 +471,65 @@ class DefPerson:
                 self.__information[key] = oinfo[key]
         self.__filepaths.extend(copy.deepcopy(other.__filepaths))
 
+    def copy_files(
+        self,
+        main_root = gc.dir_OUTPUT_SIGNFORQC_classmate,
+        under_class_folder = True,
+        gen_solofolder = True,
+        keep_origin_name = False, ):
+        """
+        复制文件
+        Args:
+            main_root :目标文件母目录
+            under_class_folder:是否要放在对应的青字班文件夹下
+            gen_solofolder:是否生成单独的一个文件夹
+            keep_origin_name :是否保持原名称
+        """
+        from .myfolder import (
+            create_nested_folders,
+            copy_file,
+            get_filename_with_extension,
+            split_filename_and_extension)
+        sum = 0
+        target_root: list[str] = []
+        if len(self.__filepaths) == 0: return sum
+        if under_class_folder:
+            classnames = gc.generate_class_list(self.__classname)
+            if len(classnames) > 0:
+                for i in range(len(classnames)):
+                    target_root.append(main_root + '/' + classnames[i] + '/')
+            else:
+                target_root.append(main_root + '/unknown_class/')
+        if gen_solofolder:
+            for i in range(len(target_root)):
+                target_root[i] = (target_root[i] + self.get_information('报名方式') + '-'
+                                  + self.name + '-' + self.studentID + '/')
+        # 生成文件夹
+        for tr in target_root: create_nested_folders(tr, if_print = False)
+        # 复制文件
+        for fp in self.__filepaths:
+            for tr in target_root:
+                copy_file(fp,
+                    tr + get_filename_with_extension(fp) if keep_origin_name
+                    else tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1],
+                    True)
+                sum += 1
+        return sum
 
-def is_studentID(s: str):
-    import re
-    # 1. 检查是否只包含数字和英文（排除所有其他字符，包括汉字）
-    # 正则说明：^ 匹配开头，$ 匹配结尾，[0-9a-zA-Z] 匹配数字和英文，+ 表示至少1个字符
-    if not re.fullmatch(r'^[0-9a-zA-Z]+$', s):
-        return False  # 包含非数字/英文的字符（如汉字、符号、空格等）
 
-    # 2. 提取纯数字部分（排除最后一位可能的字母）
-    # 匹配规则：前面全是数字，最后一位可以是数字或字母
-    match = re.fullmatch(r'(\d+)([a-zA-Z]?)', s)
-    if not match:
-        return False  # 不符合“数字+可选字母结尾”的结构（如字母在开头）
+    def is_studentID(s: str):
+        import re
+        # 1. 检查是否只包含数字和英文（排除所有其他字符，包括汉字）
+        # 正则说明：^ 匹配开头，$ 匹配结尾，[0-9a-zA-Z] 匹配数字和英文，+ 表示至少1个字符
+        if not re.fullmatch(r'^[0-9a-zA-Z]+$', s):
+            return False  # 包含非数字/英文的字符（如汉字、符号、空格等）
 
-    # 3. 检查数字部分长度是否 >6（即至少7位）
-    digits_part = match.group(1)  # 数字部分（不含末尾字母）
-    return len(digits_part) >= 6
+        # 2. 提取纯数字部分（排除最后一位可能的字母）
+        # 匹配规则：前面全是数字，最后一位可以是数字或字母
+        match = re.fullmatch(r'(\d+)([a-zA-Z]?)', s)
+        if not match:
+            return False  # 不符合“数字+可选字母结尾”的结构（如字母在开头）
+
+        # 3. 检查数字部分长度是否 >6（即至少7位）
+        digits_part = match.group(1)  # 数字部分（不含末尾字母）
+        return len(digits_part) >= 6

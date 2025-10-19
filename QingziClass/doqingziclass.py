@@ -389,7 +389,7 @@ class DoQingziClass:
                     sh_per = word.get_sheet_without_enter('姓名')
                     if sh_per is not None:
                         per = trans_sheet_to_person(sh_per, inkey_as_sub = True)  # 启用模糊处理
-                        per.set_information('地址', value = p)
+                        per.filepath = p
                         if '自' in p:
                             per.set_information('报名方式', '自主报名')
                         elif '组织' in p:
@@ -433,7 +433,7 @@ class DoQingziClass:
                         cmtts_paths.append(p)
                         per = trans_sheet_to_person(sh1, inkey_as_sub = True)
                         per.ifsign = True  # 报名班委
-                        per.set_information('地址', value = p)
+                        per.filepath = p
                         if '自' in p:
                             per.set_information('报名方式', '自主报名')
                         else:
@@ -442,7 +442,7 @@ class DoQingziClass:
                         continue
                     elif sh2 is not None:
                         per = trans_sheet_to_person(sh2, inkey_as_sub = True)
-                        per.set_information('地址', value = p)
+                        per.filepath = p
                         if '自' in p:
                             per.set_information('报名方式', '自主报名')
                         elif '组织' in p or '社团' in p or '学院' in p:
@@ -473,6 +473,20 @@ class DoQingziClass:
                 else:
                     temps.append(p)
             self.__persons_all.extend(temps)
+
+        @current_monitor.add_nested_function()
+        def __copy_all():
+            """复制所有文件"""
+            lens = len(self.__persons_all)
+            connect_progress_default(lens)
+            try:
+                for i in range(lens):
+                    post_progress_default(
+                        i, lens,
+                        "复制文件" + self.__persons_all[i].get_information(gc.chstrFilePath))
+                    self.__persons_all[i].copy_files()
+            finally:
+                disconnect_progress_default()
 
         @current_monitor.add_nested_function()
         def __make_sheet():
@@ -535,6 +549,7 @@ class DoQingziClass:
         else:
             self.__persons_all.extend(pers_doc)
         __merge(__parse_pdfs(pdf_paths))
+        __copy_all()
         __save(__make_sheet())
 
         """处理错误"""

@@ -129,6 +129,15 @@ class GlobalConstants:
         raise Exception(f'文件{path}命名错误，请包含关键词')  # 未找到匹配的结构
 
     @staticmethod
+    def generate_class_list(instr: str):
+        """生成班级的列表"""
+        out = []
+        for cn in GlobalConstants.cns:
+            if cn[0] in instr:
+                out.append(cn[1])
+        return out
+
+    @staticmethod
     def create_folders_must():
         """创建必要文件夹"""
         from .myfolder import create_nested_folders

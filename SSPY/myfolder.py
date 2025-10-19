@@ -22,7 +22,6 @@ def split_filename_and_extension(file_path):
     从文件路径中获取不带扩展名的文件名
     Parameters:
         file_path: 文件的完整路径字符串
-
     Returns:
         不带扩展名的文件名（如 'report'）
     """
