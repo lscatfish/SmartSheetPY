@@ -531,7 +531,7 @@ class DoQingziClass:
                         cn_sheet[c] = [copy.deepcopy(header), ]
                         cn_sheet[c][0].append('是否报名班委')
                     cr = copy.deepcopy(row)
-                    cr[-1] = trans_list_to_str(per.savepath)
+                    cr[-2] = trans_list_to_str(per.savepath)
                     cn_sheet[c].append(cr)
             # 生成序号
             sheet[0].insert(0, '序号')

@@ -526,8 +526,8 @@ class DefPerson:
         # 复制文件
         for fp in self.__filepaths:
             for tr in target_root:
-                t = (tr + get_filename_with_extension(fp) if keep_origin_name
-                     else tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1])
+                t = ((tr + get_filename_with_extension(fp)) if keep_origin_name
+                      else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))
                 copy_file(fp, t, True)
                 self.savepath = t
                 sum += 1
