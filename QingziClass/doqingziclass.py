@@ -493,7 +493,7 @@ class DoQingziClass:
         @current_monitor.add_nested_function()
         def __make_sheet_all():
             """制总表"""
-            """预制表过程"""
+            # 预制表过程
             header: list[str] = [
                 gc.chstrName,
                 gc.chstrGender,
@@ -519,18 +519,30 @@ class DoQingziClass:
                 '文件地址']
             sheet: list[list[str]] = [copy.deepcopy(header)]
             sheet[0].append('是否报名班委')
+
+            cn_sheet: dict[str, list[list[str]]] = {}
             for per in self.__persons_all:
                 row = per.to_list(header)
                 row.append('是' if per.ifsign else '否')
                 sheet.append(row)
+
+                for c in per.gen_classes():
+                    if cn_sheet.get(c, None) is None:
+                        cn_sheet[c] = [copy.deepcopy(header)]
+                    cn_sheet[c].append(copy.deepcopy(row))
             # 生成序号
             sheet[0].insert(0, '序号')
             for i in range(1, len(sheet)):
                 sheet[i].insert(0, str(i))
-            return sheet
+            for c in cn_sheet:
+                cn_sheet[c][0].insert(0, '序号')
+                for i in range(1, len(cn_sheet[c])):
+                    cn_sheet[c][i].insert(0, str(i))
+
+            return sheet, cn_sheet
 
         @current_monitor.add_nested_function()
-        def __save_all(sheet: list[list[str]]):
+        def __save_all(sheet: list[list[str]], cn_sheet: dict[str, list[list[str]]]):
             """总保存表"""
             from openpyxl.styles import Alignment
             from SSPY.helperfunction import sort_table
@@ -544,9 +556,13 @@ class DoQingziClass:
             )
             writer.write()
 
-        @current_monitor.add_nested_function()
-        def _make_sheet():
-
+            for c in cn_sheet:
+                XlsxWrite(
+                    sheet = cn_sheet[c],
+                    path = gc.dir_OUTPUT_SIGNFORQC_classmate + c + f'/{c}报名.xlsx',
+                    font_regular = gc.fontRegularSongSmall,
+                    alignment = Alignment(vertical = 'center')
+                ).write()
 
         pdf_paths, docx_paths = __organize_files()
         pers_doc = __parse_docxs(docx_paths)
@@ -556,7 +572,7 @@ class DoQingziClass:
             self.__persons_all.extend(pers_doc)
         __merge(__parse_pdfs(pdf_paths))
         __copy_classify()
-        __save_all(__make_sheet_all())
+        __save_all(*(__make_sheet_all()))
 
         """处理错误"""
         for p in unknown_paths:
