@@ -483,6 +483,14 @@ class DefPerson:
                 self.__information[key] = oinfo[key]
         self.__filepaths.extend(copy.deepcopy(other.__filepaths))
 
+    def gen_classes(self):
+        """产生班级列表"""
+        clss = (gc.generate_class_list(self.__classname) +
+                gc.generate_class_list(self.get_information(gc.chstrSignPosition)))
+        if len(clss) == 0:
+            clss.append('unknown_class')
+        return clss
+
     def copy_files(
         self,
         main_root = gc.dir_OUTPUT_SIGNFORQC_classmate,
@@ -506,13 +514,9 @@ class DefPerson:
         target_root: list[str] = []
         if len(self.__filepaths) == 0: return sum
         if under_class_folder:
-            classnames = (gc.generate_class_list(self.__classname) +
-                          gc.generate_class_list(self.get_information(gc.chstrSignPosition)))
-            if len(classnames) > 0:
-                for i in range(len(classnames)):
-                    target_root.append(main_root + '/' + classnames[i] + '/')
-            else:
-                target_root.append(main_root + '/unknown_class/')
+            classnames = self.gen_classes()
+            for i in range(len(classnames)):
+                target_root.append(main_root + '/' + classnames[i] + '/')
         if gen_solofolder:
             for i in range(len(target_root)):
                 target_root[i] = (target_root[i] + self.get_information('报名方式') + '-'

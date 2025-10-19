@@ -129,7 +129,7 @@ class GlobalConstants:
         raise Exception(f'文件{path}命名错误，请包含关键词')  # 未找到匹配的结构
 
     @staticmethod
-    def generate_class_list(instr: str):
+    def generate_class_list(instr: str) -> list[str]:
         """生成班级的列表"""
         out = []
         if instr == '': return out
