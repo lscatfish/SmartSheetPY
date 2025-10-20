@@ -23,20 +23,32 @@ def readimg(path):
 class ScaledStaticBitmap(wx.Panel):
     """支持缩放的图像显示面板"""
 
-    def __init__(self, parent):
+    def __init__(self, parent, default_bg_color = (240, 240, 240)):
         super(ScaledStaticBitmap, self).__init__(parent)
         self.bitmap = None
         self.original_image = None
         self.scale_factor = 1.0
 
+        self.default_bg_color = default_bg_color  # 默认背景色
+        self.has_image = False  # 标记是否有图片加载
+
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self._on_erase_background)
+
+    def _on_erase_background(self, event):
+        # 空处理器，阻止背景擦除
+        pass
 
     def set_image(self, cv2_image):
         """设置OpenCV图像"""
         if cv2_image is not None:
             self.original_image = cv2_image
+            self.has_image = True
             self.update_display()
+        else:
+            self.has_image = False
+            self.Refresh()  # 触发重绘显示默认背景
 
     def update_display(self):
         """更新显示"""
@@ -66,25 +78,43 @@ class ScaledStaticBitmap(wx.Panel):
                     height, width = resized_image.shape[:2]
                     self.bitmap = wx.Bitmap.FromBuffer(width, height, resized_image)
                     self.Refresh()
+            else:
+                # 没有图片时，清除位图引用
+                self.bitmap = None
+                self.Refresh()
 
     def on_paint(self, event):
-        """绘制图像"""
-        dc = wx.PaintDC(self)
-        if self.bitmap and self.bitmap.IsOk():
-            # 清除背景
-            dc.Clear()
+        """绘制图像 - 使用双缓冲技术避免闪烁[1](@ref)"""
+        dc = wx.BufferedPaintDC(self)  # 使用缓冲设备上下文
 
-            # 获取面板尺寸
-            panel_width, panel_height = self.GetClientSize()
+        # 获取面板尺寸
+        panel_width, panel_height = self.GetClientSize()
+
+        # 绘制默认背景
+        dc.SetBackground(wx.Brush(wx.Colour(self.default_bg_color)))
+        dc.Clear()
+
+        if self.bitmap and self.bitmap.IsOk() and self.has_image:
+            # 绘制图像（居中显示）
             bitmap_width = self.bitmap.GetWidth()
             bitmap_height = self.bitmap.GetHeight()
 
-            # 计算居中位置
             x = (panel_width - bitmap_width) // 2
             y = (panel_height - bitmap_height) // 2
 
-            # 绘制图像
             dc.DrawBitmap(self.bitmap, x, y, True)
+        else:
+            # 没有图片时显示提示文本
+            dc.SetTextForeground(wx.Colour(150, 150, 150))  # 灰色文字
+            dc.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+
+            text = "请加载图像"
+            text_width, text_height = dc.GetTextExtent(text)
+
+            x = (panel_width - text_width) // 2
+            y = (panel_height - text_height) // 2
+
+            dc.DrawText(text, x, y)
 
     def on_size(self, event):
         """处理尺寸变化"""
@@ -266,6 +296,10 @@ class PerspectiveCorrectorFrame(wx.Frame):
         self.save_btn.Disable()
         self.reset_btn.Disable()
 
+        # 初始化时显示提示
+        self.original_display.set_image(None)
+        self.corrected_display.set_image(None)
+
     def on_load_image(self, event):
         """加载图像"""
         with wx.FileDialog(self, "选择图像文件",
@@ -324,7 +358,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             return
 
         h, w = self.image.shape[:2]
-        margin = min(w, h) * 0.1  # 10%边距
+        margin = min(w, h) * 0.05  # 10%边距
 
         self.src_points = [
             [margin, margin],  # 左上
@@ -378,7 +412,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             if len(point) == 2:
                 px, py = point
                 distance = np.sqrt((px - img_x) ** 2 + (py - img_y) ** 2)
-                if distance < self.point_radius * 3:  # 扩大点击区域
+                if distance < self.point_radius * 8:  # 扩大点击区域
                     self.dragging_point = i
                     break
 
@@ -438,7 +472,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
             if distances:
                 min_index = np.argmin(distances)
-                if distances[min_index] < 100:  # 最大移动距离
+                if distances[min_index] < min(*(self.image.shape[:2])) * 0.35:  # 最大移动距离
                     # 确保坐标在图像范围内
                     h, w = self.image.shape[:2]
                     img_x = max(0, min(w - 1, img_x))
