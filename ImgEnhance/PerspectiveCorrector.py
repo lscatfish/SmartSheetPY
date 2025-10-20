@@ -111,8 +111,10 @@ class ScaledStaticBitmap(wx.Panel):
 
 class PerspectiveCorrectorFrame(wx.Frame):
     def __init__(self, parent, title):
-        super(PerspectiveCorrectorFrame, self).__init__(parent, title = title, size = (1400, 800))
+        from wxGUI.DPIset import set_DPI
 
+        set_DPI()
+        super(PerspectiveCorrectorFrame, self).__init__(parent, title = title, size = (1600, 900))
         self.image = None
         self.corrected_image = None
         self.src_points = []  # 原始图像中的四个点
@@ -258,7 +260,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
     def on_load_image(self, event):
         """加载图像"""
         with wx.FileDialog(self, "选择图像文件",
-                wildcard = "图像文件 (*.jpg;*.png;*.bmp;*.jpeg)|*.jpg;*.png;*.bmp;*.jpeg") as dialog:
+                wildcard = "图像文件 (*.jpg;*.png;*.bmp;*.jpeg)|*.jpg;*.png;*.bmp;*.jpeg|所有文件|*") as dialog:
             if dialog.ShowModal() == wx.ID_OK:
                 filepath = dialog.GetPath()
                 self.image = read_img(filepath)
