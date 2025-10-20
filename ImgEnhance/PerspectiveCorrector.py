@@ -148,6 +148,8 @@ class PerspectiveCorrectorFrame(wx.Frame):
         self.src_points = []  # 原始图像中的四个点
         self.dragging_point = None
         self.point_radius = 8
+        self.image_width = 0  # 图像宽度
+        self.image_height = 0  # 图像高度
 
         # 初始化UI
         self.init_ui()
@@ -214,11 +216,12 @@ class PerspectiveCorrectorFrame(wx.Frame):
             grid_sizer.Add(wx.StaticText(points_box, label = f'点 {i + 1}'), 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
 
             # X坐标输入 - 使用wx.SpinCtrl，带上下调整按钮
-            x_ctrl = wx.SpinCtrl(points_box, min = 0, max = 10000, initial = 0)
+            # 初始范围设为0-1000，加载图像后会根据实际尺寸调整
+            x_ctrl = wx.SpinCtrl(points_box, min = 0, max = 1000, initial = 0)
             x_ctrl.SetMinSize((80, -1))
 
             # Y坐标输入 - 使用wx.SpinCtrl，带上下调整按钮
-            y_ctrl = wx.SpinCtrl(points_box, min = 0, max = 10000, initial = 0)
+            y_ctrl = wx.SpinCtrl(points_box, min = 0, max = 1000, initial = 0)
             y_ctrl.SetMinSize((80, -1))
 
             # 设置点按钮
@@ -237,6 +240,10 @@ class PerspectiveCorrectorFrame(wx.Frame):
             # 绑定SpinCtrl变化事件，实现实时更新
             x_ctrl.Bind(wx.EVT_SPINCTRL, lambda event, idx = i: self.on_spin_change(idx))
             y_ctrl.Bind(wx.EVT_SPINCTRL, lambda event, idx = i: self.on_spin_change(idx))
+
+            # 绑定文本输入事件（当用户直接输入数字时）
+            x_ctrl.Bind(wx.EVT_TEXT, lambda event, idx = i: self.on_spin_text_change(idx))
+            y_ctrl.Bind(wx.EVT_TEXT, lambda event, idx = i: self.on_spin_text_change(idx))
 
         points_sizer.Add(grid_sizer, 1, flag = wx.EXPAND | wx.ALL, border = 5)
         right_sizer.Add(points_sizer, proportion = 0, flag = wx.EXPAND | wx.ALL, border = 5)
@@ -266,6 +273,18 @@ class PerspectiveCorrectorFrame(wx.Frame):
         self.save_btn.Disable()
         self.reset_btn.Disable()
 
+    def update_spin_ctrl_ranges(self):
+        """根据图像尺寸更新SpinCtrl的最大值范围"""
+        if self.image is not None:
+            h, w = self.image.shape[:2]
+            self.image_width = w
+            self.image_height = h
+
+            # 更新所有SpinCtrl的范围
+            for x_ctrl, y_ctrl, btn in self.point_controls:
+                x_ctrl.SetRange(0, w - 1)  # X坐标范围：0到图像宽度-1
+                y_ctrl.SetRange(0, h - 1)  # Y坐标范围：0到图像高度-1
+
     def on_load_image(self, event):
         """加载图像"""
         with wx.FileDialog(self, "选择图像文件",
@@ -275,6 +294,8 @@ class PerspectiveCorrectorFrame(wx.Frame):
                 self.image = readimg(filepath)
                 if self.image is not None:
                     self.original_display.set_image(self.image)
+                    # 更新SpinCtrl的范围限制
+                    self.update_spin_ctrl_ranges()
                     self.initialize_points()
                     self.correct_btn.Enable()
                     self.reset_btn.Enable()
@@ -324,7 +345,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             return
 
         h, w = self.image.shape[:2]
-        margin = min(w, h) * 0.1  # 10%边距
+        margin = min(w, h) * 0.05  # 5%边距
 
         self.src_points = [
             [margin, margin],  # 左上
@@ -351,18 +372,22 @@ class PerspectiveCorrectorFrame(wx.Frame):
             y = y_ctrl.GetValue()
 
             if point_index < len(self.src_points):
-                # 确保坐标在图像范围内
-                if self.image is not None:
-                    h, w = self.image.shape[:2]
-                    x = max(0, min(w - 1, x))
-                    y = max(0, min(h - 1, y))
-
+                # 由于SpinCtrl已经设置了范围，这里不需要再手动调整范围
                 self.src_points[point_index] = [x, y]
                 self.display_original_image()
+                wx.CallAfter(self.on_correct, None)
 
     def on_spin_change(self, point_index):
         """当使用上下按钮调整数值时的处理"""
         self.set_point_from_controls(point_index)
+
+    def on_spin_text_change(self, point_index):
+        """当在文本框中直接输入数值时的处理"""
+        # 添加延迟处理，避免频繁更新
+        if hasattr(self, '_text_timer'):
+            self._text_timer.Stop()
+
+        self._text_timer = wx.CallLater(500, self.set_point_from_controls, point_index)
 
     def on_mouse_down(self, event):
         """鼠标按下事件"""
