@@ -16,7 +16,7 @@ def readimg(path):
             image = cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
         return image
     except Exception as e:
-        print(f"读取图像错误: {e}")
+        # print(f"读取图像错误: {e}")
         return None
 
 
@@ -31,7 +31,7 @@ def writeimg(img_cv, path):
         img_pil.save(path)
         return os.path.exists(path)
     except Exception as e:
-        print(f"保存图像错误: {e}")
+        # print(f"保存图像错误: {e}")
         return False
 
 
