@@ -112,7 +112,7 @@ def remove_shadow_morphology(image, iteration = 9, kernel_size = 3):
     return remove_shadow_mat
 
 
-def remove_shadow_hsv(image, saturation_thresh = 50, value_thresh = 50):
+def remove_shadow_hsv(image, saturation_thresh = 35, value_thresh = 45):
     """
     使用HSV颜色空间方法去除阴影
     参数:
@@ -326,14 +326,14 @@ def example_usage():
     """
     from ImgEnhance.iofunc import read_img, write_img
     # 读取图像
-    image = read_img('../input/att_imgs/青书班1.jpeg')
+    image = read_img('12.jpg')
 
     # 方法1：单独使用各个功能
     # 去除阴影
     shadow_removed = remove_shadow_morphology(image)
 
     # 锐化图像
-    sharpened = sharpen_image_laplacian(shadow_removed)
+    sharpened = sharpen_image_laplacian(shadow_removed,1)
 
     # 调整对比度和亮度
     contrast_adjusted = adjust_contrast_brightness(sharpened, contrast = 1.2, brightness = 10)
