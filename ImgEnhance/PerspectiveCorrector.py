@@ -2,7 +2,7 @@ import wx
 import cv2
 import numpy as np
 
-from .iofunc import read_img, write_img
+from ImgEnhance.iofunc import read_img, write_img
 
 
 class ScaledStaticBitmap(wx.Panel):
