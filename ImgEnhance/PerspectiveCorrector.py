@@ -1,16 +1,23 @@
-import PIL.Image
 import wx
 import cv2
 import numpy as np
-from wx.lib.masked import NumCtrl
+import os
+from PIL import Image
 
 
 def readimg(path):
     """读取图像并转换为OpenCV格式"""
-    pil_img = PIL.Image.open(path)
-    img_array = np.array(pil_img)
-    image = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-    return image
+    try:
+        pil_img = Image.open(path)
+        img_array = np.array(pil_img)
+        if len(img_array.shape) == 3:
+            image = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        else:
+            image = cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
+        return image
+    except Exception as e:
+        print(f"读取图像错误: {e}")
+        return None
 
 
 class ScaledStaticBitmap(wx.Panel):
@@ -22,7 +29,6 @@ class ScaledStaticBitmap(wx.Panel):
         self.original_image = None
         self.scale_factor = 1.0
 
-        # 绑定绘制事件
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
 
@@ -57,8 +63,9 @@ class ScaledStaticBitmap(wx.Panel):
                     resized_image = cv2.resize(display_image, (new_width, new_height))
 
                     # 转换为wxPython位图
-                    self.bitmap = wx.Bitmap.FromBuffer(new_width, new_height, resized_image)
-                    self.Refresh()  # 触发重绘
+                    height, width = resized_image.shape[:2]
+                    self.bitmap = wx.Bitmap.FromBuffer(width, height, resized_image)
+                    self.Refresh()
 
     def on_paint(self, event):
         """绘制图像"""
@@ -85,6 +92,63 @@ class ScaledStaticBitmap(wx.Panel):
         event.Skip()
 
 
+class NumberControl(wx.Panel):
+    """简单的数字输入控件"""
+
+    def __init__(self, parent, value = 0, min_val = 0, max_val = 10000):
+        super(NumberControl, self).__init__(parent)
+
+        self.value = value
+        self.min_val = min_val
+        self.max_val = max_val
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.text_ctrl = wx.TextCtrl(self, value = str(value), style = wx.TE_PROCESS_ENTER)
+        self.text_ctrl.SetMinSize((80, -1))
+
+        sizer.Add(self.text_ctrl, 1, wx.EXPAND)
+
+        self.SetSizer(sizer)
+
+        self.text_ctrl.Bind(wx.EVT_TEXT, self.on_text_change)
+        self.text_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_text_enter)
+
+    def on_text_change(self, event):
+        """文本变化事件"""
+        try:
+            value = int(self.text_ctrl.GetValue())
+            if self.min_val <= value <= self.max_val:
+                self.value = value
+        except:
+            pass
+        event.Skip()
+
+    def on_text_enter(self, event):
+        """回车事件"""
+        try:
+            value = int(self.text_ctrl.GetValue())
+            if value < self.min_val:
+                value = self.min_val
+            elif value > self.max_val:
+                value = self.max_val
+            self.value = value
+            self.text_ctrl.SetValue(str(value))
+        except:
+            self.text_ctrl.SetValue(str(self.value))
+        event.Skip()
+
+    def GetValue(self):
+        """获取值"""
+        return self.value
+
+    def SetValue(self, value):
+        """设置值"""
+        if self.min_val <= value <= self.max_val:
+            self.value = value
+            self.text_ctrl.SetValue(str(value))
+
+
 class PerspectiveCorrectorFrame(wx.Frame):
     def __init__(self, parent, title):
         super(PerspectiveCorrectorFrame, self).__init__(parent, title = title, size = (1400, 800))
@@ -104,14 +168,14 @@ class PerspectiveCorrectorFrame(wx.Frame):
         # 创建主面板
         panel = wx.Panel(self)
 
-        # 创建主水平布局 - 调整比例让图像区域更大
+        # 创建主水平布局
         main_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # 左侧图像显示区域 - 占据70%宽度
         left_panel = wx.Panel(panel, style = wx.BORDER_SUNKEN)
         left_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # 使用自定义的缩放图像控件替代wx.StaticBitmap
+        # 原始图像显示区域
         self.original_display = ScaledStaticBitmap(left_panel)
         left_sizer.Add(self.original_display, proportion = 1, flag = wx.EXPAND | wx.ALL, border = 5)
 
@@ -121,12 +185,14 @@ class PerspectiveCorrectorFrame(wx.Frame):
         self.load_btn = wx.Button(left_panel, label = '加载图像')
         self.correct_btn = wx.Button(left_panel, label = '执行校正')
         self.save_btn = wx.Button(left_panel, label = '保存结果')
+        self.reset_btn = wx.Button(left_panel, label = '重置点')
 
         button_sizer.Add(self.load_btn, proportion = 1, flag = wx.EXPAND | wx.RIGHT, border = 5)
         button_sizer.Add(self.correct_btn, proportion = 1, flag = wx.EXPAND | wx.RIGHT, border = 5)
-        button_sizer.Add(self.save_btn, proportion = 1, flag = wx.EXPAND)
+        button_sizer.Add(self.save_btn, proportion = 1, flag = wx.EXPAND | wx.RIGHT, border = 5)
+        button_sizer.Add(self.reset_btn, proportion = 1, flag = wx.EXPAND)
 
-        left_sizer.Add(button_sizer, proportion = 0, flag = wx.EXPAND | wx.TOP | wx.BOTTOM, border = 5)
+        left_sizer.Add(button_sizer, proportion = 0, flag = wx.EXPAND | wx.ALL, border = 5)
         left_panel.SetSizer(left_sizer)
 
         # 右侧控制面板 - 占据30%宽度
@@ -135,38 +201,37 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
         # 校正结果显示
         self.corrected_display = ScaledStaticBitmap(right_panel)
-        right_sizer.Add(self.corrected_display, proportion = 2, flag = wx.EXPAND | wx.ALL, border = 5)
+        right_sizer.Add(self.corrected_display, proportion = 1, flag = wx.EXPAND | wx.ALL, border = 5)
 
         # 点坐标编辑区域
-        points_box = wx.StaticBox(right_panel, label = '控制点坐标')
+        points_box = wx.StaticBox(right_panel, label = '控制点坐标 (左上->右上->右下->左下)')
         points_sizer = wx.StaticBoxSizer(points_box, wx.VERTICAL)
 
-        # 使用GridBagSizer以获得更好的布局控制
-        grid_sizer = wx.GridBagSizer(5, 5)
+        # 创建网格布局
+        grid_sizer = wx.FlexGridSizer(rows = 5, cols = 4, vgap = 5, hgap = 5)
 
         # 表头
-        grid_sizer.Add(wx.StaticText(points_box, label = '点'), (0, 0), flag = wx.ALIGN_CENTER)
-        grid_sizer.Add(wx.StaticText(points_box, label = 'X坐标'), (0, 1), flag = wx.ALIGN_CENTER)
-        grid_sizer.Add(wx.StaticText(points_box, label = 'Y坐标'), (0, 2), flag = wx.ALIGN_CENTER)
-        grid_sizer.Add(wx.StaticText(points_box, label = '操作'), (0, 3), flag = wx.ALIGN_CENTER)
+        grid_sizer.Add(wx.StaticText(points_box, label = '点'), 0, wx.ALIGN_CENTER)
+        grid_sizer.Add(wx.StaticText(points_box, label = 'X坐标'), 0, wx.ALIGN_CENTER)
+        grid_sizer.Add(wx.StaticText(points_box, label = 'Y坐标'), 0, wx.ALIGN_CENTER)
+        grid_sizer.Add(wx.StaticText(points_box, label = '操作'), 0, wx.ALIGN_CENTER)
 
         self.point_controls = []
         for i in range(4):
             # 点标签
-            grid_sizer.Add(wx.StaticText(points_box, label = f'点 {i + 1}'), (i + 1,
-                                                                              0), flag = wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
+            grid_sizer.Add(wx.StaticText(points_box, label = f'点 {i + 1}'), 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
 
             # X坐标输入
-            x_ctrl = NumCtrl(points_box, integerWidth = 4, fractionWidth = 0, size = (80, -1))
-            grid_sizer.Add(x_ctrl, (i + 1, 1), flag = wx.EXPAND)
+            x_ctrl = NumberControl(points_box, value = 0, min_val = 0, max_val = 10000)
+            grid_sizer.Add(x_ctrl, 0, wx.EXPAND)
 
             # Y坐标输入
-            y_ctrl = NumCtrl(points_box, integerWidth = 4, fractionWidth = 0, size = (80, -1))
-            grid_sizer.Add(y_ctrl, (i + 1, 2), flag = wx.EXPAND)
+            y_ctrl = NumberControl(points_box, value = 0, min_val = 0, max_val = 10000)
+            grid_sizer.Add(y_ctrl, 0, wx.EXPAND)
 
             # 设置点按钮
             set_btn = wx.Button(points_box, label = f'设置')
-            grid_sizer.Add(set_btn, (i + 1, 3), flag = wx.EXPAND)
+            grid_sizer.Add(set_btn, 0, wx.EXPAND)
 
             self.point_controls.append((x_ctrl, y_ctrl, set_btn))
 
@@ -174,7 +239,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             set_btn.Bind(wx.EVT_BUTTON, lambda event, idx = i: self.set_point_from_controls(idx))
 
         points_sizer.Add(grid_sizer, 1, flag = wx.EXPAND | wx.ALL, border = 5)
-        right_sizer.Add(points_sizer, proportion = 1, flag = wx.EXPAND | wx.ALL, border = 5)
+        right_sizer.Add(points_sizer, proportion = 0, flag = wx.EXPAND | wx.ALL, border = 5)
 
         right_panel.SetSizer(right_sizer)
 
@@ -188,6 +253,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
         self.load_btn.Bind(wx.EVT_BUTTON, self.on_load_image)
         self.correct_btn.Bind(wx.EVT_BUTTON, self.on_correct)
         self.save_btn.Bind(wx.EVT_BUTTON, self.on_save)
+        self.reset_btn.Bind(wx.EVT_BUTTON, self.on_reset_points)
 
         # 绑定鼠标事件到图像显示面板
         self.original_display.Bind(wx.EVT_LEFT_DOWN, self.on_mouse_down)
@@ -198,8 +264,10 @@ class PerspectiveCorrectorFrame(wx.Frame):
         # 初始状态禁用按钮
         self.correct_btn.Disable()
         self.save_btn.Disable()
+        self.reset_btn.Disable()
 
     def on_load_image(self, event):
+        """加载图像"""
         with wx.FileDialog(self, "选择图像文件",
                 wildcard = "图像文件 (*.jpg;*.png;*.bmp;*.jpeg)|*.jpg;*.png;*.bmp;*.jpeg") as dialog:
             if dialog.ShowModal() == wx.ID_OK:
@@ -209,6 +277,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
                     self.original_display.set_image(self.image)
                     self.initialize_points()
                     self.correct_btn.Enable()
+                    self.reset_btn.Enable()
                 else:
                     wx.MessageBox('无法加载图像文件！', '错误', wx.OK | wx.ICON_ERROR)
 
@@ -224,14 +293,27 @@ class PerspectiveCorrectorFrame(wx.Frame):
         for i, point in enumerate(self.src_points):
             if len(point) == 2:
                 x, y = int(point[0]), int(point[1])
+                # 确保点在图像范围内
+                x = max(0, min(w - 1, x))
+                y = max(0, min(h - 1, y))
+
                 cv2.circle(display_image, (x, y), self.point_radius, (0, 0, 255), -1)
                 cv2.putText(display_image, str(i + 1), (x + 10, y - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         # 绘制连线
         if len(self.src_points) == 4:
-            points = np.array(self.src_points, dtype = np.int32)
-            cv2.polylines(display_image, [points], True, (0, 255, 0), 2)
+            points = []
+            for point in self.src_points:
+                if len(point) == 2:
+                    x, y = int(point[0]), int(point[1])
+                    x = max(0, min(w - 1, x))
+                    y = max(0, min(h - 1, y))
+                    points.append([x, y])
+
+            if len(points) == 4:
+                points = np.array(points, dtype = np.int32)
+                cv2.polylines(display_image, [points], True, (0, 255, 0), 2)
 
         # 更新显示
         self.original_display.set_image(display_image)
@@ -269,42 +351,34 @@ class PerspectiveCorrectorFrame(wx.Frame):
             y = y_ctrl.GetValue()
 
             if point_index < len(self.src_points):
+                # 确保坐标在图像范围内
+                if self.image is not None:
+                    h, w = self.image.shape[:2]
+                    x = max(0, min(w - 1, x))
+                    y = max(0, min(h - 1, y))
+
                 self.src_points[point_index] = [x, y]
                 self.display_original_image()
-
-    # 其他方法（on_mouse_down, on_mouse_move, on_mouse_up, on_double_click,
-    # on_correct, display_corrected_image, on_save）保持不变...
-    # 这里省略了其他方法的实现以保持简洁，您原有的这些方法可以保留
 
     def on_mouse_down(self, event):
         """鼠标按下事件"""
         if self.image is None:
             return
 
+        # 获取鼠标位置
         x, y = event.GetPosition()
-        bitmap = self.original_bitmap.GetBitmap()
-        if not bitmap.IsOk():
-            return
 
         # 转换为图像坐标
-        img_width = self.image.shape[1]
-        img_height = self.image.shape[0]
-
-        bitmap_width = bitmap.GetWidth()
-        bitmap_height = bitmap.GetHeight()
-
-        scale_x = img_width / bitmap_width
-        scale_y = img_height / bitmap_height
-
-        img_x = int(x * scale_x)
-        img_y = int(y * scale_y)
+        img_x, img_y = self.screen_to_image_coords(x, y)
+        if img_x is None or img_y is None:
+            return
 
         # 检查是否点击了控制点
         for i, point in enumerate(self.src_points):
             if len(point) == 2:
                 px, py = point
                 distance = np.sqrt((px - img_x) ** 2 + (py - img_y) ** 2)
-                if distance < self.point_radius * 2:  # 扩大点击区域
+                if distance < self.point_radius * 3:  # 扩大点击区域
                     self.dragging_point = i
                     break
 
@@ -312,31 +386,28 @@ class PerspectiveCorrectorFrame(wx.Frame):
         """鼠标移动事件"""
         if self.dragging_point is not None and event.Dragging() and event.LeftIsDown():
             x, y = event.GetPosition()
-            bitmap = self.original_bitmap.GetBitmap()
 
-            if bitmap.IsOk():
-                img_width = self.image.shape[1]
-                img_height = self.image.shape[0]
+            # 转换为图像坐标
+            img_x, img_y = self.screen_to_image_coords(x, y)
+            if img_x is None or img_y is None:
+                return
 
-                bitmap_width = bitmap.GetWidth()
-                bitmap_height = bitmap.GetHeight()
+            # 确保坐标在图像范围内
+            if self.image is not None:
+                h, w = self.image.shape[:2]
+                img_x = max(0, min(w - 1, img_x))
+                img_y = max(0, min(h - 1, img_y))
 
-                scale_x = img_width / bitmap_width
-                scale_y = img_height / bitmap_height
+            # 更新点坐标
+            self.src_points[self.dragging_point] = [img_x, img_y]
 
-                img_x = max(0, min(img_width - 1, int(x * scale_x)))
-                img_y = max(0, min(img_height - 1, int(y * scale_y)))
+            # 更新控件显示
+            if self.dragging_point < len(self.point_controls):
+                x_ctrl, y_ctrl, btn = self.point_controls[self.dragging_point]
+                x_ctrl.SetValue(int(img_x))
+                y_ctrl.SetValue(int(img_y))
 
-                # 更新点坐标
-                self.src_points[self.dragging_point] = [img_x, img_y]
-
-                # 更新控件显示
-                if self.dragging_point < len(self.point_controls):
-                    x_ctrl, y_ctrl, btn = self.point_controls[self.dragging_point]
-                    x_ctrl.SetValue(img_x)
-                    y_ctrl.SetValue(img_y)
-
-                self.display_original_image()
+            self.display_original_image()
 
     def on_mouse_up(self, event):
         """鼠标释放事件"""
@@ -348,28 +419,71 @@ class PerspectiveCorrectorFrame(wx.Frame):
             return
 
         x, y = event.GetPosition()
-        bitmap = self.original_bitmap.GetBitmap()
 
-        img_width = self.image.shape[1]
-        img_height = self.image.shape[0]
-
-        bitmap_width = bitmap.GetWidth()
-        bitmap_height = bitmap.GetHeight()
-
-        scale_x = img_width / bitmap_width
-        scale_y = img_height / bitmap_height
-
-        img_x = int(x * scale_x)
-        img_y = int(y * scale_y)
+        # 转换为图像坐标
+        img_x, img_y = self.screen_to_image_coords(x, y)
+        if img_x is None or img_y is None:
+            return
 
         # 找到最近的点并移动它
         if len(self.src_points) > 0:
-            distances = [np.sqrt((p[0] - img_x) ** 2 + (p[1] - img_y) ** 2) for p in self.src_points]
-            min_index = np.argmin(distances)
-            if distances[min_index] < 100:  # 最大移动距离
-                self.src_points[min_index] = [img_x, img_y]
-                self.update_point_controls()
-                self.display_original_image()
+            distances = []
+            for point in self.src_points:
+                if len(point) == 2:
+                    px, py = point
+                    distance = np.sqrt((px - img_x) ** 2 + (py - img_y) ** 2)
+                    distances.append(distance)
+                else:
+                    distances.append(float('inf'))
+
+            if distances:
+                min_index = np.argmin(distances)
+                if distances[min_index] < 100:  # 最大移动距离
+                    # 确保坐标在图像范围内
+                    h, w = self.image.shape[:2]
+                    img_x = max(0, min(w - 1, img_x))
+                    img_y = max(0, min(h - 1, img_y))
+
+                    self.src_points[min_index] = [img_x, img_y]
+                    self.update_point_controls()
+                    self.display_original_image()
+
+    def screen_to_image_coords(self, screen_x, screen_y):
+        """将屏幕坐标转换为图像坐标"""
+        if self.image is None or self.original_display.bitmap is None:
+            return None, None
+
+        # 获取显示面板和位图尺寸
+        panel_width, panel_height = self.original_display.GetClientSize()
+        bitmap_width = self.original_display.bitmap.GetWidth()
+        bitmap_height = self.original_display.bitmap.GetHeight()
+
+        if bitmap_width == 0 or bitmap_height == 0:
+            return None, None
+
+        # 计算位图在面板中的偏移（居中显示）
+        offset_x = (panel_width - bitmap_width) // 2
+        offset_y = (panel_height - bitmap_height) // 2
+
+        # 检查点击是否在图像范围内
+        if (offset_x <= screen_x < offset_x + bitmap_width and
+                offset_y <= screen_y < offset_y + bitmap_height):
+            # 计算在位图中的相对位置
+            bitmap_x = screen_x - offset_x
+            bitmap_y = screen_y - offset_y
+
+            # 计算缩放比例
+            img_height, img_width = self.image.shape[:2]
+            scale_x = img_width / bitmap_width
+            scale_y = img_height / bitmap_height
+
+            # 转换为原始图像坐标
+            img_x = bitmap_x * scale_x
+            img_y = bitmap_y * scale_y
+
+            return img_x, img_y
+
+        return None, None
 
     def on_correct(self, event):
         """执行透视校正"""
@@ -378,7 +492,18 @@ class PerspectiveCorrectorFrame(wx.Frame):
             return
 
         try:
-            # 定义源点和目标点[1,2](@ref)
+            # 检查所有点是否有效
+            valid_points = True
+            for point in self.src_points:
+                if len(point) != 2:
+                    valid_points = False
+                    break
+
+            if not valid_points:
+                wx.MessageBox('控制点设置不完整！', '错误', wx.OK | wx.ICON_ERROR)
+                return
+
+            # 定义源点和目标点
             src_pts = np.float32(self.src_points)
 
             # 计算目标点（基于源点的边界框）
@@ -388,6 +513,17 @@ class PerspectiveCorrectorFrame(wx.Frame):
             width = int(max(x_coords) - min(x_coords))
             height = int(max(y_coords) - min(y_coords))
 
+            # 设置目标点（A4比例）
+            a4_ratio = 297.0 / 210.0  # A4纸高宽比
+            if width > 0:
+                current_ratio = height / width
+                if current_ratio > a4_ratio:
+                    # 以高度为准调整宽度
+                    width = int(height / a4_ratio)
+                else:
+                    # 以宽度为准调整高度
+                    height = int(width * a4_ratio)
+
             dst_pts = np.float32([
                 [0, 0],
                 [width, 0],
@@ -395,10 +531,10 @@ class PerspectiveCorrectorFrame(wx.Frame):
                 [0, height]
             ])
 
-            # 计算透视变换矩阵[1,5](@ref)
+            # 计算透视变换矩阵
             M = cv2.getPerspectiveTransform(src_pts, dst_pts)
 
-            # 执行透视变换[2,3](@ref)
+            # 执行透视变换
             self.corrected_image = cv2.warpPerspective(self.image, M, (width, height))
 
             # 显示校正结果
@@ -413,12 +549,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
         if self.corrected_image is None:
             return
 
-        display_image = cv2.cvtColor(self.corrected_image, cv2.COLOR_BGR2RGB)
-        h, w = display_image.shape[:2]
-
-        wx_image = wx.Bitmap.FromBuffer(w, h, display_image)
-        self.corrected_bitmap.SetBitmap(wx_image)
-        self.corrected_bitmap.Refresh()
+        self.corrected_display.set_image(self.corrected_image)
 
     def on_save(self, event):
         """保存校正结果"""
@@ -431,17 +562,29 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
             if dialog.ShowModal() == wx.ID_OK:
                 filepath = dialog.GetPath()
+                # 确保文件扩展名正确
+                if not filepath.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    if dialog.GetFilterIndex() == 0:  # JPEG
+                        filepath += '.jpg'
+                    else:  # PNG
+                        filepath += '.png'
+
                 success = cv2.imwrite(filepath, self.corrected_image)
                 if success:
-                    wx.MessageBox('图像保存成功！', '提示', wx.OK | wx.ICON_INFORMATION)
+                    wx.MessageBox(f'图像保存成功！\n保存路径: {filepath}', '提示', wx.OK | wx.ICON_INFORMATION)
                 else:
                     wx.MessageBox('图像保存失败！', '错误', wx.OK | wx.ICON_ERROR)
 
+    def on_reset_points(self, event):
+        """重置控制点"""
+        if self.image is not None:
+            self.initialize_points()
 
 
 class PerspectiveCorrectorApp(wx.App):
     def OnInit(self):
         frame = PerspectiveCorrectorFrame(None, title = '手动透视校正工具')
+        frame.Show()
         return True
 
 
@@ -452,5 +595,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
