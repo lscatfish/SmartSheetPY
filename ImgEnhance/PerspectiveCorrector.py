@@ -1,38 +1,8 @@
 import wx
 import cv2
 import numpy as np
-import os
-from PIL import Image
 
-
-def readimg(path):
-    """读取图像并转换为OpenCV格式"""
-    try:
-        pil_img = Image.open(path)
-        img_array = np.array(pil_img)
-        if len(img_array.shape) == 3:
-            image = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-        else:
-            image = cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
-        return image
-    except Exception as e:
-        # print(f"读取图像错误: {e}")
-        return None
-
-
-def writeimg(img_cv, path):
-    """保存OpenCV图像"""
-    try:
-        # 转换通道顺序：BGR → RGB
-        img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-        # 转换为PIL的Image对象
-        img_pil = Image.fromarray(img_rgb)
-        # 保存图像
-        img_pil.save(path)
-        return os.path.exists(path)
-    except Exception as e:
-        # print(f"保存图像错误: {e}")
-        return False
+from .iofunc import read_img, write_img
 
 
 class ScaledStaticBitmap(wx.Panel):
@@ -291,7 +261,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
                 wildcard = "图像文件 (*.jpg;*.png;*.bmp;*.jpeg)|*.jpg;*.png;*.bmp;*.jpeg") as dialog:
             if dialog.ShowModal() == wx.ID_OK:
                 filepath = dialog.GetPath()
-                self.image = readimg(filepath)
+                self.image = read_img(filepath)
                 if self.image is not None:
                     self.original_display.set_image(self.image)
                     # 更新SpinCtrl的范围限制
@@ -598,7 +568,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
                     else:  # PNG
                         filepath += '.png'
 
-                success = writeimg(self.corrected_image, filepath)
+                success = write_img(self.corrected_image, filepath)
                 if success:
                     wx.MessageBox(f'图像保存成功！\n保存路径: {filepath}', '提示', wx.OK | wx.ICON_INFORMATION)
                 else:
