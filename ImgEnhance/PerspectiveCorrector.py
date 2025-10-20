@@ -20,6 +20,17 @@ def readimg(path):
         return None
 
 
+def writeimg(img_cv: cv2.Mat, path: str):
+    # 2. 转换通道顺序：BGR → RGB（关键步骤）
+    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+    # 3. 转换为PIL的Image对象
+    img_pil = Image.fromarray(img_rgb)
+
+    # 4. 保存图像（支持png、jpg等格式）
+    img_pil.save(path)  # 保存为png
+    return os.path.exists(path)
+
+
 class ScaledStaticBitmap(wx.Panel):
     """支持缩放的图像显示面板"""
 
@@ -412,7 +423,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             if len(point) == 2:
                 px, py = point
                 distance = np.sqrt((px - img_x) ** 2 + (py - img_y) ** 2)
-                if distance < self.point_radius * 8:  # 扩大点击区域
+                if distance < self.point_radius * 5:  # 扩大点击区域
                     self.dragging_point = i
                     break
 
@@ -590,9 +601,9 @@ class PerspectiveCorrectorFrame(wx.Frame):
         if self.corrected_image is None:
             return
 
-        with wx.FileDialog(self, "保存校正后的图像",
+        with (wx.FileDialog(self, "保存校正后的图像",
                 wildcard = "JPEG文件 (*.jpg)|*.jpg|PNG文件 (*.png)|*.png",
-                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
+                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog):
 
             if dialog.ShowModal() == wx.ID_OK:
                 filepath = dialog.GetPath()
@@ -603,7 +614,8 @@ class PerspectiveCorrectorFrame(wx.Frame):
                     else:  # PNG
                         filepath += '.png'
 
-                success = cv2.imwrite(filepath, self.corrected_image)
+                success = writeimg(self.corrected_image, filepath)
+                # cv2.imwrite(filepath, self.corrected_image)
                 if success:
                     wx.MessageBox(f'图像保存成功！\n保存路径: {filepath}', '提示', wx.OK | wx.ICON_INFORMATION)
                 else:
