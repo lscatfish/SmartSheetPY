@@ -20,35 +20,41 @@ def readimg(path):
         return None
 
 
-def writeimg(img_cv: cv2.Mat, path: str):
-    # 2. 转换通道顺序：BGR → RGB（关键步骤）
-    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-    # 3. 转换为PIL的Image对象
-    img_pil = Image.fromarray(img_rgb)
-
-    # 4. 保存图像（支持png、jpg等格式）
-    img_pil.save(path)  # 保存为png
-    return os.path.exists(path)
+def writeimg(img_cv, path):
+    """保存OpenCV图像"""
+    try:
+        # 转换通道顺序：BGR → RGB
+        img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+        # 转换为PIL的Image对象
+        img_pil = Image.fromarray(img_rgb)
+        # 保存图像
+        img_pil.save(path)
+        return os.path.exists(path)
+    except Exception as e:
+        print(f"保存图像错误: {e}")
+        return False
 
 
 class ScaledStaticBitmap(wx.Panel):
-    """支持缩放的图像显示面板"""
+    """支持缩放的图像显示面板，解决黑色背景和频闪问题"""
 
     def __init__(self, parent, default_bg_color = (240, 240, 240)):
         super(ScaledStaticBitmap, self).__init__(parent)
         self.bitmap = None
         self.original_image = None
         self.scale_factor = 1.0
+        self.default_bg_color = default_bg_color
+        self.has_image = False
 
-        self.default_bg_color = default_bg_color  # 默认背景色
-        self.has_image = False  # 标记是否有图片加载
+        # 设置面板背景色
+        self.SetBackgroundColour(wx.Colour(self.default_bg_color))
 
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_SIZE, self.on_size)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self._on_erase_background)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase_background)
 
-    def _on_erase_background(self, event):
-        # 空处理器，阻止背景擦除
+    def on_erase_background(self, event):
+        """空的事件处理器，阻止背景擦除导致的闪烁"""
         pass
 
     def set_image(self, cv2_image):
@@ -59,11 +65,12 @@ class ScaledStaticBitmap(wx.Panel):
             self.update_display()
         else:
             self.has_image = False
-            self.Refresh()  # 触发重绘显示默认背景
+            self.bitmap = None
+            self.Refresh()
 
     def update_display(self):
         """更新显示"""
-        if self.original_image is not None:
+        if self.has_image and self.original_image is not None:
             # 转换颜色空间
             display_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2RGB)
             h, w = display_image.shape[:2]
@@ -89,14 +96,12 @@ class ScaledStaticBitmap(wx.Panel):
                     height, width = resized_image.shape[:2]
                     self.bitmap = wx.Bitmap.FromBuffer(width, height, resized_image)
                     self.Refresh()
-            else:
-                # 没有图片时，清除位图引用
-                self.bitmap = None
-                self.Refresh()
+        else:
+            self.Refresh()
 
     def on_paint(self, event):
-        """绘制图像 - 使用双缓冲技术避免闪烁[1](@ref)"""
-        dc = wx.BufferedPaintDC(self)  # 使用缓冲设备上下文
+        """绘制图像 - 使用双缓冲技术避免闪烁"""
+        dc = wx.BufferedPaintDC(self)
 
         # 获取面板尺寸
         panel_width, panel_height = self.GetClientSize()
@@ -116,8 +121,9 @@ class ScaledStaticBitmap(wx.Panel):
             dc.DrawBitmap(self.bitmap, x, y, True)
         else:
             # 没有图片时显示提示文本
-            dc.SetTextForeground(wx.Colour(150, 150, 150))  # 灰色文字
-            dc.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+            dc.SetTextForeground(wx.Colour(100, 100, 100))
+            font = wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+            dc.SetFont(font)
 
             text = "请加载图像"
             text_width, text_height = dc.GetTextExtent(text)
@@ -131,63 +137,6 @@ class ScaledStaticBitmap(wx.Panel):
         """处理尺寸变化"""
         self.update_display()
         event.Skip()
-
-
-class NumberControl(wx.Panel):
-    """简单的数字输入控件"""
-
-    def __init__(self, parent, value = 0, min_val = 0, max_val = 10000):
-        super(NumberControl, self).__init__(parent)
-
-        self.value = value
-        self.min_val = min_val
-        self.max_val = max_val
-
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.text_ctrl = wx.TextCtrl(self, value = str(value), style = wx.TE_PROCESS_ENTER)
-        self.text_ctrl.SetMinSize((80, -1))
-
-        sizer.Add(self.text_ctrl, 1, wx.EXPAND)
-
-        self.SetSizer(sizer)
-
-        self.text_ctrl.Bind(wx.EVT_TEXT, self.on_text_change)
-        self.text_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_text_enter)
-
-    def on_text_change(self, event):
-        """文本变化事件"""
-        try:
-            value = int(self.text_ctrl.GetValue())
-            if self.min_val <= value <= self.max_val:
-                self.value = value
-        except:
-            pass
-        event.Skip()
-
-    def on_text_enter(self, event):
-        """回车事件"""
-        try:
-            value = int(self.text_ctrl.GetValue())
-            if value < self.min_val:
-                value = self.min_val
-            elif value > self.max_val:
-                value = self.max_val
-            self.value = value
-            self.text_ctrl.SetValue(str(value))
-        except:
-            self.text_ctrl.SetValue(str(self.value))
-        event.Skip()
-
-    def GetValue(self):
-        """获取值"""
-        return self.value
-
-    def SetValue(self, value):
-        """设置值"""
-        if self.min_val <= value <= self.max_val:
-            self.value = value
-            self.text_ctrl.SetValue(str(value))
 
 
 class PerspectiveCorrectorFrame(wx.Frame):
@@ -214,6 +163,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
         # 左侧图像显示区域 - 占据70%宽度
         left_panel = wx.Panel(panel, style = wx.BORDER_SUNKEN)
+        left_panel.SetBackgroundColour(wx.Colour(240, 240, 240))
         left_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # 原始图像显示区域
@@ -238,6 +188,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
         # 右侧控制面板 - 占据30%宽度
         right_panel = wx.Panel(panel, style = wx.BORDER_SUNKEN)
+        right_panel.SetBackgroundColour(wx.Colour(240, 240, 240))
         right_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # 校正结果显示
@@ -262,22 +213,30 @@ class PerspectiveCorrectorFrame(wx.Frame):
             # 点标签
             grid_sizer.Add(wx.StaticText(points_box, label = f'点 {i + 1}'), 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
 
-            # X坐标输入
-            x_ctrl = NumberControl(points_box, value = 0, min_val = 0, max_val = 10000)
-            grid_sizer.Add(x_ctrl, 0, wx.EXPAND)
+            # X坐标输入 - 使用wx.SpinCtrl，带上下调整按钮
+            x_ctrl = wx.SpinCtrl(points_box, min = 0, max = 10000, initial = 0)
+            x_ctrl.SetMinSize((80, -1))
 
-            # Y坐标输入
-            y_ctrl = NumberControl(points_box, value = 0, min_val = 0, max_val = 10000)
-            grid_sizer.Add(y_ctrl, 0, wx.EXPAND)
+            # Y坐标输入 - 使用wx.SpinCtrl，带上下调整按钮
+            y_ctrl = wx.SpinCtrl(points_box, min = 0, max = 10000, initial = 0)
+            y_ctrl.SetMinSize((80, -1))
 
             # 设置点按钮
-            set_btn = wx.Button(points_box, label = f'设置')
+            set_btn = wx.Button(points_box, label = '设置')
+            set_btn.SetMinSize((60, -1))
+
+            grid_sizer.Add(x_ctrl, 0, wx.EXPAND)
+            grid_sizer.Add(y_ctrl, 0, wx.EXPAND)
             grid_sizer.Add(set_btn, 0, wx.EXPAND)
 
             self.point_controls.append((x_ctrl, y_ctrl, set_btn))
 
             # 绑定按钮事件
             set_btn.Bind(wx.EVT_BUTTON, lambda event, idx = i: self.set_point_from_controls(idx))
+
+            # 绑定SpinCtrl变化事件，实现实时更新
+            x_ctrl.Bind(wx.EVT_SPINCTRL, lambda event, idx = i: self.on_spin_change(idx))
+            y_ctrl.Bind(wx.EVT_SPINCTRL, lambda event, idx = i: self.on_spin_change(idx))
 
         points_sizer.Add(grid_sizer, 1, flag = wx.EXPAND | wx.ALL, border = 5)
         right_sizer.Add(points_sizer, proportion = 0, flag = wx.EXPAND | wx.ALL, border = 5)
@@ -306,10 +265,6 @@ class PerspectiveCorrectorFrame(wx.Frame):
         self.correct_btn.Disable()
         self.save_btn.Disable()
         self.reset_btn.Disable()
-
-        # 初始化时显示提示
-        self.original_display.set_image(None)
-        self.corrected_display.set_image(None)
 
     def on_load_image(self, event):
         """加载图像"""
@@ -369,7 +324,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             return
 
         h, w = self.image.shape[:2]
-        margin = min(w, h) * 0.05  # 10%边距
+        margin = min(w, h) * 0.1  # 10%边距
 
         self.src_points = [
             [margin, margin],  # 左上
@@ -405,6 +360,10 @@ class PerspectiveCorrectorFrame(wx.Frame):
                 self.src_points[point_index] = [x, y]
                 self.display_original_image()
 
+    def on_spin_change(self, point_index):
+        """当使用上下按钮调整数值时的处理"""
+        self.set_point_from_controls(point_index)
+
     def on_mouse_down(self, event):
         """鼠标按下事件"""
         if self.image is None:
@@ -423,7 +382,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             if len(point) == 2:
                 px, py = point
                 distance = np.sqrt((px - img_x) ** 2 + (py - img_y) ** 2)
-                if distance < self.point_radius * 5:  # 扩大点击区域
+                if distance < self.point_radius * 3:  # 扩大点击区域
                     self.dragging_point = i
                     break
 
@@ -483,7 +442,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
             if distances:
                 min_index = np.argmin(distances)
-                if distances[min_index] < min(*(self.image.shape[:2])) * 0.35:  # 最大移动距离
+                if distances[min_index] < 100:  # 最大移动距离
                     # 确保坐标在图像范围内
                     h, w = self.image.shape[:2]
                     img_x = max(0, min(w - 1, img_x))
@@ -500,8 +459,8 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
         # 获取显示面板和位图尺寸
         panel_width, panel_height = self.original_display.GetClientSize()
-        bitmap_width = self.original_display.bitmap.GetWidth()
-        bitmap_height = self.original_display.bitmap.GetHeight()
+        bitmap_width = self.original_display.bitmap.GetWidth() if self.original_display.bitmap else 0
+        bitmap_height = self.original_display.bitmap.GetHeight() if self.original_display.bitmap else 0
 
         if bitmap_width == 0 or bitmap_height == 0:
             return None, None
@@ -601,9 +560,9 @@ class PerspectiveCorrectorFrame(wx.Frame):
         if self.corrected_image is None:
             return
 
-        with (wx.FileDialog(self, "保存校正后的图像",
+        with wx.FileDialog(self, "保存校正后的图像",
                 wildcard = "JPEG文件 (*.jpg)|*.jpg|PNG文件 (*.png)|*.png",
-                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog):
+                style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dialog:
 
             if dialog.ShowModal() == wx.ID_OK:
                 filepath = dialog.GetPath()
@@ -615,7 +574,6 @@ class PerspectiveCorrectorFrame(wx.Frame):
                         filepath += '.png'
 
                 success = writeimg(self.corrected_image, filepath)
-                # cv2.imwrite(filepath, self.corrected_image)
                 if success:
                     wx.MessageBox(f'图像保存成功！\n保存路径: {filepath}', '提示', wx.OK | wx.ICON_INFORMATION)
                 else:
