@@ -2,7 +2,6 @@ import copy
 import tempfile
 import zipfile
 from pathlib import Path
-from sys import stderr
 
 from docx.oxml.ns import qn
 import xml.etree.ElementTree as ET
@@ -155,14 +154,14 @@ class DocxLoad:
                             except ValueError as e:
                                 # ① 单行坏掉，只丢这一行
                                 print(f"表格 {tbl_idx} 第 {row_idx} 行结构损坏，已跳过：{e}")
-                                return [],[]
+                                return [], []
 
                         all_tables.append(table_data)
 
                     except ValueError as e:
                         # ② 整个表格坏掉，直接丢
                         print(f"表格 {tbl_idx} 完全损坏，已跳过：{e}\n")
-                        return [],[]
+                        return [], []
             if self.__parse_paragraphs:
                 for p in doc.paragraphs:
                     all_paragraphs.append(p.text.strip())
@@ -176,8 +175,8 @@ class DocxLoad:
                     ct = z.read('[Content_Types].xml').decode('utf-8', 'ignore').lower()
                     if 'spreadsheetml.main' in ct:
                         print(f'{file_path.name} 实为 Excel，已跳过\n')
-                        return [],[]  # 静默跳过
-                return [],[]
+                        return [], []  # 静默跳过
+                return [], []
 
         finally:
             if doc is not None:
@@ -197,7 +196,7 @@ class DocxLoad:
     def sheets_without_enter(self) -> list[list[list]] | None:
         from .helperfunction import clean_enter
         if self.__sheets is None: return None
-        outs = clean_enter(self.__sheets,'')
+        outs = clean_enter(self.__sheets, '')
         return outs
 
     @property
@@ -223,7 +222,7 @@ class DocxLoad:
         sh = self.get_sheet(index = index)
         if sh is None:
             return None
-        outs = clean_enter(sh,'')
+        outs = clean_enter(sh, '')
         if isinstance(outs, list):
             return outs
         else:
