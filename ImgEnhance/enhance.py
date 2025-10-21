@@ -1,15 +1,159 @@
 """增强效果"""
+import dataclasses
+from typing import Any
+
 import cv2
 import numpy as np
 
-from .iofunc import read_img, write_img
+from ImgEnhance.iofunc import read_img, write_img
 
 
-class ImageEnhancement:
-    """此模块用于管理图像增强"""
+class SentinelAny:
+    """哨兵值"""
+    pass
 
-    def __init__(self, path, ):
+
+def overwrite_dict(mask: dict[str, Any], base: dict[str, Any], exclude: type | None = SentinelAny):
+    """
+    Args:
+        mask:覆写字典
+        base:基础字典
+        exclude:排除方法
+    """
+    for mask_key, mask_value in mask.items():
+        if exclude is None:
+            if mask_value is not None:
+                base[mask_key] = mask_value
+            continue
+        else:
+            if not isinstance(mask_value, exclude):
+                base[mask_key] = mask_value
+            continue
+
+
+class BaseImageEnhancement:
+    """此模块用于管理图像增强，基类"""
+
+    @dataclasses.dataclass
+    class PipeData:
+        img: cv2.Mat
+        shadow_remove_method: str
+        shadow_remove_method_args: tuple | dict
+        sharpen_method: str
+        sharpen_method_args: tuple | dict
+        enhance_contrast: bool
+        enhance_contrast_args: tuple | dict
+        enhance_saturation: bool
+        enhance_saturation_args: tuple | dict
+        white_balance: bool
+        white_balance_args: tuple | dict
+
+    def __init__(
+        self,
+        shadow_remove_method: str = 'morphology',
+        shadow_remove_method_args: tuple | dict = (9, 3),
+        sharpen_method: str = 'unsharp_mask',
+        sharpen_method_args: tuple | dict = ((5, 5), 1.0, 1.5),
+        enhance_contrast = True,
+        enhance_contrast_args: tuple | dict = (1.2, 5),
+        enhance_saturation = True,
+        enhance_saturation_args: tuple | dict = (1.1,),
+        white_balance = True,
+        white_balance_args: tuple | dict = None, ):
         """"""
+        params = locals().copy()
+        params.pop('self')
+        self._params = params
+
+    def enhance(
+        self,
+        img: str | np.ndarray = None,
+        shadow_remove_method: str = None,
+        shadow_remove_method_args: tuple | dict = None,
+        sharpen_method: str = None,
+        sharpen_method_args: tuple | dict = None,
+        enhance_contrast = None,
+        enhance_contrast_args: tuple | dict = None,
+        enhance_saturation = None,
+        enhance_saturation_args: tuple | dict = None,
+        white_balance = None,
+        white_balance_args: tuple | dict = None,
+        *args, **kwargs):
+        params = locals().copy()
+        params.pop('self')
+        params.pop('args')
+        params.pop('kwargs')
+
+        if img is None:
+            raise Exception('Image cannot be None！')
+        elif isinstance(img, str):
+            self._params['img'] = read_img(img)
+            params.pop('img')
+        elif isinstance(img, np.ndarray):
+            try:
+                if len(img.shape) == 3:
+                    self._params['img'] = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                else:
+                    self._params['img'] = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            except Exception as e:
+                print(f"读取图像错误: {e}")
+                # 非禁用方式会使得窗口崩溃
+            params.pop('img')
+        else:
+            raise Exception('Image must be np.ndarray or str')
+
+        overwrite_dict(params, self._params, None)
+        self._pipeline(**self._params)  # 解包传递
+        pass
+
+    def _pipeline(self, *args, **kwargs):
+        """产线方法"""
+        img: cv2.Mat = self._params['img'].copy()
+        pipe = self.PipeData(**self._params)
+
+        if pipe.shadow_remove_method == 'morphology':
+            if isinstance(pipe.shadow_remove_method_args, dict):
+                img = self.remove_shadow_morphology(img, **pipe.shadow_remove_method_args)
+            elif isinstance(pipe.shadow_remove_method_args, tuple):
+                img = self.remove_shadow_morphology(img, *pipe.shadow_remove_method_args)
+        elif pipe.shadow_remove_method == 'hsv':
+            if isinstance(pipe.shadow_remove_method_args, dict):
+                img = self.remove_shadow_hsv(img, **pipe.shadow_remove_method_args)
+            elif isinstance(pipe.shadow_remove_method_args, tuple):
+                img = self.remove_shadow_hsv(img, *pipe.shadow_remove_method_args)
+
+        if pipe.sharpen_method == 'unsharp_mask':
+            if isinstance(pipe.sharpen_method_args, dict):
+                img = self.unsharp_masking(img, **pipe.sharpen_method_args)
+            elif isinstance(pipe.sharpen_method_args, tuple):
+                img = self.unsharp_masking(img, *pipe.sharpen_method_args)
+        elif pipe.sharpen_method == 'laplacian':
+            if isinstance(pipe.sharpen_method_args, dict):
+                img = self.sharpen_image_laplacian(img, **pipe.sharpen_method_args)
+            elif isinstance(pipe.sharpen_method_args, tuple):
+                img = self.sharpen_image_laplacian(img, *pipe.sharpen_method_args)
+        elif pipe.sharpen_method == 'filter2d':
+            if isinstance(pipe.sharpen_method_args, dict):
+                img = self.sharpen_image_filter2d(img, **pipe.sharpen_method_args)
+            elif isinstance(pipe.sharpen_method_args, tuple):
+                img = self.sharpen_image_filter2d(img, *pipe.sharpen_method_args)
+
+        if pipe.enhance_contrast:
+            if isinstance(pipe.enhance_contrast_args, dict):
+                img = self.adjust_contrast_brightness(img, **pipe.enhance_contrast_args)
+            elif isinstance(pipe.enhance_contrast_args, tuple):
+                img = self.adjust_contrast_brightness(img, *pipe.enhance_contrast_args)
+
+        if pipe.enhance_saturation:
+            if isinstance(pipe.enhance_saturation_args, dict):
+                img = self.adjust_saturation(img, **pipe.enhance_saturation_args)
+            elif isinstance(pipe.enhance_saturation_args, tuple):
+                img = self.adjust_saturation(img, *pipe.enhance_saturation_args)
+
+        if pipe.white_balance:
+            img = self.auto_white_balance(img)
+
+        return img
 
     @staticmethod
     def sharpen_image_laplacian(image, kernel_size = 3, scale = 0.03):
