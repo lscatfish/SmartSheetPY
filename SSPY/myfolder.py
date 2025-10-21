@@ -2,6 +2,7 @@
 import copy
 import os
 import shutil
+from pathlib import Path
 
 
 def get_filename_with_extension(file_path):
@@ -89,6 +90,28 @@ def copy_file(source_path: str, target_path: str, if_print: bool = False) -> boo
         print(f"文件复制失败：{str(e)}")
         return False
 
+
+def is_same_path(a: str | Path, b: str | Path) -> bool:
+    """判断是否是同一个路径"""
+    p1 = Path(a) if isinstance(a, str) else a
+    p2 = Path(b) if isinstance(b, str) else b
+    rp1 = p1.resolve()
+    rp2 = p2.resolve()
+    return rp1 == rp2
+
+
+def parent_dir(a: str | Path) -> tuple[str, str]:
+    """获取母目录，并返回初始目录"""
+    p = Path(a) if isinstance(a, str) else a
+    return str(p.parent), str(a)
+
+
+def get_top_parent_dir_by(header: str | Path, start: str | Path):
+    higher = start
+    while True:
+        higher, this = parent_dir(higher)
+        if is_same_path(header, higher):
+            return str(this)
 
 class DefFolder:
     def __init__(self, root_dir: str, if_print: bool = False, extensions: str | list = None):

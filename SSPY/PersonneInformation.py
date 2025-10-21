@@ -510,23 +510,26 @@ class DefPerson:
             create_nested_folders,
             copy_file,
             get_filename_with_extension,
-            split_filename_and_extension)
+            split_filename_and_extension,
+            get_top_parent_dir_by,
+            parent_dir)
+        from shutil import copytree
         sum = 0
-        target_root: list[str] = []
+        target_: list[str] = []
         if len(self.__filepaths) == 0: return sum
         if under_class_folder:
             classnames = self.gen_classes()
             for i in range(len(classnames)):
-                target_root.append(main_root + '/' + classnames[i] + '/')
+                target_.append(main_root + '/' + classnames[i] + '/')
         if gen_solofolder:
-            for i in range(len(target_root)):
-                target_root[i] = (target_root[i] + self.get_information('报名方式') + '-'
-                                  + self.name + '-' + self.studentID + '/')
+            for i in range(len(target_)):
+                target_[i] = (target_[i] + self.get_information('报名方式') + '-'
+                              + self.name + '-' + self.studentID + '/')
         # 生成文件夹
-        for tr in target_root: create_nested_folders(tr, if_print = False)
+        for tr in target_: create_nested_folders(tr, if_print = False)
         # 复制文件
         for fp in self.__filepaths:
-            for tr in target_root:
+            for tr in target_:
                 t = ((tr + get_filename_with_extension(fp)) if keep_origin_name
                      else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))
                 j = 0
@@ -538,6 +541,10 @@ class DefPerson:
                 copy_file(fp, t, True)
                 self.savepath = t
                 sum += 1
+
+        dirs = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, self.__filepaths[0])
+        if os.path.isdir(dirs):
+            copytree(dirs, parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}", dirs_exist_ok = True)
         return sum
 
 
