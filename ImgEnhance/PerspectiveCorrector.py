@@ -292,7 +292,8 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
                 cv2.circle(display_image, (x, y), self.point_radius, (0, 0, 255), -1)
                 cv2.putText(display_image, str(i + 1), (x + 10, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, max(0.7, min(w, h) * 0.0008)
+                    , (0, 0, 255), int(max(2, min(w, h) * 0.0025)))
 
         # 绘制连线
         if len(self.src_points) == 4:
@@ -306,7 +307,8 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
             if len(points) == 4:
                 points = np.array(points, dtype = np.int32)
-                cv2.polylines(display_image, [points], True, (0, 255, 0), 2)
+                cv2.polylines(display_image, [points],
+                    True, (0, 255, 0), int(max(2, min(w, h) * 0.001)))
 
         # 更新显示
         self.original_display.set_image(display_image)
@@ -318,6 +320,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
         h, w = self.image.shape[:2]
         margin = min(w, h) * 0.05  # 5%边距
+        self.point_radius = int(max(8, min(h, w) * 0.006))
 
         self.src_points = [
             [margin, margin],  # 左上
@@ -379,7 +382,7 @@ class PerspectiveCorrectorFrame(wx.Frame):
             if len(point) == 2:
                 px, py = point
                 distance = np.sqrt((px - img_x) ** 2 + (py - img_y) ** 2)
-                if distance < self.point_radius * 3:  # 扩大点击区域
+                if distance < self.point_radius * 5:  # 扩大点击区域
                     self.dragging_point = i
                     break
 
@@ -439,9 +442,9 @@ class PerspectiveCorrectorFrame(wx.Frame):
 
             if distances:
                 min_index = np.argmin(distances)
-                if distances[min_index] < 100:  # 最大移动距离
+                h, w = self.image.shape[:2]
+                if distances[min_index] < int(min(h, w) * 0.5):  # 最大移动距离
                     # 确保坐标在图像范围内
-                    h, w = self.image.shape[:2]
                     img_x = max(0, min(w - 1, img_x))
                     img_y = max(0, min(h - 1, img_y))
 
