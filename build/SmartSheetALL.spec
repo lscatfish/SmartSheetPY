@@ -128,7 +128,7 @@ EmailDownloader_exe = EXE(
     entitlements_file=None,
 )
 
-a = Analysis(
+ToolSearchingMain_a = Analysis(
     ['..\\ToolSearchingMain.py'],
     pathex=[],
     binaries=[],
@@ -141,11 +141,11 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-pyz = PYZ(a.pure)
+ToolSearchingMain_pyz = PYZ(ToolSearchingMain_a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
+ToolSearchingMain_exe = EXE(
+    ToolSearchingMain_pyz,
+    ToolSearchingMain_a.scripts,
     [],
     exclude_binaries=True,
     name='ToolSearchingMain',
@@ -161,7 +161,38 @@ exe = EXE(
     entitlements_file=None,
 )
 
+PerspectiveCorrectorMain_a = Analysis(
+    ['..\\PerspectiveCorrectorMain.py'],
+    pathex=[],
+    binaries=[],
+    datas=[],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+PerspectiveCorrectorMain_pyz = PYZ(PerspectiveCorrectorMain_a.pure)
 
+PerspectiveCorrectorMain_exe = EXE(
+    PerspectiveCorrectorMain_pyz,
+    PerspectiveCorrectorMain_a.scripts,
+    [],
+    exclude_binaries=True,
+    name='PerspectiveCorrectorMain',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
 
 
 
@@ -172,9 +203,12 @@ coll = COLLECT(
     EmailDownloader_exe,
     EmailDownloader_a.binaries,
     EmailDownloader_a.datas,
-    exe,
-    a.binaries,
-    a.datas,
+    ToolSearchingMain_exe,
+    ToolSearchingMain_a.binaries,
+    ToolSearchingMain_a.datas,
+    PerspectiveCorrectorMain_exe,
+    PerspectiveCorrectorMain_a.binaries,
+    PerspectiveCorrectorMain_a.datas,
     strip=False,
     upx=True,
     upx_exclude=[],
