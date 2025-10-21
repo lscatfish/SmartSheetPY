@@ -219,12 +219,13 @@ def auto_white_balance(image):
     return result
 
 
-def enhance_image_pipeline(image,
-                           shadow_removal_method = 'morphology',
-                           sharpen_method = 'unsharp_mask',
-                           enhance_contrast = True,
-                           enhance_saturation = True,
-                           white_balance = True):
+def enhance_image_pipeline(
+    image,
+    shadow_removal_method = 'morphology',
+    sharpen_method = 'unsharp_mask',
+    enhance_contrast = True,
+    enhance_saturation = True,
+    white_balance = True):
     """
     图像增强综合流程
     参数:
@@ -333,7 +334,7 @@ def example_usage():
     shadow_removed = remove_shadow_morphology(image)
 
     # 锐化图像
-    sharpened = sharpen_image_laplacian(shadow_removed,1)
+    sharpened = sharpen_image_laplacian(shadow_removed, 1)
 
     # 调整对比度和亮度
     contrast_adjusted = adjust_contrast_brightness(sharpened, contrast = 1.2, brightness = 10)

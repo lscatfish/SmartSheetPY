@@ -1,5 +1,6 @@
 """增强效果"""
 import dataclasses
+from abc import abstractmethod, ABC
 from typing import Any
 
 import cv2
@@ -31,7 +32,7 @@ def overwrite_dict(mask: dict[str, Any], base: dict[str, Any], exclude: type | N
             continue
 
 
-class BaseImageEnhancement:
+class BaseImageEnhancement(ABC):
     """此模块用于管理图像增强，基类"""
 
     @dataclasses.dataclass
@@ -48,6 +49,7 @@ class BaseImageEnhancement:
         white_balance: bool
         white_balance_args: tuple | dict
 
+    @abstractmethod
     def __init__(
         self,
         shadow_remove_method: str = 'morphology',
@@ -65,6 +67,7 @@ class BaseImageEnhancement:
         params.pop('self')
         self._params = params
 
+    @abstractmethod
     def enhance(
         self,
         img: str | np.ndarray = None,
@@ -106,6 +109,7 @@ class BaseImageEnhancement:
         self._pipeline(**self._params)  # 解包传递
         pass
 
+    @abstractmethod
     def _pipeline(self, *args, **kwargs):
         """产线方法"""
         img: cv2.Mat = self._params['img'].copy()
