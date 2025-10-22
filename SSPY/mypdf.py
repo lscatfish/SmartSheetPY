@@ -90,16 +90,19 @@ class PdfLoad:
 
     def __extract_text(self):
         import fitz  # PyMuPDF
-        pdf = fitz.open(self.__path)
-        for page_num in range(len(pdf)):
-            p_text: list[str] = []
-            page = pdf.load_page(page_num)
-            # 关键步骤：以字典形式获取页面中的所有块信息
-            blocks_dict = page.get_text("dict")
-            for block in blocks_dict["blocks"]:
-                if block["type"] == 0:
-                    # 遍历块中的每一行和每一个span
-                    for line in block["lines"]:
-                        for span in line["spans"]:
-                            p_text.append(clean_space(span["text"], ''))
-            self.__pageList.append(p_text)
+        try:
+            pdf = fitz.open(self.__path)
+            for page_num in range(len(pdf)):
+                p_text: list[str] = []
+                page = pdf.load_page(page_num)
+                # 关键步骤：以字典形式获取页面中的所有块信息
+                blocks_dict = page.get_text("dict")
+                for block in blocks_dict["blocks"]:
+                    if block["type"] == 0:
+                        # 遍历块中的每一行和每一个span
+                        for line in block["lines"]:
+                            for span in line["spans"]:
+                                p_text.append(clean_space(span["text"], ''))
+                self.__pageList.append(p_text)
+        except Exception as e:
+            print(f'pdf文件"{self.__path}"解析失败：{e}，已跳过...')

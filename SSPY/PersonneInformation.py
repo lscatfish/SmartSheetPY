@@ -544,12 +544,6 @@ class DefPerson:
         for tr in target_: create_nested_folders(tr, if_print = False)
         # 复制文件
         for tr in target_:
-            # if self.name=='安丁树':
-            #     print('dsv')
-            #     print('dsv')
-            #     print('dsv')
-            #     print('dsv')
-            #     print('dsv')
             for fp in self.__filepaths:
                 t = ((tr + get_filename_with_extension(fp)) if keep_origin_name
                      else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))

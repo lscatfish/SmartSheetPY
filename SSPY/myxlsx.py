@@ -108,7 +108,11 @@ class XlsxLoad:
         """读取文件"""
         if self.__ifp:
             print('xlsx文件读取\"' + self.__path + '\"', end = '')
-        wb = load_workbook(self.__path, data_only = True, read_only = True)
+        try:
+            wb = load_workbook(self.__path, data_only = True, read_only = True)
+        except Exception as e :
+            print(f'xlsx文件"{self.__path}"解析出错：{e} ，已跳过...')
+            return
 
         for ws in wb.worksheets:
             sh = []
