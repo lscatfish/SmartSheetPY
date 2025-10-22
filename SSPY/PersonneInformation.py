@@ -482,7 +482,12 @@ class DefPerson:
         oinfo = other.information
         for key in oinfo:
             self_key_value = self.get_information(key)
-            if self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
+            if key == gc.chstrRegistrationMethod:
+                if self_key_value == '组织推荐': continue
+                if self_key_value != oinfo[key]:
+                    self.__information[key] = '组织推荐'
+                continue
+            elif self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
                 continue
             else:  # 为空
                 self.__information[key] = oinfo[key]
@@ -524,6 +529,7 @@ class DefPerson:
         sum = 0
         target_: list[str] = []
         if len(self.__filepaths) == 0: return sum
+        self.__filepaths = list(dict.fromkeys(self.__filepaths))  # 键去重方法
         if under_class_folder:
             classnames = self.gen_classes()
             for i in range(len(classnames)):
@@ -547,14 +553,17 @@ class DefPerson:
                          else (tr + self.name + '-' + self.studentID + f'({j})' + b))
                     if j > 20: break
                 copy_file(fp, t, True)
-                self.savepath = t
+                self.savepath = str(t)
                 sum += 1
 
         # 获取关联文件
         dirs = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, self.__filepaths[0])
         if os.path.isdir(dirs):
-            copytree(dirs,
-                parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}", dirs_exist_ok = True)
+            print(f'自"{dirs}"复制到{parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}"}')
+            copytree(
+                dirs,
+                parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}",
+                dirs_exist_ok = True)
         return sum
 
 
