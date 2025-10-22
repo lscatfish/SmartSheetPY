@@ -153,11 +153,13 @@ class DefPerson:
                     self.__information[gc.chstrGrade] = first4 + '级'
         if len(self.__classname) > 0:
             orgcn = self.__classname
+            """原始名称"""
             self.__classname = ''
             for cn in gc.cns:
                 if cn[0] in orgcn:
                     if self.__classname != '':
                         self.__classname += (',' + cn[1])
+                        continue
                     self.__classname += cn[1]
             if self.__classname == '':
                 self.__classname = orgcn
@@ -478,10 +480,11 @@ class DefPerson:
         oinfo = other.information
         for key in oinfo:
             self_key_value = self.get_information(key)
-            if self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
+            if self_key_value and self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
                 continue
             else:  # 为空
                 self.__information[key] = oinfo[key]
+        self.__classname += other.classname
         self.__filepaths.extend(copy.deepcopy(other.__filepaths))
 
     def gen_classes(self):
@@ -544,7 +547,8 @@ class DefPerson:
 
         dirs = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, self.__filepaths[0])
         if os.path.isdir(dirs):
-            copytree(dirs, parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}", dirs_exist_ok = True)
+            copytree(dirs,
+                parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}", dirs_exist_ok = True)
         return sum
 
 
