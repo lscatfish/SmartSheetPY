@@ -45,10 +45,13 @@ class HistorySearch:
     """历史搜索记录"""
 
     def __init__(self):
+        """最多保存100条"""
         self.__history: list[ASearch] = []
 
     def push_back(self, _in: ASearch):
         if self.has_history(_in.target, _in.root): return
+        if len(self.__history) == 100:
+            self.__history.pop(0)
         self.__history.append(_in)
 
     def has_history(self, target: str, root: str):
@@ -83,8 +86,13 @@ class HistorySearch:
             from SSPY.myxlsx import XlsxWrite
             from SSPY.myfolder import create_nested_folders
             create_nested_folders('./output/')  # 确保文件夹存在
+
+            from datetime import datetime
+            current_time = datetime.now()
+            # 格式化示例（常用格式符：%Y-年，%m-月，%d-日，%H-时(24h)，%M-分，%S-秒）
+            formatted_time = current_time.strftime("%m%d%H%M%S")
             XlsxWrite(
-                path = './output/search_log.xlsx',
+                path = f'./output/search_log{formatted_time}.xlsx',
                 sheet = sh,
                 widths = [30, 80],
                 alignment = gc.alignmentLeft
