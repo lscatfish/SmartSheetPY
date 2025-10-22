@@ -553,6 +553,8 @@ class DefPerson:
         # 获取关联文件
         dirs = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, self.__filepaths[0])
         if os.path.isdir(dirs):
+            print(dirs)
+            print(parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}")
             copytree(dirs,
                 parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}", dirs_exist_ok = True)
         return sum
