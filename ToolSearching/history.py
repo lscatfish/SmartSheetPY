@@ -99,3 +99,4 @@ class HistorySearch:
             ).write()
 
         _save(_table())
+        self.__history.clear()
