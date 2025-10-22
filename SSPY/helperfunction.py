@@ -94,3 +94,11 @@ def trans_list_to_str(in_list: list[str]) -> str:
     for i in range(len_l):
         out_str += (in_list[i] + ('\n' if (i + 1) < len_l else ''))
     return out_str
+
+def deduplication_list(in_list:list,dedp):
+    """对一个list去重
+    Args:
+        in_list:输入的list
+        dedp:相同判断方法
+    """
+    pass

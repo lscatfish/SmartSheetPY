@@ -1,5 +1,6 @@
 import copy
 import threading
+
 import SSPY.fuzzy.search as fuzzy_search
 
 from SSPY.mypdf import PdfLoad
@@ -461,18 +462,18 @@ class DoQingziClass:
 
             return pers
 
-        @current_monitor.add_nested_function()
-        def __merge(pers_pdf: list[DefPerson]):
-            """合并解析出的人员信息"""
-            if pers_pdf is None or len(pers_pdf) == 0: return
-            temps: list[DefPerson] = []
-            for p in pers_pdf:
-                p_all = self.search(p)  # 不启用push
-                if p_all is not None:
-                    p_all.merge(p)
-                else:
-                    temps.append(p)
-            self.__persons_all.extend(temps)
+        # @current_monitor.add_nested_function()
+        # def __merge(pers_pdf: list[DefPerson]):
+        #     """合并解析出的人员信息"""
+        #     if pers_pdf is None or len(pers_pdf) == 0: return
+        #     temps: list[DefPerson] = []
+        #     for p in pers_pdf:
+        #         p_all = self.search(p)  # 不启用push
+        #         if p_all is not None:
+        #             p_all.merge(p)
+        #         else:
+        #             temps.append(p)
+        #     self.__persons_all.extend(temps)
 
         @current_monitor.add_nested_function()
         def __copy_classify():
@@ -573,7 +574,8 @@ class DoQingziClass:
             return
         else:
             self.__persons_all.extend(pers_doc)
-        __merge(__parse_pdfs(pdf_paths))
+        self.__persons_all.extend(__parse_pdfs(pdf_paths))
+        self.deduplication()  # 去重
         __copy_classify()
         __save_all(*(__make_sheet_all()))
 
@@ -630,6 +632,30 @@ class DoQingziClass:
             widths = [24, ]
         ).write()
         print('未知人员表已储存：\"' + path + '\"')
+
+    @monitor_variables(
+        target_var = '__stopFlag',
+        var_type = VariableType.INSTANCE_PRIVATE,
+        condition = _exit,
+        return_value = None)
+    def deduplication(self):
+        """去重"""
+        unique_pers: list[DefPerson] = []
+        """去重之后的人员列表"""
+        exclude_index: list[int] = []
+        """去重的时候，已经被去除的index"""
+        for i in range(len(self.__persons_all)):
+            if i in exclude_index: continue
+            per = self.__persons_all[i]
+            for j in range(i + 1, len(self.__persons_all)):
+                if not self.is_same_studentID(per.studentID, self.__persons_all[j].studentID):
+                    continue
+                # 同一个学号
+                per.merge(self.__persons_all[j])
+                exclude_index.append(j)
+            per.optimize()
+            unique_pers.append(per)
+        self.__persons_all = unique_pers  # 更换地址
 
     @monitor_variables(
         target_var = '__stopFlag',

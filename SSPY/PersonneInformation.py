@@ -75,7 +75,9 @@ class DefPerson:
             gc.chstrClub            : '',
             gc.chstrSignPosition    : ''}  # 信息
         self.__filepaths: list[str] = []  # 此人员相关的文件路径
+        """从哪里来"""
         self.__savepaths: list[str] = []  # 保存的文件路径
+        """到哪里去"""
         if cname is not None: self.__classname = cname
         if name is not None: self.__information[gc.chstrName] = name
         if studentID is not None:
@@ -443,7 +445,7 @@ class DefPerson:
 
     @filepath.setter
     def filepath(self, value: str | list[str]):
-        """补充文件路径"""
+        """补充文件路径（从哪里来）"""
         if isinstance(value, str):
             self.__filepaths.append(value)
         elif isinstance(value, list):
@@ -475,17 +477,19 @@ class DefPerson:
 
     def merge(self, other: 'DefPerson'):
         """合并other的信息到this"""
-        self.__ifsign = other.ifsign
-        self.__ifcheck = other.ifcheck
+        self.__ifsign = (other.ifsign or self.__ifsign)
+        self.__ifcheck = (other.ifcheck or self.__ifcheck)
         oinfo = other.information
         for key in oinfo:
             self_key_value = self.get_information(key)
-            if self_key_value and self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
+            if self_key_value != '' and self_key_value != 'None' and self_key_value != '-':
                 continue
             else:  # 为空
                 self.__information[key] = oinfo[key]
+                continue
         self.__classname += other.classname
         self.__filepaths.extend(copy.deepcopy(other.__filepaths))
+        self.__filepaths = list(dict.fromkeys(self.__filepaths))  # 键去重方法
 
     def gen_classes(self):
         """产生班级列表"""
@@ -540,11 +544,13 @@ class DefPerson:
                     j += 1
                     a, b = split_filename_and_extension(fp)
                     t = ((tr + a + f'({j})' + b) if keep_origin_name
-                         else (tr + self.name + '-' + self.studentID + f'({j})' + split_filename_and_extension(fp)[1]))
+                         else (tr + self.name + '-' + self.studentID + f'({j})' + b))
+                    if j > 20: break
                 copy_file(fp, t, True)
                 self.savepath = t
                 sum += 1
 
+        # 获取关联文件
         dirs = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, self.__filepaths[0])
         if os.path.isdir(dirs):
             copytree(dirs,

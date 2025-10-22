@@ -1,3 +1,4 @@
+"""我们希望可以重构此处的代码"""
 import copy
 import tempfile
 import zipfile
@@ -5,6 +6,8 @@ from pathlib import Path
 
 from docx.oxml.ns import qn
 import xml.etree.ElementTree as ET
+
+from SSPY.communitor.core import postText
 
 
 class DocxLoad:
@@ -177,6 +180,10 @@ class DocxLoad:
                         print(f'{file_path.name} 实为 Excel，已跳过\n')
                         return [], []  # 静默跳过
                 return [], []
+            return [], []
+        except Exception as e:
+            postText(f'未知错误"{file_path}"{e}', color = 'red')
+            return [], []
 
         finally:
             if doc is not None:
