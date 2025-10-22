@@ -524,12 +524,14 @@ class DefPerson:
             get_filename_with_extension,
             split_filename_and_extension,
             get_top_parent_dir_by,
-            parent_dir)
+            parent_dir,
+            deduplication_paths,
+            safe_copytree)
         from shutil import copytree
         sum = 0
         target_: list[str] = []
         if len(self.__filepaths) == 0: return sum
-        self.__filepaths = list(dict.fromkeys(self.__filepaths))  # 键去重方法
+        self.__filepaths = deduplication_paths(self.filepath)
         if under_class_folder:
             classnames = self.gen_classes()
             for i in range(len(classnames)):
@@ -542,6 +544,12 @@ class DefPerson:
         for tr in target_: create_nested_folders(tr, if_print = False)
         # 复制文件
         for tr in target_:
+            # if self.name=='安丁树':
+            #     print('dsv')
+            #     print('dsv')
+            #     print('dsv')
+            #     print('dsv')
+            #     print('dsv')
             for fp in self.__filepaths:
                 t = ((tr + get_filename_with_extension(fp)) if keep_origin_name
                      else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))
@@ -551,16 +559,16 @@ class DefPerson:
                     a, b = split_filename_and_extension(fp)
                     t = ((tr + a + f'({j})' + b) if keep_origin_name
                          else (tr + self.name + '-' + self.studentID + f'({j})' + b))
-                    if j > 20: break
+                    if j > 2: break  # 允许4个重复文件
                 copy_file(fp, t, True)
                 self.savepath = str(t)
                 sum += 1
-            # 获取关联文件
-            top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
-            if os.path.isdir(top_dir):
-                dst=tr + f"原始文件/{os.path.basename(top_dir)}/"
-                print(f'自"{top_dir}"复制文件到 "{dst}"')
-                copytree(top_dir, dst, dirs_exist_ok = True)
+                # 获取关联文件
+                top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
+                if os.path.isdir(top_dir):
+                    dst = tr + f"原始文件/{os.path.basename(top_dir)}/"
+                    print(f'自"{top_dir}"复制文件到 "{dst}"')
+                    safe_copytree(top_dir, dst, delay = 0.1)
         return sum
 
 

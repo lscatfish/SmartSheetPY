@@ -3,6 +3,7 @@ import copy
 import os
 import shutil
 from pathlib import Path
+import time
 
 
 def get_filename_with_extension(file_path):
@@ -116,23 +117,35 @@ def get_top_parent_dir_by(header: str | Path, start: str | Path):
         if is_same_path(header, higher):
             return str(this)
 
-def deduplication_path(paths:list[str]|list[Path])->list[str|Path]:
+
+def deduplication_paths(paths: list[str] | list[Path]) -> list[str | Path]:
     """对路径去重"""
     dedup = []
-    exclude=[]
-    if len(paths) == 0: return dedup
+    exclude = []
+    if len(paths) <= 1: return paths
     for i in range(len(paths)):
         if i in exclude: continue
-        for j in range(i+1, len(paths)):
-            pi=paths[i] if isinstance(paths[i], Path) else str(paths[i])
-            pj=paths[j] if isinstance(paths[j], Path) else str(paths[j])
-            if is_same_path(pi,pj):
-                dedup.append(paths[i])
+        dedup.append(paths[i])
+        for j in range(i + 1, len(paths)):
+            if is_same_path(paths[i], paths[j]):
                 exclude.append(j)
     return dedup
 
 
-
+def safe_copytree(src, dst, max_retries = 3, delay = 0.2):
+    for i in range(max_retries):
+        try:
+            shutil.copytree(src, dst, dirs_exist_ok = True)
+            return True
+        except PermissionError as e:
+            if i < max_retries - 1:
+                time.sleep(delay)  # 重试前延迟
+                continue
+            print(f'多次尝试复制"{src}"到"{dst}"失败：{e}')
+            return False
+        except Exception as e:
+            print(f'复制 "{src}" 失败：{e}')
+            return False
 
 
 class DefFolder:
