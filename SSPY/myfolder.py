@@ -107,11 +107,33 @@ def parent_dir(a: str | Path) -> tuple[str, str]:
 
 
 def get_top_parent_dir_by(header: str | Path, start: str | Path):
+    """
+    获取顶部路径
+    """
     higher = start
     while True:
         higher, this = parent_dir(higher)
         if is_same_path(header, higher):
             return str(this)
+
+def deduplication_path(paths:list[str]|list[Path])->list[str|Path]:
+    """对路径去重"""
+    dedup = []
+    exclude=[]
+    if len(paths) == 0: return dedup
+    for i in range(len(paths)):
+        if i in exclude: continue
+        for j in range(i+1, len(paths)):
+            pi=paths[i] if isinstance(paths[i], Path) else str(paths[i])
+            pj=paths[j] if isinstance(paths[j], Path) else str(paths[j])
+            if is_same_path(pi,pj):
+                dedup.append(paths[i])
+                exclude.append(j)
+    return dedup
+
+
+
+
 
 class DefFolder:
     def __init__(self, root_dir: str, if_print: bool = False, extensions: str | list = None):

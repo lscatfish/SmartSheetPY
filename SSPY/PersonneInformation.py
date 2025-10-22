@@ -541,8 +541,8 @@ class DefPerson:
         # 生成文件夹
         for tr in target_: create_nested_folders(tr, if_print = False)
         # 复制文件
-        for fp in self.__filepaths:
-            for tr in target_:
+        for tr in target_:
+            for fp in self.__filepaths:
                 t = ((tr + get_filename_with_extension(fp)) if keep_origin_name
                      else (tr + self.name + '-' + self.studentID + split_filename_and_extension(fp)[1]))
                 j = 0
@@ -555,15 +555,12 @@ class DefPerson:
                 copy_file(fp, t, True)
                 self.savepath = str(t)
                 sum += 1
-
-        # 获取关联文件
-        dirs = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, self.__filepaths[0])
-        if os.path.isdir(dirs):
-            print(f'自"{dirs}"复制到{parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}"}')
-            copytree(
-                dirs,
-                parent_dir(self.__savepaths[0])[0] + f"/原始文件/{os.path.basename(dirs)}",
-                dirs_exist_ok = True)
+            # 获取关联文件
+            top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
+            if os.path.isdir(top_dir):
+                dst=tr + f"原始文件/{os.path.basename(top_dir)}/"
+                print(f'自"{top_dir}"复制文件到 "{dst}"')
+                copytree(top_dir, dst, dirs_exist_ok = True)
         return sum
 
 
