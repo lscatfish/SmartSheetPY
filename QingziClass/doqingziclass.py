@@ -354,58 +354,66 @@ class DoQingziClass:
         return_value = None)
     def signforqcSheet(self):
         """青字班报名统计,per.ifsign表示是否报名班委"""
+        from SSPY.parseperson import renormalization
+
         unknown_paths: list[str] = []
         """未知（无法解析）的文件的路径"""
         cmtts_paths: list[str] = []
         """班委报名表的路径"""
         current_monitor = get_current_monitor()
+        """继承监视器"""
 
         @current_monitor.add_nested_function(return_value = ([], []))
         def __organize_files():
             """收集报名的各种文件"""
             if _exit(self.__stopFlag):  return [], []
             folder = DefFolder(gc.dir_INPUT_SIGNFORQC_)
-            pdf_paths = folder.get_paths_by(gc.extensions_PDF)
-            docx_paths = folder.get_paths_by(gc.extensions_DOCX)
-            return pdf_paths, docx_paths
+            pdfpaths = folder.get_paths_by(gc.extensions_PDF)
+            docxpaths = folder.get_paths_by(gc.extensions_DOCX)
+            imgpaths = folder.get_paths_by(gc.extensions_IMG)
+            return pdfpaths, docxpaths,imgpaths
 
         @current_monitor.add_nested_function(return_value = [])
         def __parse_docxs(paths: list[str]) -> list[DefPerson]:
             """解析docx文件"""
             if paths is None or (isinstance(paths, list) and len(paths)) == 0: return []
             nonlocal unknown_paths
-            from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
 
             try:
                 len_paths = len(paths)
                 connect_progress_default(len_paths)
                 i = 0
+
                 for p in paths:
                     if _exit(self.__stopFlag):  return []
                     i += 1
                     post_progress_default(i, len_paths,
                         f'解析DOCX文件 {p}')
                     word = DocxLoad(p)
-                    sh_per = word.get_sheet_without_enter('姓名')
-                    if sh_per is not None:
-                        per = trans_sheet_to_person(sh_per, inkey_as_sub = True)  # 启用模糊处理
-                        per.filepath = p
-                        if '自' in p:
-                            per.set_information('报名方式', '自主报名')
-                        elif '组织' in p:
-                            per.set_information('报名方式', '组织推荐')
-                        elif '重庆大学团校' in p:
-                            per.set_information('报名方式', '自主报名')
-                        else:
-                            # 不以最坏情况思考
-                            per.set_information('报名方式', '组织推荐')
+
+                    sh_per1 = word.get_sheet_without_enter('所任职务')
+                    """学员报名"""
+                    sh_per2 = word.get_sheet_without_enter('应聘岗位')
+                    """班委报名"""
+                    if sh_per1 is not None:
+                        per = renormalization(sh_per1, p, False)
+                        if per is None:
+                            unknown_paths.append(p)
+                            continue
                         pers.append(per)
+                        continue
+                    elif sh_per2 is not None:
+                        per = renormalization(sh_per2, p, True)
+                        if per is None:
+                            unknown_paths.append(p)
+                            continue
+                        pers.append(per)
+                        continue
                     else:
                         unknown_paths.append(p)
             finally:
                 disconnect_progress_default()
-
             return pers
 
         @current_monitor.add_nested_function(return_value = [])
@@ -414,7 +422,6 @@ class DoQingziClass:
             if paths is None or len(paths) == 0: return []
             nonlocal unknown_paths
             nonlocal cmtts_paths
-            from SSPY.parseperson import trans_sheet_to_person
             pers: list[DefPerson] = []
 
             try:
@@ -430,29 +437,20 @@ class DoQingziClass:
                     pdf = PdfLoad(p)
                     sh1 = pdf.get_sheet('应聘岗位', True)
                     sh2 = pdf.get_sheet('所任职务', True)
+
                     if sh1 is not None:
+                        per = renormalization(sh1, p, True)
+                        if per is None:
+                            unknown_paths.append(p)
+                            continue
                         cmtts_paths.append(p)
-                        per = trans_sheet_to_person(sh1, inkey_as_sub = True)
-                        per.ifsign = True  # 报名班委
-                        per.filepath = p
-                        if '自' in p:
-                            per.set_information('报名方式', '自主报名')
-                        else:
-                            per.set_information('报名方式', '组织推荐')
                         pers.append(per)
                         continue
                     elif sh2 is not None:
-                        per = trans_sheet_to_person(sh2, inkey_as_sub = True)
-                        per.filepath = p
-                        if '自' in p:
-                            per.set_information('报名方式', '自主报名')
-                        elif '组织' in p or '社团' in p or '学院' in p:
-                            per.set_information('报名方式', '组织推荐')
-                        elif '重庆大学团校' in p:
-                            per.set_information('报名方式', '自主报名')
-                        else:
-                            # 不以最坏情况思考
-                            per.set_information('报名方式', '组织推荐')
+                        per = renormalization(sh2, p, False)
+                        if per is None:
+                            unknown_paths.append(p)
+                            continue
                         pers.append(per)
                         continue
                     else:
@@ -462,22 +460,9 @@ class DoQingziClass:
 
             return pers
 
-        # @current_monitor.add_nested_function()
-        # def __merge(pers_pdf: list[DefPerson]):
-        #     """合并解析出的人员信息"""
-        #     if pers_pdf is None or len(pers_pdf) == 0: return
-        #     temps: list[DefPerson] = []
-        #     for p in pers_pdf:
-        #         p_all = self.search(p)  # 不启用push
-        #         if p_all is not None:
-        #             p_all.merge(p)
-        #         else:
-        #             temps.append(p)
-        #     self.__persons_all.extend(temps)
-
         @current_monitor.add_nested_function()
-        def __copy_classify():
-            """复制分类所有文件"""
+        def __copy_key_files():
+            """复制分类所有关键文件"""
             lens = len(self.__persons_all)
             connect_progress_default(lens)
             try:
@@ -485,9 +470,9 @@ class DoQingziClass:
                     post_progress_default(
                         i, lens,
                         "复制文件" + self.__persons_all[i].get_information(gc.chstrFilePath))
-                    self.__persons_all[i].copy_files(gc.dir_OUTPUT_SIGNFORQC_classmate)
+                    self.__persons_all[i].copy_keyfiles(gc.dir_OUTPUT_SIGNFORQC_classmate)
                     if self.__persons_all[i].ifsign:
-                        self.__persons_all[i].copy_files(gc.dir_OUTPUT_SIGNFORQC_committee)
+                        self.__persons_all[i].copy_keyfiles(gc.dir_OUTPUT_SIGNFORQC_committee)
             finally:
                 disconnect_progress_default()
 
@@ -521,6 +506,8 @@ class DoQingziClass:
             sheet: list[list[str]] = [copy.deepcopy(header)]
             sheet[0].append('是否报名班委')
 
+            print('正在制表...')
+
             cn_sheet: dict[str, list[list[str]]] = {}
             for per in self.__persons_all:
                 row = per.to_list(header)
@@ -534,6 +521,7 @@ class DoQingziClass:
                     cr = copy.deepcopy(row)
                     cr[-2] = trans_list_to_str(per.savepath)
                     cn_sheet[c].append(cr)
+
             # 生成序号
             sheet[0].insert(0, '序号')
             for i in range(1, len(sheet)):
@@ -551,6 +539,9 @@ class DoQingziClass:
             from openpyxl.styles import Alignment
             from SSPY.helperfunction import sort_table
             if sheet is None or len(sheet) == 0: return
+
+            print('正在保存表格...')
+
             sort_table(sheet, lambda a, b: a[0] < b[0], [0, ], [0, ])
             writer = XlsxWrite(
                 sheet = sheet,
@@ -563,12 +554,26 @@ class DoQingziClass:
             for c in cn_sheet:
                 XlsxWrite(
                     sheet = cn_sheet[c],
-                    path = gc.dir_OUTPUT_SIGNFORQC_classmate + c + f'/{c}报名.xlsx',
+                    path = gc.dir_OUTPUT_SIGNFORQC_classmate + f'/{c}报名.xlsx',
                     font_regular = gc.fontRegularSongSmall,
                     alignment = Alignment(vertical = 'center')
                 ).write()
 
-        pdf_paths, docx_paths = __organize_files()
+        @current_monitor.add_nested_function()
+        def __copy_unknown():
+            """复制未知文件"""
+            nonlocal unknown_paths
+            lens = len(unknown_paths)
+            connect_progress_default(lens)
+            try:
+                for i in range(lens):
+                    post_progress_default(i, lens, )
+                    copy_file(unknown_paths[i], gc.dir_OUTPUT_SIGNFORQC_classmate, if_print = True)
+            finally:
+                disconnect_progress_default()
+
+        pdf_paths, docx_paths,img_paths = __organize_files()
+        unknown_paths.extend(img_paths)
         pers_doc = __parse_docxs(docx_paths)
         if pers_doc is None or len(pers_doc) == 0:
             return
@@ -576,12 +581,10 @@ class DoQingziClass:
             self.__persons_all.extend(pers_doc)
         self.__persons_all.extend(__parse_pdfs(pdf_paths))
         self.deduplication()  # 去重
-        __copy_classify()
-        __save_all(*(__make_sheet_all()))
-
-        """处理错误"""
-        for p in unknown_paths:
-            copy_file(p, gc.dir_OUTPUT_SIGNFORQC_unknown, if_print = True)
+        __copy_key_files()
+        s, cs = __make_sheet_all()
+        __save_all(s, cs)
+        __copy_unknown()
 
     @monitor_variables(
         target_var = '__stopFlag',

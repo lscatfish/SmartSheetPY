@@ -504,16 +504,16 @@ class DefPerson:
             clss.append('unknown_class')
         return clss
 
-    def copy_files(
+    def copy_keyfiles(
         self,
-        main_root = gc.dir_OUTPUT_SIGNFORQC_classmate,
+        target_main_root = gc.dir_OUTPUT_SIGNFORQC_classmate,
         under_class_folder = True,
         gen_solofolder = True,
         keep_origin_name = False, ):
         """
-        复制文件
+        复制关键文件
         Args:
-            main_root :目标文件母目录
+            target_main_root :目标文件母目录
             under_class_folder:是否要放在对应的青字班文件夹下
             gen_solofolder:是否生成单独的一个文件夹
             keep_origin_name :是否保持原名称
@@ -535,7 +535,19 @@ class DefPerson:
         if under_class_folder:
             classnames = self.gen_classes()
             for i in range(len(classnames)):
-                target_.append(main_root + '/' + classnames[i] + '/')
+                base__ = target_main_root + '/' + classnames[i] + '/'
+                target_.append(base__)
+
+                for fp in self.__filepaths:
+                    top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
+                    if os.path.isdir(top_dir):
+                        dst = base__ + f"原始文件/{os.path.basename(top_dir)}/"
+                        print(f'自"{top_dir}"复制文件到 "{dst}"')
+                        safe_copytree(top_dir, dst, delay = 0.1)
+                    elif os.path.isfile(top_dir):
+                        dst = base__ + f"原始文件/"
+                        copy_file(top_dir, dst, if_print = True)
+
         if gen_solofolder:
             for i in range(len(target_)):
                 target_[i] = (target_[i] + self.get_information('报名方式') + '-'
@@ -553,17 +565,26 @@ class DefPerson:
                     a, b = split_filename_and_extension(fp)
                     t = ((tr + a + f'({j})' + b) if keep_origin_name
                          else (tr + self.name + '-' + self.studentID + f'({j})' + b))
-                    if j > 2: break  # 允许4个重复文件
+                    if j > 3: break  # 允许5个重复文件
                 copy_file(fp, t, True)
                 self.savepath = str(t)
                 sum += 1
-                # 获取关联文件
-                top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
-                if os.path.isdir(top_dir):
-                    dst = tr + f"原始文件/{os.path.basename(top_dir)}/"
-                    print(f'自"{top_dir}"复制文件到 "{dst}"')
-                    safe_copytree(top_dir, dst, delay = 0.1)
+                # # 获取关联文件
+                # top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
+                # if os.path.isdir(top_dir):
+                #     dst = tr + f"原始文件/{os.path.basename(top_dir)}/"
+                #     print(f'自"{top_dir}"复制文件到 "{dst}"')
+                #     safe_copytree(top_dir, dst, delay = 0.1)
         return sum
+
+    def copy_linking_files(self, src_top_dir = gc.dir_INPUT_SIGNFORQC_):
+        """
+        复制关联文件
+        Args:
+            src_top_dir:源文件的顶级文件夹
+            # target_dir:目标文件夹
+        """
+        pass
 
 
 def is_studentID(s: str):

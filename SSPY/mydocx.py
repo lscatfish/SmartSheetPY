@@ -226,7 +226,7 @@ class DocxLoad:
 
     def get_sheet_without_enter(self, index: int | str = None) -> list[list] | None:
         """从文件中按照index内容读取一个表格"""
-        if self.__sheets is None: return None
+        if self.__sheets is None or len(self.__sheets) == 0: return None
         from .helperfunction import clean_enter
         sh = self.get_sheet(index = index)
         if sh is None:
