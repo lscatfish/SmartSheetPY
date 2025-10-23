@@ -568,7 +568,7 @@ class DoQingziClass:
             try:
                 for i in range(lens):
                     post_progress_default(i, lens, )
-                    copy_file(unknown_paths[i], gc.dir_OUTPUT_SIGNFORQC_classmate, if_print = True)
+                    copy_file(unknown_paths[i], gc.dir_OUTPUT_SIGNFORQC_unknown, if_print = True)
             finally:
                 disconnect_progress_default()
 

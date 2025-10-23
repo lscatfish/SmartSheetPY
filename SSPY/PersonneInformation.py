@@ -542,10 +542,12 @@ class DefPerson:
                     top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
                     if os.path.isdir(top_dir):
                         dst = base__ + f"原始文件/{os.path.basename(top_dir)}/"
+                        create_nested_folders(dst,if_print = False)
                         print(f'自"{top_dir}"复制文件到 "{dst}"')
                         safe_copytree(top_dir, dst, delay = 0.1)
                     elif os.path.isfile(top_dir):
                         dst = base__ + f"原始文件/"
+                        create_nested_folders(dst,if_print = False)
                         copy_file(top_dir, dst, if_print = True)
 
         if gen_solofolder:
