@@ -1,4 +1,5 @@
 """历史搜索记录"""
+import copy
 from copy import deepcopy
 
 
@@ -14,7 +15,7 @@ class ASearch:
         """
         self.__target = target
         self.__root = root
-        self.__rst = rst
+        self.__rst = copy.deepcopy(rst)
 
     @property
     def target(self):
@@ -85,7 +86,7 @@ class HistorySearch:
             from SSPY.globalconstants import GlobalConstants as gc
             from SSPY.myxlsx import XlsxWrite
             from SSPY.myfolder import create_nested_folders
-            create_nested_folders('./output/')  # 确保文件夹存在
+            create_nested_folders('./output/', if_print = False)  # 确保文件夹存在
 
             from datetime import datetime
             current_time = datetime.now()

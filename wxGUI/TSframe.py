@@ -7,7 +7,6 @@ import wx
 from .base.baseframe import BaseFrame
 from wxGUI.communitor.text_hub import postText
 from .hijack.hijack_sysstd import WxTextCtrlStdout
-from ToolSearching.history import HistorySearch, ASearch
 
 
 class TSMainFrame(BaseFrame):
@@ -89,8 +88,6 @@ class TSMainFrame(BaseFrame):
         from ToolSearching.core import SearchingTool
         self.__searching_tool = SearchingTool()  # 示例
 
-        self.__history = HistorySearch()
-
         self.__if_preload = False  # 是否被预加载了
         self.btn_find.Disable()
 
@@ -160,24 +157,18 @@ class TSMainFrame(BaseFrame):
     def TaskFind(self):
         """运行搜索任务"""
         rst: list[tuple] = []
+        """搜索结果"""
         if self.target_text == '':
             postText('请输入搜索值！！！\n\n', 'red', False)
             return
-        rst = self.__history.get_history(self.target_text, self.target_path, rst)
-        if len(rst) == 0:
-            self.__searching_tool.find(self.target_text, rst)
-        else:
-            for line in rst:
-                postText(f'原文:  {line[0]}', ptime = False)
-                postText(f'路径:  {line[1]}', ptime = False)
-            return
+        self.__searching_tool.find(self.target_text, self.target_path, rst)
         if len(rst) == 0:
             postText(f'搜索目标“{self.target_text}”未找到\n\n', 'yellow', False)
             return
         for line in rst:
             postText(f'原文:  {line[0]}', ptime = False)
             postText(f'路径:  {line[1]}', ptime = False)
-        self.__history.push_back(ASearch(self.target_text, self.target_path, rst))
+            postText('', ptime = False)  # 换行
 
     def on_interrupt(self, event):
         """中断函数"""
@@ -186,7 +177,7 @@ class TSMainFrame(BaseFrame):
     def on_save(self, event):
         """运行保存修改结果"""
         postText('正在保存中......', ptime = False)
-        wx.CallAfter(self.__history.save_all)
+        wx.CallAfter(self.__searching_tool.save)
         postText('保存完毕......', color = 'green', ptime = False)
 
     def DisableButtons(self):

@@ -7,6 +7,7 @@ import time
 from SSPY.datastorage import *
 from SSPY.helperfunction import _exit
 from SSPY.tracker.core import monitor_variables, VariableType
+from ToolSearching.history import HistorySearch, ASearch
 
 
 class SearchingTool:
@@ -20,6 +21,7 @@ class SearchingTool:
         self.__pdf: list[str] = []
         self.__xlsx: list[str] = []
         self.__datas: list[BaseDataStorage | DOCXDataStorage | PDFDataStorage | XLSXDataStorage] = []
+        self.__history = HistorySearch()
         self.__stopFlag = None
         self.lock = threading.Lock()
         """中止event"""
@@ -169,14 +171,27 @@ class SearchingTool:
         self.__xlsx.clear()
         self.__datas.clear()
 
-    def find(self, target: str, rst: list):
+    def find(self, target: str, root: str, rst: list):
         """
         搜索所有
         Args:
             target:搜索目标
+            root:根目录
             rst:搜索结果
         """
         if isinstance(target, str) and target == '':
             return
+        if root == '': return
+        rst.extend(self.__history.get_history(target, root, []))
+        if len(rst) > 0: return
+
         for d in self.__datas:
             rst.extend(d.find_value(target))
+
+        if len(rst) > 0:
+            self.__history.push_back(ASearch(target, root, rst))
+
+    def save(self,):
+        """保存"""
+        self.__history.save_all()
+        print('保存完毕')
