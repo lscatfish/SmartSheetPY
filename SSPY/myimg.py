@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """此文件用于解析签到照片"""
 import copy
 import os

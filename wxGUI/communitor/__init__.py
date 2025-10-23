@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # msg_comm/__init__.py
 from .core import register_main_process, msg  # 暴露API，简化导入
 import threading

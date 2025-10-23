@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 PaddleX 官方模型下载目录劫持器
 author : lscatfish

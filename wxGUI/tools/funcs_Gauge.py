@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """针对进度条的操做"""
 import wx
 

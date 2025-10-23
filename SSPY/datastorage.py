@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """数据储存类"""
 from copy import deepcopy
 from enum import Enum, unique

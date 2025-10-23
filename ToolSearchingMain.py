@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """搜索器入口"""
 # import sys, os, importlib.util, subprocess
 #

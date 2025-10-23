@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """共享变量访问器"""
 import inspect
 import threading

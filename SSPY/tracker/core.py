@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 import sys
-import inspect
 from enum import Enum
 from types import FunctionType
 import threading

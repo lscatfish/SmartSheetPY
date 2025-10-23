@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """模糊搜索模块"""
 import copy
 from enum import Enum, unique

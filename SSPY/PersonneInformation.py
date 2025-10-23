@@ -1,4 +1,5 @@
-﻿import copy
+# -*- coding: utf-8 -*-
+import copy
 import os.path
 from dis import name
 from functools import singledispatchmethod

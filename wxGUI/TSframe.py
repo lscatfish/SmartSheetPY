@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """搜索器的界面"""
 import os
 import sys

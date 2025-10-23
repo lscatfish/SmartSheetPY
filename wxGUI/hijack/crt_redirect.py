@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # crt_redirect.py
 """
 劫持 Windows C 运行时 stderr，使其输出重定向到 wx 消息窗口
