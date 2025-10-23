@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from openpyxl.styles import Font, Side, Border, Alignment
 
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 _appender = None  # 全局变量：存 (窗口对象, 方法)
 

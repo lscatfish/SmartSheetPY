@@ -1,4 +1,5 @@
-﻿"""入口文件"""
+# -*- coding: utf-8 -*-
+"""入口文件"""
 
 import sys, os, importlib.util, subprocess
 

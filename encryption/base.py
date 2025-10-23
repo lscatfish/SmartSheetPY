@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import yaml
 import os
 from cryptography.fernet import Fernet

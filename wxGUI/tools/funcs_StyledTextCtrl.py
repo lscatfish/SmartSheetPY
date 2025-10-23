@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx
 import time
 from wx.stc import StyledTextCtrl

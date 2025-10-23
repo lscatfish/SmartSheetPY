@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """请严格遵守互联网针对机器人的条例"""
 
 import imaplib

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """历史搜索记录"""
 import copy
 from copy import deepcopy

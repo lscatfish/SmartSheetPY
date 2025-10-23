@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """此文件用于解析遍历文件夹以及拷贝文件"""
 import copy
 import os

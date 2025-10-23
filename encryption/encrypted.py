@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from encryption.base import YamlEncryptor
 
 

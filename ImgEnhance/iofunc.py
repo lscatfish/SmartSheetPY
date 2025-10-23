@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """输入输出功能"""
 import os
 

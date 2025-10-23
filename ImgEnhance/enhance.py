@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """增强效果"""
 import dataclasses
 from abc import abstractmethod, ABC

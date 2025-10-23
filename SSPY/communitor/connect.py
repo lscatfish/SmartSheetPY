@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """链接器与解除链接器"""
 import time
 
