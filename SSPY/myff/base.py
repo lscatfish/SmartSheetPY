@@ -22,7 +22,7 @@ def get_filename_with_extension(file_path):
     return os.path.basename(file_path)
 
 
-def split_filename_and_extension(file_path):
+def get_purename_extension(file_path):
     """
     从文件路径中获取不带扩展名的文件名
     Parameters:
@@ -34,7 +34,7 @@ def split_filename_and_extension(file_path):
     full_filename = os.path.basename(file_path)
     name_part, ext_part = os.path.splitext(full_filename)
 
-    return (name_part, ext_part)
+    return name_part, ext_part
 
 
 def create_nested_folders(
@@ -96,8 +96,8 @@ def copy_file(source_path: str, target_path: str, if_print: bool = False) -> boo
 
 def is_same_path(a: str | Path, b: str | Path) -> bool:
     """判断是否是同一个路径"""
-    p1 = os.path.abspath(str(a))
-    p2 = os.path.abspath(str(b))
+    p1 = os.path.abspath(a)
+    p2 = os.path.abspath(b)
     return p1 == p2
 
 
@@ -182,7 +182,7 @@ def calculate_file_hash(file_path, algorithm = 'md5'):
 class BaseFile:
     """一个文件对象"""
 
-    def __init__(self, path: str | Path, base_dir: str = BASE_DIR, chash = True):
+    def __init__(self, path: str | Path, base_dir: str | Path = BASE_DIR, chash = True):
         """
         输入一个文件路径
         Args:
@@ -190,9 +190,9 @@ class BaseFile:
             base_dir:程序运行的默认路径（绝对）
             chash:是否计算哈希值
         """
-        self.relative_path = None
+        self._relative_path = None
         """相对路径"""
-        self.absolute_path = None
+        self._absolute_path = None
         """绝对路径"""
         self.__hash = None
         """文件的哈希值"""
@@ -208,9 +208,9 @@ class BaseFile:
         if not os.path.isfile(path):
             raise Exception(f'“{path}”不是文件')
             # return
-        self.absolute_path = os.path.abspath(str(path))
-        self.relative_path = os.path.relpath(self.absolute_path, base_dir)
-        self.__filename = os.path.basename(self.absolute_path)
+        self._absolute_path = os.path.abspath(path)
+        self._relative_path = os.path.relpath(self._absolute_path, str(base_dir))
+        self.__filename = os.path.basename(self._absolute_path)
         self.__purename, self.__extension = os.path.splitext(self.__filename)
         if chash:
             self.__hash = self._hash()
@@ -221,13 +221,13 @@ class BaseFile:
         # 分块读取文件并更新哈希
         block_size = 65536  # 64KB块大小，可根据需求调整
         try:
-            with open(self.absolute_path, 'rb') as f:  # 二进制模式读取，避免编码问题
+            with open(self._absolute_path, 'rb') as f:  # 二进制模式读取，避免编码问题
                 while chunk := f.read(block_size):  # 循环读取块
                     hash_obj.update(chunk)
         except FileNotFoundError:
-            raise FileNotFoundError(f"文件不存在: {self.absolute_path}")
+            raise FileNotFoundError(f"文件不存在: {self._absolute_path}")
         except PermissionError:
-            raise PermissionError(f"没有权限读取文件: {self.absolute_path}")
+            raise PermissionError(f"没有权限读取文件: {self._absolute_path}")
         except Exception as e:
             raise Exception(f"{e}")
 
@@ -242,8 +242,8 @@ class BaseFile:
 
     def is_same_path(self, other: 'BaseFile') -> bool:
         """是否是相同的路径"""
-        if self.absolute_path is None or other.absolute_path is None: return False
-        return other.absolute_path == self.absolute_path
+        if self._absolute_path is None or other._absolute_path is None: return False
+        return other._absolute_path == self._absolute_path
 
     @property
     def filename(self) -> str:
@@ -267,7 +267,23 @@ class BaseFile:
 
     @property
     def purename_extension(self):
+        """纯文件名，不带后缀"""
         return self.__purename, self.__extension
+
+    @property
+    def absolute_path(self) -> str:
+        return self._absolute_path
+
+    @property
+    def relative_path(self, base_dir: str | Path = None) -> str:
+        """
+        Args:
+            base_dir:基础路径
+        """
+        if base_dir is None:
+            return self._relative_path
+        else:
+            return os.path.relpath(self._absolute_path, str(base_dir))
 
     def copy_to(self, dist: str | Path, if_print = False):
         """
@@ -278,16 +294,16 @@ class BaseFile:
         """
         try:
             # 复制文件（保留元数据）
-            shutil.copy2(self.absolute_path, dist)
+            shutil.copy2(self._absolute_path, dist)
 
             # 输出成功信息
             if os.path.isdir(dist):
                 # 目标是目录时，拼接完整目标路径
-                target_full_path = os.path.join(dist, self.__filename)
+                target_full_path = os.path.join(str(dist), self.__filename)
             else:
-                target_full_path = dist
+                target_full_path = str(dist)
             if if_print:
-                print(f"文件复制成功：{self.relative_path} ---> {target_full_path}")
+                print(f"文件复制成功：{self._relative_path} ---> {target_full_path}")
             return True
 
         except Exception as e:
@@ -298,7 +314,7 @@ class BaseFile:
     def parent_dir(self) -> str:
         """获取文件的上级路径"""
         try:
-            return parent_dir(self.absolute_path)[0]
+            return parent_dir(self._absolute_path)[0]
         except Exception as e:
             raise e
 
@@ -308,4 +324,42 @@ class BaseFile:
         Args:
             top_dir:顶级文件夹
         """
-        return get_top_parent_dir_by(top_dir, self.absolute_path)
+        return get_top_parent_dir_by(top_dir, self._absolute_path)
+
+
+class BaseFolder:
+    """基础的文件夹"""
+
+    def __init__(self, root_dir: str | Path):
+        """
+        Args:
+            root_dir:根目录
+            # base_dir:基于基础目录
+        """
+        self._root_dir = os.path.abspath(root_dir)
+        """根地址"""
+        self.__children: list['BaseFolder'] | None = self._children
+        """子文件夹/子文件"""
+        self.__all_filepaths: list[str] = []
+        """_root_dir同源下的文件"""
+
+    @property
+    def _children(self):
+        """获取子文件/路径"""
+        ch: list['BaseFolder'] = []
+
+        if os.path.isfile(self._root_dir):
+            self.__all_filepaths.append(self._root_dir)
+            return None
+        str_ch = os.listdir(self._root_dir)
+        if len(str_ch) == 0: return None
+        for pn in str_ch:
+            bf = BaseFolder(f"{self._root_dir}/{pn}")
+            self.__all_filepaths.extend(bf.all_filepaths)
+            ch.append(bf)
+        return ch
+
+    @property
+    def all_filepaths(self):
+        """输出此文件夹下的所有的文件，包含嵌套"""
+        return self.__all_filepaths
