@@ -4,7 +4,7 @@ import shutil
 import time
 from pathlib import Path
 
-from SSPY.myfile import BASE_DIR
+from SSPY.myff import BASE_DIR
 
 import hashlib
 
@@ -151,12 +151,10 @@ def safe_copytree(src, dst, max_retries = 3, delay = 0.2):
 def calculate_file_hash(file_path, algorithm = 'md5'):
     """
     计算文件的哈希值
-
-    参数:
+    Args:
         file_path: 文件的路径（绝对路径或相对路径）
         algorithm: 哈希算法，支持'md5'、'sha1'、'sha256'、'sha512'等
-
-    返回:
+    Returns:
         哈希值的十六进制字符串
     """
     # 验证算法是否支持
@@ -253,7 +251,6 @@ class BaseFile:
         从文件路径中获取带扩展名的文件名
         文件名称（文件名.后缀）
         """
-
         return self.__filename
 
     @property
@@ -273,4 +270,42 @@ class BaseFile:
         return self.__purename, self.__extension
 
     def copy_to(self, dist: str | Path, if_print = False):
-        """复制文件到"""
+        """
+        复制文件到dist
+        Args:
+            dist:输入的路径
+            if_print:是否打印
+        """
+        try:
+            # 复制文件（保留元数据）
+            shutil.copy2(self.absolute_path, dist)
+
+            # 输出成功信息
+            if os.path.isdir(dist):
+                # 目标是目录时，拼接完整目标路径
+                target_full_path = os.path.join(dist, self.__filename)
+            else:
+                target_full_path = dist
+            if if_print:
+                print(f"文件复制成功：{self.relative_path} ---> {target_full_path}")
+            return True
+
+        except Exception as e:
+            print(f"文件复制失败：{str(e)}")
+            return False
+
+    @property
+    def parent_dir(self) -> str:
+        """获取文件的上级路径"""
+        try:
+            return parent_dir(self.absolute_path)[0]
+        except Exception as e:
+            raise e
+
+    def top_parent_dir(self, top_dir: str | Path) -> str:
+        """
+        获取顶级的文件路径
+        Args:
+            top_dir:顶级文件夹
+        """
+        return get_top_parent_dir_by(top_dir, self.absolute_path)
