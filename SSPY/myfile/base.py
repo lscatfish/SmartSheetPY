@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
-"""此文件用于解析遍历文件夹以及拷贝文件"""
-import copy
-import os
+"""标准文件控制库"""
+import os.path
 import shutil
-from pathlib import Path
 import time
+from pathlib import Path
+
+from SSPY.myfile import BASE_DIR
+
+import hashlib
 
 
 def get_filename_with_extension(file_path):
@@ -94,11 +96,9 @@ def copy_file(source_path: str, target_path: str, if_print: bool = False) -> boo
 
 def is_same_path(a: str | Path, b: str | Path) -> bool:
     """判断是否是同一个路径"""
-    p1 = Path(a) if isinstance(a, str) else a
-    p2 = Path(b) if isinstance(b, str) else b
-    rp1 = p1.resolve()
-    rp2 = p2.resolve()
-    return rp1 == rp2
+    p1 = os.path.abspath(str(a))
+    p2 = os.path.abspath(str(b))
+    return p1 == p2
 
 
 def parent_dir(a: str | Path) -> tuple[str, str]:
@@ -148,110 +148,129 @@ def safe_copytree(src, dst, max_retries = 3, delay = 0.2):
             return False
 
 
-class DefFolder:
-    def __init__(self, root_dir: str, if_print: bool = False, extensions: str | list = None):
+def calculate_file_hash(file_path, algorithm = 'md5'):
+    """
+    计算文件的哈希值
+
+    参数:
+        file_path: 文件的路径（绝对路径或相对路径）
+        algorithm: 哈希算法，支持'md5'、'sha1'、'sha256'、'sha512'等
+
+    返回:
+        哈希值的十六进制字符串
+    """
+    # 验证算法是否支持
+    if algorithm not in hashlib.algorithms_available:
+        raise ValueError(f"不支持的哈希算法: {algorithm}")
+
+    # 创建哈希对象
+    hash_obj = hashlib.new(algorithm)
+
+    # 分块读取文件并更新哈希
+    block_size = 65536  # 64KB块大小，可根据需求调整
+    try:
+        with open(file_path, 'rb') as f:  # 二进制模式读取，避免编码问题
+            while chunk := f.read(block_size):  # 循环读取块
+                hash_obj.update(chunk)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"文件不存在: {file_path}")
+    except PermissionError:
+        raise PermissionError(f"没有权限读取文件: {file_path}")
+
+    # 返回十六进制哈希值
+    return hash_obj.hexdigest()
+
+
+class BaseFile:
+    """一个文件对象"""
+
+    def __init__(self, path: str | Path, base_dir: str = BASE_DIR, chash = True):
         """
+        输入一个文件路径
         Args:
-            root_dir:目标文件夹路径
-            if_print:是否打印提示
-            extensions:按照给定后缀提取文件
+            path:目标文件
+            base_dir:程序运行的默认路径（绝对）
+            chash:是否计算哈希值
         """
-        self.__root_dir = root_dir
-        self.__if_print = if_print
-        if self.__if_print: print('加载文件夹 \"' + self.__root_dir + '\"')
-        self.__paths = self.collect_file_paths(self.__root_dir, if_print = self.__if_print)
-        if extensions is not None:
-            self.__paths = self.get_paths_by(extensions)
-        if self.__if_print: print('Done!')
+        self.relative_path = None
+        """相对路径"""
+        self.absolute_path = None
+        """绝对路径"""
+        self.__hash = None
+        """文件的哈希值"""
+        self.__purename = None
+        """纯文件名字，无后缀"""
+        self.__filename = None
+        """文件名字"""
+        self.__extension = None
+        """文件后缀"""
+        if not os.path.exists(path):
+            raise Exception(f'“{path}”不存在')
+            # return
+        if not os.path.isfile(path):
+            raise Exception(f'“{path}”不是文件')
+            # return
+        self.absolute_path = os.path.abspath(str(path))
+        self.relative_path = os.path.relpath(self.absolute_path, base_dir)
+        self.__filename = os.path.basename(self.absolute_path)
+        self.__purename, self.__extension = os.path.splitext(self.__filename)
+        if chash:
+            self.__hash = self._hash()
 
-    @staticmethod
-    def collect_file_paths(root_dir: str, if_print: bool = False) -> list[str]:
+    def _hash(self) -> str:
+        """计算哈希值"""
+        hash_obj = hashlib.new('md5')
+        # 分块读取文件并更新哈希
+        block_size = 65536  # 64KB块大小，可根据需求调整
+        try:
+            with open(self.absolute_path, 'rb') as f:  # 二进制模式读取，避免编码问题
+                while chunk := f.read(block_size):  # 循环读取块
+                    hash_obj.update(chunk)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"文件不存在: {self.absolute_path}")
+        except PermissionError:
+            raise PermissionError(f"没有权限读取文件: {self.absolute_path}")
+        except Exception as e:
+            raise Exception(f"{e}")
+
+        # 返回十六进制哈希值
+        return hash_obj.hexdigest()
+
+    def is_same(self, other: 'BaseFile') -> bool:
+        """是否相同"""
+        if self.is_same_path(other): return True
+        if self.__hash is None or other.__hash is None: return False
+        return self.__hash == other.__hash
+
+    def is_same_path(self, other: 'BaseFile') -> bool:
+        """是否是相同的路径"""
+        if self.absolute_path is None or other.absolute_path is None: return False
+        return other.absolute_path == self.absolute_path
+
+    @property
+    def filename(self) -> str:
         """
-        递归遍历文件夹及其子目录，收集所有文件的绝对路径
-        排除预加载文件如~$xxx和__MACOSX文件夹
-        Parameters:
-            if_print: 是否打印检测到的文件
-            root_dir: 要遍历的根文件夹路径
-        Returns:
-            包含所有符合条件的文件绝对路径的列表
+        从文件路径中获取带扩展名的文件名
+        文件名称（文件名.后缀）
         """
-        file_paths = []
 
-        # 定义需要排除的文件名模式
-        def is_excluded_file(filename: str) -> bool:
-            # 排除以 ~$ 开头的文件（如Office预加载文件）
-            if filename.startswith("~$"):
-                return True
-            # 排除以 __M 开头的文件
-            if filename.startswith("__M"):
-                return True
-            # 排除编辑器临时文件（#开头/结尾、.swp、.swo等）
-            if filename.startswith("#") or filename.endswith("#") or filename.endswith((".swp", ".swo")):
-                return True
-            # 排除临时备份文件
-            if filename.endswith(".bak") or (filename.startswith("~") and not filename.startswith("~$")):
-                return True
-            return False
-
-        # 遍历目录时排除__MACOSX文件夹
-        for root, dirs, files in os.walk(root_dir):
-            # 检查并移除__MACOSX文件夹（修改dirs列表会影响后续遍历）
-            if "__MACOSX" in dirs:
-                dirs.remove("__MACOSX")  # 从遍历列表中移除，后续不会递归进入
-
-            # 过滤并收集文件
-            for file in files:
-                if is_excluded_file(file):
-                    continue  # 跳过不符合条件的文件
-                file_path = os.path.join(root, file)
-                if if_print:
-                    print(file_path)
-                file_paths.append(file_path)
-
-        return file_paths
+        return self.__filename
 
     @property
-    def paths(self):
-        return copy.deepcopy(self.__paths)
+    def purename(self) -> str:
+        """
+        纯名字
+        """
+        return self.__purename
 
     @property
-    def root_dir(self):
-        return self.__root_dir
+    def extension(self) -> str:
+        """文件后缀"""
+        return self.__extension
 
     @property
-    def filenames(self):
-        filenames = []
-        for file in self.paths:
-            filenames.append(get_filename_with_extension(file))
-        return filenames
+    def purename_extension(self):
+        return self.__purename, self.__extension
 
-    @property
-    def pure_filenames(self):
-        filenames: list[str] = []
-        for file in self.paths:
-            filenames.append(split_filename_and_extension(file)[0])
-        return filenames
-
-    def get_paths_by(self, extensions: list | str) -> list[str]:
-        files = []
-        extn = extensions if isinstance(extensions, list) else [extensions, ]
-        for file in self.paths:
-            for ext in extn:
-                if file.endswith(ext):
-                    files.append(file)
-                    break
-        return files
-
-    def get_filenames_by(self, extensions: list | str) -> list[str]:
-        filenames = []
-        ps = self.get_paths_by(extensions)
-        for file in ps:
-            filenames.append(get_filename_with_extension(file))
-        return filenames
-
-    def get_pure_filenames_by(self, extensions: list | str) -> list[str]:
-        pure_filenames = []
-        ps = self.get_paths_by(extensions)
-        for file in ps:
-            pure_filenames.append(split_filename_and_extension(file)[0])
-        return pure_filenames
+    def copy_to(self, dist: str | Path, if_print = False):
+        """复制文件到"""
