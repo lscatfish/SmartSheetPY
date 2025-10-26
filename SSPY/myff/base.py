@@ -107,7 +107,7 @@ def parent_dir(a: str | Path) -> tuple[str, str]:
     return str(p.parent), str(a)
 
 
-def get_top_parent_dir_by(header: str | Path, start: str | Path):
+def get_top_parent_dir(header: str | Path, start: str | Path):
     """
     获取顶部路径
     """
@@ -132,7 +132,7 @@ def deduplication_paths(paths: list[str] | list[Path]) -> list[str | Path]:
     return dedup
 
 
-def safe_copytree(src, dst, max_retries = 3, delay = 0.2):
+def safe_copytree(src, dst, max_retries = 3, delay = 0.1):
     for i in range(max_retries):
         try:
             shutil.copytree(src, dst, dirs_exist_ok = True)
@@ -230,7 +230,6 @@ class BaseFile:
             raise PermissionError(f"没有权限读取文件: {self._absolute_path}")
         except Exception as e:
             raise Exception(f"{e}")
-
         # 返回十六进制哈希值
         return hash_obj.hexdigest()
 
@@ -324,7 +323,7 @@ class BaseFile:
         Args:
             top_dir:顶级文件夹
         """
-        return get_top_parent_dir_by(top_dir, self._absolute_path)
+        return get_top_parent_dir(top_dir, self._absolute_path)
 
 
 class BaseFolder:
@@ -363,3 +362,11 @@ class BaseFolder:
     def all_filepaths(self):
         """输出此文件夹下的所有的文件，包含嵌套"""
         return self.__all_filepaths
+
+    def is_in(self,path: str) -> bool:
+        """
+        Args:
+
+        """
+
+
