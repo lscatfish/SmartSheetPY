@@ -32,3 +32,18 @@ def postText(msg: str, color: str = 'default', ptime = True):
     else:
         warnings.warn('SSPY的消息发送函数postText必须按照 (str,str,bool) 的格式', RuntimeWarning)
     return None
+
+def mprint(msg: str, color: str = 'default', ptime = False):
+    """标准输出函数"""
+    """适配wxGUI"""
+    global _response_fun
+    if _response_fun is None:
+        match color:
+            case 'default':print(msg)
+            case 'red':print(f"\033[31m{msg}\033[0m")
+            case 'green':print(f"\033[32m{msg}\033[0m")
+            case 'yellow':print(f"\033[33m{msg}\033[0m")
+            case _: print(msg)
+        return
+    else:
+        postText(msg, color, ptime)

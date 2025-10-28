@@ -1,14 +1,13 @@
-"""标准文件控制库"""
+﻿"""标准文件控制库"""
 import copy
 import os.path
 import shutil
 import time
-from abc import abstractclassmethod
-from pathlib import Path
-
-from SSPY.myff import BASE_DIR
-
 import hashlib
+from os import PathLike
+
+from pathlib import Path
+from SSPY.myff import BASE_DIR
 
 
 def get_filename_with_extension(file_path):
@@ -135,6 +134,7 @@ def deduplication_paths(paths: list[str] | list[Path]) -> list[str | Path]:
 
 
 def safe_copytree(src, dst, max_retries = 3, delay = 0.1):
+    from SSPY.communitor import mprint
     for i in range(max_retries):
         try:
             shutil.copytree(src, dst, dirs_exist_ok = True)
@@ -143,10 +143,10 @@ def safe_copytree(src, dst, max_retries = 3, delay = 0.1):
             if i < max_retries - 1:
                 time.sleep(delay)  # 重试前延迟
                 continue
-            print(f'多次尝试复制"{src}"到"{dst}"失败：{e}')
+            mprint(f'多次尝试复制"{src}"到"{dst}"失败：{e}', 'red')
             return False
         except Exception as e:
-            print(f'复制 "{src}" 失败：{e}')
+            mprint(f'复制 "{src}" 失败：{e}', 'red')
             return False
 
 
@@ -271,7 +271,7 @@ class BaseFile:
 
     @property
     def absolute_path(self) -> str:
-        """  绝对路径 """
+        """绝对路径"""
         return self._absolute_path
 
     @property
@@ -286,23 +286,23 @@ class BaseFile:
         else:
             return os.path.relpath(self._absolute_path, str(base_dir))
 
-    def copy_to(self, dist: str | Path, if_print = False):
+    def copy_to(self, dist: str | Path, rename: str = None, if_print = False):
         """
         复制文件到dist
         Args:
             dist:输入的路径
+            rename:重命名文件，只有当dist为path时才有效
             if_print:是否打印
         """
         try:
-            # 复制文件（保留元数据）
-            shutil.copy2(self._absolute_path, dist)
-
             # 输出成功信息
             if os.path.isdir(dist):
                 # 目标是目录时，拼接完整目标路径
-                target_full_path = os.path.join(str(dist), self.__filename)
+                target_full_path = os.path.join(str(dist), self.__filename if rename is None else rename)
             else:
                 target_full_path = str(dist)
+            # 复制文件（保留元数据）
+            shutil.copy2(self._absolute_path, target_full_path)
             if if_print:
                 print(f"文件复制成功：{self._relative_path} ---> {target_full_path}")
             return True
@@ -331,22 +331,29 @@ class BaseFile:
 class BaseFolder:
     """基础的文件夹"""
 
-    def __init__(self, root_dir: str | Path):
+    def __init__(
+        self,
+        root_dir: str | Path,
+        extensions: list[str] | tuple[str] | None = None):
         """
         Args:
             root_dir:根目录
+            extensions:限制后缀名称
             # base_dir:基于基础目录
         """
         self._root_dir = os.path.abspath(root_dir)
         """根地址"""
         self.__all_filepaths: list[str] = []
         """_root_dir同源下的文件"""
-        self.__children: list['BaseFolder'] | None = self._get_children
+        self.__children: list['BaseFolder'] | None = self._get_children(extensions)
         """子文件夹/子文件"""
 
-    @property
-    def _get_children(self):
-        """获取子文件/路径"""
+    def _get_children(self, extensions: list[str] | tuple[str] | None) -> list['BaseFolder'] | None:
+        """
+        获取子文件/路径
+        This fucking function is so stupid!
+        But it works well!
+        """
         ch: list['BaseFolder'] = []
         self.__all_filepaths.clear()
         if os.path.isfile(self._root_dir):
@@ -355,6 +362,10 @@ class BaseFolder:
         str_ch = os.listdir(self._root_dir)
         if len(str_ch) == 0: return None
         for pn in str_ch:
+            if pn.startswith(("~$", "__M", "._")) or (pn.startswith("#") and pn.endswith("#")):
+                continue
+            if (extensions is not None) and (not get_purename_extension(pn)[1] in extensions):
+                continue
             bf = BaseFolder(f"{self._root_dir}/{pn}")
             self.__all_filepaths.extend(bf.__all_filepaths)
             ch.append(bf)
@@ -376,9 +387,19 @@ class BaseFolder:
         return ps
 
     @property
-    def all_filepaths(self):
-        """输出此文件夹下的所有的文件，包含嵌套"""
-        return copy.deepcopy(self.__all_filepaths)
+    def all_filepaths(self, extensions: list[str] | tuple[str] | None = None) -> list[str]:
+        """
+        输出此文件夹下的所有的文件，包含嵌套
+        Args:
+            extensions:文件的后缀限制
+        """
+        outlist = []
+        if extensions is None:
+            return copy.deepcopy(self.__all_filepaths)
+        for fp in self.__all_filepaths:
+            if get_purename_extension(fp)[1] in extensions:
+                outlist.append(fp)
+        return outlist
 
     def has_path(self, path: str) -> bool:
         """
@@ -388,3 +409,7 @@ class BaseFolder:
         """
         abp = os.path.abspath(path)
         return abp in self.all_filepaths
+
+    def copy_to(self, dist: str | PathLike):
+        """使用请求函数进行复制，复制到文件夹dist"""
+        safe_copytree(self._root_dir, dist)
