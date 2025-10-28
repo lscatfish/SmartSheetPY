@@ -180,6 +180,36 @@ def calculate_file_hash(file_path, algorithm = 'md5'):
     # 返回十六进制哈希值
     return hash_obj.hexdigest()
 
+def safe_copy_any(src:str|PathLike|Path,
+                  dst:str|Path|PathLike,
+                  rename:str=None,
+                  if_print=True
+                ,max_retries = 3, delay = 0.1):
+    """
+    安全复制函数，针对文件和文件夹
+    复制src文件夹下的所有的内容
+    Args:
+        src:初始文件(夹)
+        dst:目标路径（只能是路径）
+        rename:是否重命名（不含后缀）
+        if_print:打印提示
+        max_retries:重复尝试次数
+        delay:尝试延时
+    """
+    from SSPY.communitor import mprint
+    if os.path.isfile(src):
+        """如果是文件"""
+        create_nested_folders(dst,if_print = False)
+        target_full_path=os.path.join(dst,(os.path.basename(src)) if rename is None
+        else f"{rename}{get_purename_extension(src)[1]}")
+        shutil.copy2(src, target_full_path)
+        if if_print:
+            mprint(f'复制成功：{src} ---> {target_full_path}')
+    elif os.path.isdir(src):
+        target_full_path=os.path.join(dst,(os.path.basename(src)) if rename is None)
+
+
+
 
 class BaseFile:
     """一个文件对象"""
@@ -297,6 +327,7 @@ class BaseFile:
         try:
             # 输出成功信息
             if os.path.isdir(dist):
+
                 # 目标是目录时，拼接完整目标路径
                 target_full_path = os.path.join(str(dist), self.__filename if rename is None else rename)
             else:
@@ -345,6 +376,8 @@ class BaseFolder:
         """根地址"""
         self.__all_filepaths: list[str] = []
         """_root_dir同源下的文件"""
+        self.__isfile = False
+        """是否为文件"""
         self.__children: list['BaseFolder'] | None = self._get_children(extensions)
         """子文件夹/子文件"""
 
@@ -357,6 +390,7 @@ class BaseFolder:
         ch: list['BaseFolder'] = []
         self.__all_filepaths.clear()
         if os.path.isfile(self._root_dir):
+            self.__isfile = True
             self.__all_filepaths.append(self._root_dir)
             return None
         str_ch = os.listdir(self._root_dir)
@@ -401,6 +435,18 @@ class BaseFolder:
                 outlist.append(fp)
         return outlist
 
+    @property
+    def root_dir(self) -> str:
+        return self._root_dir
+
+    @property
+    def isfile(self) -> bool:
+        return self.__isfile
+
+    @property
+    def isdir(self) -> bool:
+        return not self.__isfile
+
     def has_path(self, path: str) -> bool:
         """
         判断一个路径是否在这个文件夹中
@@ -412,4 +458,7 @@ class BaseFolder:
 
     def copy_to(self, dist: str | PathLike):
         """使用请求函数进行复制，复制到文件夹dist"""
-        safe_copytree(self._root_dir, dist)
+        if self.__isfile:
+            copy_file()
+        else:
+            safe_copytree(self._root_dir, dist)
