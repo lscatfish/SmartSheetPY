@@ -22,17 +22,13 @@ class ParasSheets(BaseFile, ABC):
         para = all_str(clean_enter(clean_space(self._paragraphs, ''), ''), '')
 
         if self.ftype == self.Type.docx:
-            sh = all_str(clean_enter(clean_space(self._sheets, ''), ''), '')
-            if len(para) == 0 and 0 == len(sh):
+            if len(para) == 0:
                 return self.hash_all
-            hash1 = calculate_str_hash(para)
-            hash2 = calculate_str_hash(sh)
-            return calculate_str_hash(hash1 + hash2)
+            return calculate_str_hash(para)
         elif self.ftype == self.Type.pdf:
             if len(para) == 0:
                 return self.hash_all
-            hash1 = calculate_str_hash(para)
-            return hash1
+            return calculate_str_hash(para)
         else:
             return self.hash_all
 
@@ -120,5 +116,11 @@ class ParasSheets(BaseFile, ABC):
         return per
 
     @abc.abstractmethod
-    def __parse_sheets(self):
+    def __parse_sheets(self, _):
+        """解析表格"""
+        pass
+
+    @abc.abstractmethod
+    def __parse_paragraphs(self, _):
+        """解析段落"""
         pass

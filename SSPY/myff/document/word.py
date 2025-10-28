@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 from .base import ParasSheets
 
+
 class DirectDocxParser:
     """直接解析docx的XML结构，避免依赖python-docx，解析产生自cpp原始逻辑"""
 
@@ -103,20 +104,15 @@ class DirectDocxParser:
 
         return paragraphs
 
+
 class Word(ParasSheets):
     """word文件的解析，只实现读取方法"""
-    def __init__(self, path,if_print=False):
+
+    def __init__(self, path, if_print = False):
         super().__init__(path)
-        # self._sheets=
+        d = DirectDocxParser(self._absolute_path)
+        self._paragraphs = d.parse_paragraphs_from_xml()
 
-
-    def __parse_sheets(self):
-        """解析出表格"""
-
-
-
-
-
-
-
+    def __parse_sheets(self,d):
+        self._sheets = d.parse_tables_from_xml()
 
