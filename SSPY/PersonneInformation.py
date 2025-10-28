@@ -260,28 +260,28 @@ class DefPerson:
 
     @property
     def name(self):
-        if self.__information.get(gc.chstrName, None) == None:
+        if self.__information.get(gc.chstrName, None) is None:
             self.__information[gc.chstrName] = ''
             return ''
         return self.__information[gc.chstrName]
 
     @property
     def grade(self):
-        if self.__information.get(gc.chstrGrade, None) == None:
+        if self.__information.get(gc.chstrGrade, None) is None:
             self.__information[gc.chstrGrade] = ''
             return ''
         return self.__information[gc.chstrGrade]
 
     @property
     def studentID(self):
-        if self.__information.get(gc.chstrStudentID, None) == None:
+        if self.__information.get(gc.chstrStudentID, None) is None:
             self.__information[gc.chstrStudentID] = ''
             return ''
         return self.__information[gc.chstrStudentID]
 
     @property
     def politicalOutlook(self):
-        if self.__information.get(gc.chstrPoliticalOutlook, None) == None:
+        if self.__information.get(gc.chstrPoliticalOutlook, None) is None:
             self.__information[gc.chstrPoliticalOutlook] = ''
             return ''
         return self.__information[gc.chstrPoliticalOutlook]
@@ -295,7 +295,7 @@ class DefPerson:
 
     @property
     def majors(self):
-        if self.__information.get(gc.chstrMajor, None) == None:
+        if self.__information.get(gc.chstrMajor, None) is None:
             self.__information[gc.chstrMajor] = ''
             return ''
         return self.__information[gc.chstrMajor]
@@ -337,21 +337,21 @@ class DefPerson:
 
     @property
     def club(self):
-        if self.__information.get(gc.chstrClub, None) == None:
+        if self.__information.get(gc.chstrClub, None) is None:
             self.__information[gc.chstrClub] = ''
             return ''
         return self.__information[gc.chstrClub]
 
     @property
     def signPosition(self):
-        if self.__information.get(gc.chstrSignPosition, None) == None:
+        if self.__information.get(gc.chstrSignPosition, None) is None:
             self.__information[gc.chstrSignPosition] = ''
             return ''
         return self.__information[gc.chstrSignPosition]
 
     @property
     def gender(self):
-        if self.__information.get(gc.chstrGender, None) == None:
+        if self.__information.get(gc.chstrGender, None) is None:
             self.__information[gc.chstrGender] = ''
             return ''
         return self.__information[gc.chstrGender]
