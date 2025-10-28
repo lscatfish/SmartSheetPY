@@ -1,7 +1,9 @@
 """标准文件控制库"""
+import copy
 import os.path
 import shutil
 import time
+from abc import abstractclassmethod
 from pathlib import Path
 
 from SSPY.myff import BASE_DIR
@@ -233,14 +235,14 @@ class BaseFile:
         # 返回十六进制哈希值
         return hash_obj.hexdigest()
 
-    def is_same(self, other: 'BaseFile') -> bool:
-        """是否相同"""
+    def is_same_content(self, other: 'BaseFile') -> bool:
+        """文件的内容是否相同"""
         if self.is_same_path(other): return True
         if self.__hash is None or other.__hash is None: return False
         return self.__hash == other.__hash
 
     def is_same_path(self, other: 'BaseFile') -> bool:
-        """是否是相同的路径"""
+        """文件的路径是否是相同"""
         if self._absolute_path is None or other._absolute_path is None: return False
         return other._absolute_path == self._absolute_path
 
@@ -254,9 +256,7 @@ class BaseFile:
 
     @property
     def purename(self) -> str:
-        """
-        纯名字
-        """
+        """  纯名字    """
         return self.__purename
 
     @property
@@ -266,16 +266,18 @@ class BaseFile:
 
     @property
     def purename_extension(self):
-        """纯文件名，不带后缀"""
+        """纯文件名 + 后缀"""
         return self.__purename, self.__extension
 
     @property
     def absolute_path(self) -> str:
+        """  绝对路径 """
         return self._absolute_path
 
     @property
     def relative_path(self, base_dir: str | Path = None) -> str:
         """
+        相对路径，相对于base_dir
         Args:
             base_dir:基础路径
         """
@@ -337,16 +339,15 @@ class BaseFolder:
         """
         self._root_dir = os.path.abspath(root_dir)
         """根地址"""
-        self.__children: list['BaseFolder'] | None = self._children
+        self.__children: list['BaseFolder'] | None = self._get_children
         """子文件夹/子文件"""
         self.__all_filepaths: list[str] = []
         """_root_dir同源下的文件"""
 
     @property
-    def _children(self):
+    def _get_children(self):
         """获取子文件/路径"""
         ch: list['BaseFolder'] = []
-
         if os.path.isfile(self._root_dir):
             self.__all_filepaths.append(self._root_dir)
             return None
@@ -354,19 +355,36 @@ class BaseFolder:
         if len(str_ch) == 0: return None
         for pn in str_ch:
             bf = BaseFolder(f"{self._root_dir}/{pn}")
-            self.__all_filepaths.extend(bf.all_filepaths)
+            self.__all_filepaths.extend(bf.__all_filepaths)
             ch.append(bf)
         return ch
 
     @property
+    def children(self) -> list['BaseFolder']:
+        """获取子BaseFolder"""
+        return self.__children
+
+    @property
+    def children_paths(self):
+        """获取子路径"""
+        if self.__children is None:
+            return None
+        ps=[]
+        for child in self.__children:
+            ps.append(child._root_dir)
+        return ps
+
+    @property
     def all_filepaths(self):
         """输出此文件夹下的所有的文件，包含嵌套"""
-        return self.__all_filepaths
+        return copy.deepcopy(self.__all_filepaths)
 
-    def is_in(self,path: str) -> bool:
+    def has_path(self, path: str) -> bool:
         """
+        判断一个路径是否在这个文件夹中
         Args:
-
+            path:输入的要比较的路径
         """
-
+        abp=os.path.abspath(path)
+        return abp in self.all_filepaths
 
