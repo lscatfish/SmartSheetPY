@@ -10,7 +10,7 @@ class GlobalConstants:
     chstrStudentID = '学号'
     chstrPoliticalOutlook = '政治面貌'
     chstrAcademy = '学院'
-    chstrMajors = '专业'
+    chstrMajor = '专业'
     chstrPhone = '电话'
     chstrQQ = 'QQ号'
     chstrPosition = '所任职务'

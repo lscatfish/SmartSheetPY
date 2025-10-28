@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
 import os.path
-from dis import name
-from functools import singledispatchmethod
 from .globalconstants import GlobalConstants as gc
 import types
 
@@ -10,25 +8,25 @@ import types
 class DefPerson:
     """表示一个人的结构体类，包含基本个人报名信息"""
     __raw_key_word = {
-        gc.chstrQClassname        : (gc.chstrQClassname, '班级名', '班级名字',
+        gc.chstrQClassname      : (gc.chstrQClassname, '班级名', '班级名字',
                                      '青字班', '青字班级', '青字班级名', '青字班级名字',
                                      '报名青字班', '报名班级', '班级'),
-        gc.chstrName              : (gc.chstrName, '名字'),
-        gc.chstrGrade             : (gc.chstrGrade, '所在年级'),
-        gc.chstrStudentID         : (gc.chstrStudentID,),
-        gc.chstrPoliticalOutlook  : (gc.chstrPoliticalOutlook,),
-        gc.chstrAcademy           : (gc.chstrAcademy,),
-        gc.chstrMajors            : (gc.chstrMajors,),
-        gc.chstrPhone             : (gc.chstrPhone, '联系方式', '电话号码', '联系电话'),
-        gc.chstrQQ                : (gc.chstrQQ, 'QQ', 'qq', 'qq号', 'Qq', 'qQ',
+        gc.chstrName            : (gc.chstrName, '名字'),
+        gc.chstrGrade           : (gc.chstrGrade, '所在年级'),
+        gc.chstrStudentID       : (gc.chstrStudentID,),
+        gc.chstrPoliticalOutlook: (gc.chstrPoliticalOutlook,),
+        gc.chstrAcademy         : (gc.chstrAcademy,),
+        gc.chstrMajor           : (gc.chstrMajor,),
+        gc.chstrPhone           : (gc.chstrPhone, '联系方式', '电话号码', '联系电话'),
+        gc.chstrQQ              : (gc.chstrQQ, 'QQ', 'qq', 'qq号', 'Qq', 'qQ',
                                      'Qq号', 'qQ号', 'QQ号码', 'qq号码'),
-        gc.chstrPosition          : (gc.chstrPosition, '担任职务', '当前职务', '所任岗位',
+        gc.chstrPosition        : (gc.chstrPosition, '担任职务', '当前职务', '所任岗位',
                                      '职务', '职位', '所任职位', '担任职位', '当前岗位'),
-        gc.chstrEmail             : (gc.chstrEmail, '邮箱地址'),
-        gc.chstrEthnicity         : (gc.chstrEthnicity,),
-        gc.chstrClub              : (gc.chstrClub, '所在社团', '组织', '所在组织',
+        gc.chstrEmail           : (gc.chstrEmail, '邮箱地址'),
+        gc.chstrEthnicity       : (gc.chstrEthnicity,),
+        gc.chstrClub            : (gc.chstrClub, '所在社团', '组织', '所在组织',
                                      '所属组织', '所属社团'),
-        gc.chstrSignPosition      : (gc.chstrSignPosition, '报名职务', '报名位置', '报名岗位'),
+        gc.chstrSignPosition    : (gc.chstrSignPosition, '报名职务', '报名位置', '报名岗位'),
         gc.chstrGender            : (gc.chstrGender,),
 
         gc.chstrRegistrationMethod: (gc.chstrRegistrationMethod,),
@@ -67,7 +65,7 @@ class DefPerson:
             gc.chstrStudentID       : '',
             gc.chstrPoliticalOutlook: '',
             gc.chstrAcademy         : '',
-            gc.chstrMajors          : '',
+            gc.chstrMajor           : '',
             gc.chstrPhone           : '',
             gc.chstrQQ              : '',
             gc.chstrPosition        : '',
@@ -135,12 +133,12 @@ class DefPerson:
             if not (self.__information[gc.chstrEthnicity].endswith('族')):
                 self.__information[gc.chstrEthnicity] += '族'
         if self.__information.get(gc.chstrPoliticalOutlook, '') != '':
-            if (self.__information[gc.chstrPoliticalOutlook] == '无'):
+            if self.__information[gc.chstrPoliticalOutlook] == '无':
                 self.__information[gc.chstrPoliticalOutlook] = '群众'
-            elif ('团' in self.__information[gc.chstrPoliticalOutlook]):
+            elif '团' in self.__information[gc.chstrPoliticalOutlook]:
                 self.__information[gc.chstrPoliticalOutlook] = '共青团员'
-            elif ('党' in self.__information[gc.chstrPoliticalOutlook]):
-                if ('预' in self.__information[gc.chstrPoliticalOutlook]):
+            elif '党' in self.__information[gc.chstrPoliticalOutlook]:
+                if '预' in self.__information[gc.chstrPoliticalOutlook]:
                     self.__information[gc.chstrPoliticalOutlook] = '中共预备党员'
                 else:
                     self.__information[gc.chstrPoliticalOutlook] = '中共党员'
@@ -290,7 +288,7 @@ class DefPerson:
 
     @property
     def academy(self):
-        if self.__information.get(gc.chstrAcademy, None) == None:
+        if self.__information.get(gc.chstrAcademy, None) is None:
             self.__information[gc.chstrAcademy] = ''
             return ''
         return self.__information[gc.chstrAcademy]
@@ -304,35 +302,35 @@ class DefPerson:
 
     @property
     def phone(self):
-        if self.__information.get(gc.chstrPhone, None) == None:
+        if self.__information.get(gc.chstrPhone, None) is None:
             self.__information[gc.chstrPhone] = ''
             return ''
         return self.__information[gc.chstrPhone]
 
     @property
     def qq(self):
-        if self.__information.get(gc.chstrQQ, None) == None:
+        if self.__information.get(gc.chstrQQ, None) is None:
             self.__information[gc.chstrQQ] = ''
             return ''
         return self.__information[gc.chstrQQ]
 
     @property
     def position(self):
-        if self.__information.get(gc.chstrPosition, None) == None:
+        if self.__information.get(gc.chstrPosition, None) is None:
             self.__information[gc.chstrPosition] = ''
             return ''
         return self.__information[gc.chstrPosition]
 
     @property
     def Email(self):
-        if self.__information.get(gc.chstrEmail, None) == None:
+        if self.__information.get(gc.chstrEmail, None) is None:
             self.__information[gc.chstrEmail] = ''
             return ''
         return self.__information[gc.chstrEmail]
 
     @property
     def ethnicity(self):
-        if self.__information.get(gc.chstrEthnicity, None) == None:
+        if self.__information.get(gc.chstrEthnicity, None) is None:
             self.__information[gc.chstrEthnicity] = ''
             return ''
         return self.__information[gc.chstrEthnicity]
@@ -418,7 +416,7 @@ class DefPerson:
 
     @qq.setter
     def qq(self, value: str | int):
-        self.__information[gc.chstrQq] = str(value)
+        self.__information[gc.chstrQQ] = str(value)
 
     @position.setter
     def position(self, value: str):
@@ -525,13 +523,11 @@ class DefPerson:
             get_filename_with_extension,
             split_filename_and_extension,
             get_top_parent_dir_by,
-            parent_dir,
             deduplication_paths,
             safe_copytree)
-        from shutil import copytree
-        sum = 0
+        __sum = 0
         target_: list[str] = []
-        if len(self.__filepaths) == 0: return sum
+        if len(self.__filepaths) == 0: return __sum
         self.__filepaths = deduplication_paths(self.filepath)
         if under_class_folder:
             classnames = self.gen_classes()
@@ -571,14 +567,14 @@ class DefPerson:
                     if j > 3: break  # 允许5个重复文件
                 copy_file(fp, t, True)
                 self.savepath = str(t)
-                sum += 1
+                __sum += 1
                 # # 获取关联文件
                 # top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
                 # if os.path.isdir(top_dir):
                 #     dst = tr + f"原始文件/{os.path.basename(top_dir)}/"
                 #     print(f'自"{top_dir}"复制文件到 "{dst}"')
                 #     safe_copytree(top_dir, dst, delay = 0.1)
-        return sum
+        return __sum
 
     def copy_linking_files(self, src_top_dir = gc.dir_INPUT_SIGNFORQC_):
         """

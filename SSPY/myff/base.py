@@ -339,15 +339,16 @@ class BaseFolder:
         """
         self._root_dir = os.path.abspath(root_dir)
         """根地址"""
-        self.__children: list['BaseFolder'] | None = self._get_children
-        """子文件夹/子文件"""
         self.__all_filepaths: list[str] = []
         """_root_dir同源下的文件"""
+        self.__children: list['BaseFolder'] | None = self._get_children
+        """子文件夹/子文件"""
 
     @property
     def _get_children(self):
         """获取子文件/路径"""
         ch: list['BaseFolder'] = []
+        self.__all_filepaths.clear()
         if os.path.isfile(self._root_dir):
             self.__all_filepaths.append(self._root_dir)
             return None
@@ -369,7 +370,7 @@ class BaseFolder:
         """获取子路径"""
         if self.__children is None:
             return None
-        ps=[]
+        ps = []
         for child in self.__children:
             ps.append(child._root_dir)
         return ps
@@ -385,6 +386,5 @@ class BaseFolder:
         Args:
             path:输入的要比较的路径
         """
-        abp=os.path.abspath(path)
+        abp = os.path.abspath(path)
         return abp in self.all_filepaths
-

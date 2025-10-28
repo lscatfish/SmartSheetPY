@@ -489,7 +489,7 @@ class DoQingziClass:
                 gc.chstrStudentID,
                 gc.chstrPoliticalOutlook,
                 gc.chstrAcademy,
-                gc.chstrMajors,
+                gc.chstrMajor,
                 gc.chstrPosition,
                 gc.chstrClub,
                 gc.chstrPhone,
