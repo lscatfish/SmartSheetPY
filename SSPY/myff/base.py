@@ -10,7 +10,7 @@ from pathlib import Path
 from SSPY.myff import BASE_DIR
 
 
-def get_filename_with_extension(file_path):
+def get_filename(file_path):
     """
     从文件路径中获取带扩展名的文件名
 
@@ -58,43 +58,6 @@ def create_nested_folders(
         raise print(f"创建文件夹失败：{e}")
 
 
-def copy_file(source_path: str, target_path: str, if_print: bool = False) -> bool:
-    """
-    将源文件复制到目标地址
-
-    Parameters:
-        if_print:    是否启用打印
-        source_path: 源文件的完整路径（如 "data/file.txt"）
-        target_path: 目标地址，可以是目录或完整文件路径
-                     (若为目录：文件会复制到该目录下，文件名与源文件相同)
-                     (若为文件路径：文件会复制到指定位置并使用新文件名
-    Returns:
-        复制成功返回 True，失败返回 False
-    """
-    try:
-        # 检查源文件是否存在
-        if not os.path.isfile(source_path):
-            print(f"错误：源文件不存在 - {source_path}")
-            return False
-
-        # 复制文件（保留元数据）
-        shutil.copy2(source_path, target_path)
-
-        # 输出成功信息
-        if os.path.isdir(target_path):
-            # 目标是目录时，拼接完整目标路径
-            target_full_path = os.path.join(target_path, os.path.basename(source_path))
-        else:
-            target_full_path = target_path
-        if if_print:
-            print(f"文件复制成功：{source_path} ---> {target_full_path}")
-        return True
-
-    except Exception as e:
-        print(f"文件复制失败：{str(e)}")
-        return False
-
-
 def is_same_path(a: str | Path, b: str | Path) -> bool:
     """判断是否是同一个路径"""
     p1 = os.path.abspath(a)
@@ -133,23 +96,6 @@ def deduplication_paths(paths: list[str] | list[Path]) -> list[str | Path]:
     return dedup
 
 
-def safe_copytree(src, dst, max_retries = 3, delay = 0.1):
-    from SSPY.communitor import mprint
-    for i in range(max_retries):
-        try:
-            shutil.copytree(src, dst, dirs_exist_ok = True)
-            return True
-        except PermissionError as e:
-            if i < max_retries - 1:
-                time.sleep(delay)  # 重试前延迟
-                continue
-            mprint(f'多次尝试复制"{src}"到"{dst}"失败：{e}', 'red')
-            return False
-        except Exception as e:
-            mprint(f'复制 "{src}" 失败：{e}', 'red')
-            return False
-
-
 def calculate_file_hash(file_path, algorithm = 'md5'):
     """
     计算文件的哈希值
@@ -180,11 +126,13 @@ def calculate_file_hash(file_path, algorithm = 'md5'):
     # 返回十六进制哈希值
     return hash_obj.hexdigest()
 
-def safe_copy_any(src:str|PathLike|Path,
-                  dst:str|Path|PathLike,
-                  rename:str=None,
-                  if_print=True
-                ,max_retries = 3, delay = 0.1):
+
+def safe_copy_any(src: str | PathLike | Path,
+                  dst: str | Path | PathLike,
+                  rename: str = None,
+                  if_print = True,
+                  max_retries = 3,
+                  delay = 0.1):
     """
     安全复制函数，针对文件和文件夹
     复制src文件夹下的所有的内容
@@ -199,28 +147,41 @@ def safe_copy_any(src:str|PathLike|Path,
     from SSPY.communitor import mprint
     if os.path.isfile(src):
         """如果是文件"""
-        create_nested_folders(dst,if_print = False)
-        target_full_path=os.path.join(dst,(os.path.basename(src)) if rename is None
+        create_nested_folders(dst, if_print = False)
+        target_full_path = os.path.join(dst, (os.path.basename(src)) if rename is None
         else f"{rename}{get_purename_extension(src)[1]}")
         shutil.copy2(src, target_full_path)
         if if_print:
-            mprint(f'复制成功：{src} ---> {target_full_path}')
+            mprint(f'复制文件成功：{src} ---> {target_full_path}')
     elif os.path.isdir(src):
-        target_full_path=os.path.join(dst,(os.path.basename(src)) if rename is None)
-
-
+        target_full_path = os.path.join(dst, (os.path.basename(src)) if rename is None else rename)
+        for i in range(max_retries):
+            try:
+                shutil.copytree(src, target_full_path, dirs_exist_ok = True)
+                if if_print:
+                    mprint(f'复制文件夹成功：{src} ---> {target_full_path}')
+                return
+            except PermissionError as e:
+                if i < max_retries - 1:
+                    time.sleep(delay)
+                    continue
+                mprint(f'多次尝试复制"{src}"到"{target_full_path}"失败：{e}', 'red')
+                return
+            except Exception as e:
+                print(f"文件复制失败：{str(e)}")
+                return
 
 
 class BaseFile:
     """一个文件对象"""
 
-    def __init__(self, path: str | Path, base_dir: str | Path = BASE_DIR, chash = True):
+    def __init__(self, path: str | Path, base_dir: str | Path = BASE_DIR,  auto_hash = True):
         """
         输入一个文件路径
         Args:
             path:目标文件
             base_dir:程序运行的默认路径（绝对）
-            chash:是否计算哈希值
+            auto_hash:自动打开（只有在使用哈希的时候才会自动打开）
         """
         self._relative_path = None
         """相对路径"""
@@ -244,10 +205,10 @@ class BaseFile:
         self._relative_path = os.path.relpath(self._absolute_path, str(base_dir))
         self.__filename = os.path.basename(self._absolute_path)
         self.__purename, self.__extension = os.path.splitext(self.__filename)
-        if chash:
-            self.__hash = self._hash()
+        if not auto_hash:
+            self.__hash = self.chash()
 
-    def _hash(self) -> str:
+    def chash(self) -> str:
         """计算哈希值"""
         hash_obj = hashlib.new('md5')
         # 分块读取文件并更新哈希
@@ -268,8 +229,7 @@ class BaseFile:
     def is_same_content(self, other: 'BaseFile') -> bool:
         """文件的内容是否相同"""
         if self.is_same_path(other): return True
-        if self.__hash is None or other.__hash is None: return False
-        return self.__hash == other.__hash
+        return self.hash_all == other.hash_all
 
     def is_same_path(self, other: 'BaseFile') -> bool:
         """文件的路径是否是相同"""
@@ -315,6 +275,13 @@ class BaseFile:
             return self._relative_path
         else:
             return os.path.relpath(self._absolute_path, str(base_dir))
+
+    @property
+    def hash_all(self):
+        """总哈希值"""
+        if self.__hash is None:
+            self.__hash = self.chash()
+        return self.__hash
 
     def copy_to(self, dist: str | Path, rename: str = None, if_print = False):
         """
@@ -378,16 +345,16 @@ class BaseFolder:
         """_root_dir同源下的文件"""
         self.__isfile = False
         """是否为文件"""
-        self.__children: list['BaseFolder'] | None = self._get_children(extensions)
+        self.__children: list[('BaseFolder')|BaseFile] | None = self._get_children(extensions)
         """子文件夹/子文件"""
 
-    def _get_children(self, extensions: list[str] | tuple[str] | None) -> list['BaseFolder'] | None:
+    def _get_children(self, extensions: list[str] | tuple[str] | None) -> list[('BaseFolder')|BaseFile] | None:
         """
         获取子文件/路径
         This fucking function is so stupid!
         But it works well!
         """
-        ch: list['BaseFolder'] = []
+        ch: list['BaseFolder'|BaseFile] = []
         self.__all_filepaths.clear()
         if os.path.isfile(self._root_dir):
             self.__isfile = True
@@ -456,9 +423,6 @@ class BaseFolder:
         abp = os.path.abspath(path)
         return abp in self.all_filepaths
 
-    def copy_to(self, dist: str | PathLike):
+    def copy_to(self, dist: str | PathLike, if_print: bool = True):
         """使用请求函数进行复制，复制到文件夹dist"""
-        if self.__isfile:
-            copy_file()
-        else:
-            safe_copytree(self._root_dir, dist)
+        safe_copy_any(self._root_dir, dist, if_print = if_print)
