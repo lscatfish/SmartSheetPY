@@ -95,8 +95,8 @@ def searched_recursive(
         target:搜索目标
         lib:搜索的源
         level:搜索匹配度等级
-        target_as_sub:将目标视作字串搜索
-        lib_as_sub:将库字符视作字串搜索
+        target_as_sub:将目标视作子串搜索
+        lib_as_sub:将库字符视作子串搜索
     Returns:
         是否满足搜索条件
     """

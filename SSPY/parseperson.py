@@ -7,7 +7,8 @@ from .PersonneInformation import DefPerson
 def trans_sheet_to_person(
     in_sheet: list[list[str]],
     classname: str = None,
-    inkey_as_sub = False, stdkey_as_sub = False) -> DefPerson:
+    inkey_as_sub = False,
+    stdkey_as_sub = False) -> DefPerson:
     per = DefPerson()
     sheet = copy.deepcopy(in_sheet)
     if classname is not None:

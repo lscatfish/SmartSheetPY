@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import threading
-
 
 def clean_enter(in_list: list | tuple | str, inst_None) -> list | str:
     """
@@ -32,9 +30,25 @@ def clean_space(in_list: list | tuple | str, inst_None) -> list | str:
     return out_list
 
 
-def _exit(in_flag: threading.Event | None) -> bool:
+def all_str(in_list: list | tuple | str, instr_None: str = '') -> str:
+    """融合所有的str"""
+    outstr = ''
+    if in_list is None:
+        return instr_None
+    elif isinstance(in_list, str):
+        return in_list
+    elif isinstance(in_list, list | tuple):
+        for row in in_list:
+            outstr += all_str(row, instr_None)
+    return outstr
+
+
+from threading import Event
+
+
+def _exit(in_flag: Event | None) -> bool:
     """退出方法，检测进程flag是否标志为set"""
-    if isinstance(in_flag, threading.Event):
+    if isinstance(in_flag, Event):
         if in_flag.is_set():
             return True
     return False
@@ -96,7 +110,8 @@ def trans_list_to_str(in_list: list[str]) -> str:
         out_str += (in_list[i] + ('\n' if (i + 1) < len_l else ''))
     return out_str
 
-def deduplication_list(in_list:list,dedp):
+
+def deduplication_list(in_list: list, dedp):
     """对一个list去重
     Args:
         in_list:输入的list
