@@ -111,8 +111,11 @@ class Word(ParasSheets):
     def __init__(self, path, if_print = False):
         super().__init__(path)
         d = DirectDocxParser(self._absolute_path)
-        self._paragraphs = d.parse_paragraphs_from_xml()
+        self.__parse_sheets(d)
+        self.__parse_paragraphs(d)
 
-    def __parse_sheets(self,d):
+    def __parse_sheets(self, d):
         self._sheets = d.parse_tables_from_xml()
 
+    def __parse_paragraphs(self, d):
+        self._paragraphs = d.parse_paragraphs_from_xml()
