@@ -36,10 +36,7 @@ class PdfLoad:
 
     @property
     def sheets(self):
-        if self.__tableOnly:
-            return copy.deepcopy(self.__sheets)
-        else:
-            return None
+        return copy.deepcopy(self.__sheets)
 
     @property
     def pages(self):
