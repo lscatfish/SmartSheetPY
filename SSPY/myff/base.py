@@ -4,6 +4,7 @@ import os.path
 import shutil
 import time
 import hashlib
+from enum import Enum, unique
 from os import PathLike
 
 from pathlib import Path
@@ -127,6 +128,11 @@ def calculate_file_hash(file_path, algorithm = 'md5'):
     return hash_obj.hexdigest()
 
 
+def calculate_str_hash(s: str) -> str:
+    """按照md5方法计算哈希值"""
+    return hashlib.md5(s.encode('utf-8')).hexdigest()
+
+
 def safe_copy_any(src: str | PathLike | Path,
                   dst: str | Path | PathLike,
                   rename: str = None,
@@ -175,7 +181,14 @@ def safe_copy_any(src: str | PathLike | Path,
 class BaseFile:
     """一个文件对象"""
 
-    def __init__(self, path: str | Path, base_dir: str | Path = BASE_DIR,  auto_hash = True):
+    @unique
+    class Type(Enum):
+        unknown = 0
+        docx = 1
+        pdf = 2
+        xlsx = 3
+
+    def __init__(self, path: str | Path, base_dir: str | Path = BASE_DIR, auto_hash = True):
         """
         输入一个文件路径
         Args:
@@ -195,6 +208,8 @@ class BaseFile:
         """文件名字"""
         self.__extension = None
         """文件后缀"""
+        self.__type = self.Type.unknown
+        """文件类型"""
         if not os.path.exists(path):
             raise Exception(f'“{path}”不存在')
             # return
@@ -283,6 +298,15 @@ class BaseFile:
             self.__hash = self.chash()
         return self.__hash
 
+    @property
+    def ftype(self):
+        return self.__type
+
+    @ftype.setter
+    def ftype(self, t):
+        if isinstance(t, self.Type):
+            self.__type = t
+
     def copy_to(self, dist: str | Path, rename: str = None, if_print = False):
         """
         复制文件到dist
@@ -345,16 +369,16 @@ class BaseFolder:
         """_root_dir同源下的文件"""
         self.__isfile = False
         """是否为文件"""
-        self.__children: list[('BaseFolder')|BaseFile] | None = self._get_children(extensions)
+        self.__children: list['BaseFolder'] | None = self._get_children(extensions)
         """子文件夹/子文件"""
 
-    def _get_children(self, extensions: list[str] | tuple[str] | None) -> list[('BaseFolder')|BaseFile] | None:
+    def _get_children(self, extensions: list[str] | tuple[str] | None) -> list['BaseFolder'] | None:
         """
         获取子文件/路径
         This fucking function is so stupid!
         But it works well!
         """
-        ch: list['BaseFolder'|BaseFile] = []
+        ch: list['BaseFolder'] = []
         self.__all_filepaths.clear()
         if os.path.isfile(self._root_dir):
             self.__isfile = True

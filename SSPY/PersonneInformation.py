@@ -8,25 +8,25 @@ import types
 class DefPerson:
     """表示一个人的结构体类，包含基本个人报名信息"""
     __raw_key_word = {
-        gc.chstrQClassname      : (gc.chstrQClassname, '班级名', '班级名字',
+        gc.chstrQClassname        : (gc.chstrQClassname, '班级名', '班级名字',
                                      '青字班', '青字班级', '青字班级名', '青字班级名字',
                                      '报名青字班', '报名班级', '班级'),
-        gc.chstrName            : (gc.chstrName, '名字'),
-        gc.chstrGrade           : (gc.chstrGrade, '所在年级'),
-        gc.chstrStudentID       : (gc.chstrStudentID,),
-        gc.chstrPoliticalOutlook: (gc.chstrPoliticalOutlook,),
-        gc.chstrAcademy         : (gc.chstrAcademy,),
-        gc.chstrMajor           : (gc.chstrMajor,),
-        gc.chstrPhone           : (gc.chstrPhone, '联系方式', '电话号码', '联系电话'),
-        gc.chstrQQ              : (gc.chstrQQ, 'QQ', 'qq', 'qq号', 'Qq', 'qQ',
+        gc.chstrName              : (gc.chstrName, '名字'),
+        gc.chstrGrade             : (gc.chstrGrade, '所在年级'),
+        gc.chstrStudentID         : (gc.chstrStudentID,),
+        gc.chstrPoliticalOutlook  : (gc.chstrPoliticalOutlook,),
+        gc.chstrAcademy           : (gc.chstrAcademy,),
+        gc.chstrMajor             : (gc.chstrMajor,),
+        gc.chstrPhone             : (gc.chstrPhone, '联系方式', '电话号码', '联系电话'),
+        gc.chstrQQ                : (gc.chstrQQ, 'QQ', 'qq', 'qq号', 'Qq', 'qQ',
                                      'Qq号', 'qQ号', 'QQ号码', 'qq号码'),
-        gc.chstrPosition        : (gc.chstrPosition, '担任职务', '当前职务', '所任岗位',
+        gc.chstrPosition          : (gc.chstrPosition, '担任职务', '当前职务', '所任岗位',
                                      '职务', '职位', '所任职位', '担任职位', '当前岗位'),
-        gc.chstrEmail           : (gc.chstrEmail, '邮箱地址'),
-        gc.chstrEthnicity       : (gc.chstrEthnicity,),
-        gc.chstrClub            : (gc.chstrClub, '所在社团', '组织', '所在组织',
+        gc.chstrEmail             : (gc.chstrEmail, '邮箱地址'),
+        gc.chstrEthnicity         : (gc.chstrEthnicity,),
+        gc.chstrClub              : (gc.chstrClub, '所在社团', '组织', '所在组织',
                                      '所属组织', '所属社团'),
-        gc.chstrSignPosition    : (gc.chstrSignPosition, '报名职务', '报名位置', '报名岗位'),
+        gc.chstrSignPosition      : (gc.chstrSignPosition, '报名职务', '报名位置', '报名岗位'),
         gc.chstrGender            : (gc.chstrGender,),
 
         gc.chstrRegistrationMethod: (gc.chstrRegistrationMethod,),
@@ -73,8 +73,9 @@ class DefPerson:
             gc.chstrEthnicity       : '',
             gc.chstrClub            : '',
             gc.chstrSignPosition    : ''}  # 信息
-        self.__filepaths: list[str] = []  # 此人员相关的文件路径
-        """从哪里来"""
+
+        self.__filepaths: dict[str, str] = {}  # 此人员相关的文件路径
+        """哈希值+文件路径"""
         self.__savepaths: list[str] = []  # 保存的文件路径
         """到哪里去"""
         if cname is not None: self.__classname = cname
@@ -188,7 +189,7 @@ class DefPerson:
         self, inkey: str,
         inkey_as_sub: bool = False,
         stdkey_as_sub: bool = False,
-        return_str = True) -> str | list[str]:
+        return_str = True) -> str | dict[str,str]:
         """
         查找一个键，无论这个键是否存在都返回空字符
         Args:
@@ -206,7 +207,7 @@ class DefPerson:
                 return self.__classname
             elif key == gc.chstrFilePath:
                 if return_str:
-                    return trans_list_to_str(self.__filepaths)
+                    return trans_list_to_str([v for k,v in self.__filepaths.items()])
                 return self.filepath
             else:
                 return self.__information.get(key, '')
@@ -443,14 +444,12 @@ class DefPerson:
         self.__information[gc.chstrGender] = str(value)
 
     @filepath.setter
-    def filepath(self, value: str | list[str]):
+    def filepath(self, d: dict[str, str] = None):
         """补充文件路径（从哪里来）"""
-        if isinstance(value, str):
-            self.__filepaths.append(value)
-        elif isinstance(value, list):
-            self.__filepaths.extend(copy.deepcopy(value))
+        if isinstance(d, dict):
+            self.__filepaths.update(d.copy())
         else:
-            raise Exception('filepath 只能接受 str 与 list[str] 格式！！！')
+            raise Exception('filepath 只能接受 dict 格式！！！')
 
     @savepath.setter
     def savepath(self, value: str | list[str]):
@@ -492,7 +491,7 @@ class DefPerson:
                 self.__information[key] = oinfo[key]
                 continue
         self.__classname += other.classname
-        self.__filepaths.extend(copy.deepcopy(other.__filepaths))
+        self.__filepaths.update(other.__filepaths.copy())
         self.__filepaths = list(dict.fromkeys(self.__filepaths))  # 键去重方法
 
     def gen_classes(self):
@@ -528,7 +527,6 @@ class DefPerson:
         __sum = 0
         target_: list[str] = []
         if len(self.__filepaths) == 0: return __sum
-        self.__filepaths = deduplication_paths(self.filepath)
         if under_class_folder:
             classnames = self.gen_classes()
             for i in range(len(classnames)):
@@ -539,12 +537,12 @@ class DefPerson:
                     top_dir = get_top_parent_dir_by(gc.dir_INPUT_SIGNFORQC_, fp)
                     if os.path.isdir(top_dir):
                         dst = base__ + f"原始文件/{os.path.basename(top_dir)}/"
-                        create_nested_folders(dst,if_print = False)
+                        create_nested_folders(dst, if_print = False)
                         print(f'自"{top_dir}"复制文件到 "{dst}"')
                         safe_copytree(top_dir, dst, delay = 0.1)
                     elif os.path.isfile(top_dir):
                         dst = base__ + f"原始文件/"
-                        create_nested_folders(dst,if_print = False)
+                        create_nested_folders(dst, if_print = False)
                         copy_file(top_dir, dst, if_print = True)
 
         if gen_solofolder:
