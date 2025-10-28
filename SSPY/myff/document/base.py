@@ -1,11 +1,12 @@
 """基础方式"""
-from copy import deepcopy
+import abc
+from abc import ABC
 
 from SSPY.myff.base import BaseFile, calculate_str_hash
 from SSPY.helperfunction import clean_enter, clean_space, all_str
 
 
-class ParasSheets(BaseFile):
+class ParasSheets(BaseFile, ABC):
     """定义段落与表格"""
 
     def __init__(self, path: str):
@@ -117,3 +118,7 @@ class ParasSheets(BaseFile):
         if key_way == 'cmtt':
             per.ifsign = True
         return per
+
+    @abc.abstractmethod
+    def __parse_sheets(self):
+        pass
