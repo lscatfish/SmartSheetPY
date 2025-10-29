@@ -27,5 +27,5 @@ a.update(b)
 print(a)
 from SSPY.myff.document.word import DirectDocxParser
 ddd=DirectDocxParser(r'D:\code\SmartSheetPY\input\sign_for_QingziClass\自主报名-丁晔\自主报名—丁晔—青书班.docx')
-print(ddd.sheets())
-print(ddd.paragraphs())
+print(ddd.sheets)
+print(ddd.paragraphs)
