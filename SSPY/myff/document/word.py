@@ -29,8 +29,8 @@ class DirectDocxParser:
         except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
             mprint(f"XML解析错误: {e}", 'red', False)
 
-
-    def parse_tables_from_xml(self) -> List[List[List[str]]]:
+    @property
+    def sheets(self) -> List[List[List[str]]]:
         """直接从document.xml解析表格数据"""
         return self._parse_xml_tables(self.__xml_content)
 
@@ -76,7 +76,8 @@ class DirectDocxParser:
 
         return ' '.join(text_parts)
 
-    def parse_paragraphs_from_xml(self) -> List[str]:
+    @property
+    def paragraphs(self) -> List[str]:
         """直接从XML解析段落文本"""
         return self._parse_xml_paragraphs(self.__xml_content)
 
@@ -104,12 +105,13 @@ class Word(ParasSheets):
 
     def __init__(self, path, if_print = False):
         super().__init__(path)
+        self.ftype = self.Type.docx
         d = DirectDocxParser(self._absolute_path)
         self.__parse_sheets(d)
         self.__parse_paragraphs(d)
 
-    def __parse_sheets(self, d):
-        self._sheets = d.parse_tables_from_xml()
+    def __parse_sheets(self, d: DirectDocxParser):
+        self._sheets = d.sheets
 
-    def __parse_paragraphs(self, d):
-        self._paragraphs = d.parse_paragraphs_from_xml()
+    def __parse_paragraphs(self, d: DirectDocxParser):
+        self._paragraphs = d.paragraphs

@@ -13,24 +13,16 @@ class ParasSheets(BaseFile, ABC):
         super().__init__(path)
         self._sheets: list[list[list[str]]] | None = None
         """表格"""
-        self._paragraphs: list[list[str]] | list[str] | None = None
+        self._paragraphs:list[str] | None = None
         """段落"""
         self.__hash = None
         """有效哈希值"""
 
     def chash(self) -> str:
         para = all_str(clean_enter(clean_space(self._paragraphs, ''), ''), '')
-
-        if self.ftype == self.Type.docx:
-            if len(para) == 0:
-                return self.hash_all
-            return calculate_str_hash(para)
-        elif self.ftype == self.Type.pdf:
-            if len(para) == 0:
-                return self.hash_all
-            return calculate_str_hash(para)
-        else:
+        if len(para) == 0:
             return self.hash_all
+        return calculate_str_hash(para)
 
     def is_same_content(self, other: 'ParasSheets') -> bool:
         return (self._absolute_path == other._absolute_path) or (self.hash == other.hash)
@@ -49,7 +41,7 @@ class ParasSheets(BaseFile, ABC):
         return clean_enter(clean_space(self._sheets, ''), '')
 
     @property
-    def paragraphs(self) -> list[list[list[str]]] | list[list[str]] | None:
+    def paragraphs(self) ->  list[str]| None:
         """段落"""
         if len(self._paragraphs) == 0:
             return None
