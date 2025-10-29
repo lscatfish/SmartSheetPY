@@ -1,6 +1,7 @@
 """word文件docx"""
 import zipfile
 from typing import List
+from SSPY.communitor import mprint
 
 import xml.etree.ElementTree as ET
 
@@ -16,20 +17,22 @@ class DirectDocxParser:
             'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
             'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
         }
+        self.__xml_content: bytes = b''
+        self.__loader()
+
+    def __loader(self):
+        """加载方法"""
+        try:
+            with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
+                with zip_ref.open('word/document.xml') as xml_file:
+                    self.__xml_content = xml_file.read()
+        except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
+            mprint(f"XML解析错误: {e}", 'red', False)
+
 
     def parse_tables_from_xml(self) -> List[List[List[str]]]:
         """直接从document.xml解析表格数据"""
-        try:
-            with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
-                # 读取document.xml
-                with zip_ref.open('word/document.xml') as xml_file:
-                    xml_content = xml_file.read()
-
-                return self._parse_xml_tables(xml_content)
-
-        except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
-            print(f"XML解析错误: {e}")
-            return []
+        return self._parse_xml_tables(self.__xml_content)
 
     def _parse_xml_tables(self, xml_content: bytes) -> List[List[List[str]]]:
         """解析XML中的表格结构"""
@@ -75,16 +78,7 @@ class DirectDocxParser:
 
     def parse_paragraphs_from_xml(self) -> List[str]:
         """直接从XML解析段落文本"""
-        try:
-            with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
-                with zip_ref.open('word/document.xml') as xml_file:
-                    xml_content = xml_file.read()
-
-                return self._parse_xml_paragraphs(xml_content)
-
-        except Exception as e:
-            print(f"段落解析错误: {e}")
-            return []
+        return self._parse_xml_paragraphs(self.__xml_content)
 
     def _parse_xml_paragraphs(self, xml_content: bytes) -> List[str]:
         """解析XML中的段落文本"""

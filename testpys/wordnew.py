@@ -21,7 +21,7 @@ class DirectDocxParser:
                 with zip_ref.open('word/document.xml') as xml_file:
                     xml_content = xml_file.read()
 
-                return self._parse_xml_tables(xml_content)
+            return self._parse_xml_tables(xml_content)
 
         except (zipfile.BadZipFile, KeyError, ET.ParseError) as e:
             print(f"XML解析错误: {e}")
@@ -76,7 +76,7 @@ class DirectDocxParser:
                 with zip_ref.open('word/document.xml') as xml_file:
                     xml_content = xml_file.read()
 
-                return self._parse_xml_paragraphs(xml_content)
+            return self._parse_xml_paragraphs(xml_content)
 
         except Exception as e:
             print(f"段落解析错误: {e}")
