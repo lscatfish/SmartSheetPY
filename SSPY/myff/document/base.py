@@ -18,7 +18,7 @@ class ParasSheets(BaseFile, ABC):
         self.__hash = None
         """有效哈希值"""
 
-    def chash(self) -> str:
+    def __chash(self) -> str:
         para = all_str(clean_enter(clean_space(self._paragraphs, ''), ''), '')
         if len(para) == 0:
             return self.hash_all
@@ -30,7 +30,7 @@ class ParasSheets(BaseFile, ABC):
     @property
     def hash(self):
         if self.__hash is None:
-            self.__hash = self.chash()
+            self.__hash = self.__chash()
         return self.__hash
 
     @property

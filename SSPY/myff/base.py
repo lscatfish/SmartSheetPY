@@ -221,9 +221,9 @@ class BaseFile:
         self.__filename = os.path.basename(self._absolute_path)
         self.__purename, self.__extension = os.path.splitext(self.__filename)
         if not auto_hash:
-            self.__hash = self.chash()
+            self.__hash = self.__chash()
 
-    def chash(self) -> str:
+    def __chash(self) -> str:
         """计算哈希值"""
         hash_obj = hashlib.new('md5')
         # 分块读取文件并更新哈希
@@ -295,7 +295,7 @@ class BaseFile:
     def hash_all(self):
         """总哈希值"""
         if self.__hash is None:
-            self.__hash = self.chash()
+            self.__hash = self.__chash()
         return self.__hash
 
     @property
